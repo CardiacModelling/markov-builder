@@ -8,30 +8,51 @@ from __future__ import print_function
 import myokit
 
 class State(object):
-    def __init__(self, name, conducting=False):
+    def __init__(self, name, indice, conducting=False):
         self.name = str(name)
         self.conducting = bool(conducting)
+        self.indice = None
+
 
 class Rate(object):
-    def __init__(self, name, index, positive):
+    def __init__(self, name, index, positive, alpha=1e-4, beta=1e-2):
         self.name = str(name)
         self.positive = bool(positive)
+        assert(alpha > 0)
+        assert(beta > 0)
+        self.alpha = float(alpha)
+        self.beta = float(beta)
+
+
+class Edge(object):
+    def __init__(self, state_from, state_to,
+                 forward_rate, forward_multiplier,
+                 backward_rate, backward_multiplier):
+        self.state_from = state_from
+        self.state_to = state_to
+        self.forward_rate = forward_rate
+        self.forward_multiplier = forward_multiplier
+        self.backward_rate = backward_rate
+        self.backward_multiplier = backward_multiplier
+
 
 class MarkovModel(object):
     def __init__(self):
 
         self.states = []
-        self.state_names = {}
+        self.state_names = {}   # Check for unique state names
         self.rates = []
-        self.rate_names = {}
-        self.edges = []
+        self.rate_names = {}    # Check for unique rate names
+        self.edges = []         #
 
     def add_state(self, name, conducting=False):
         if name in self.state_names:
             raise ValueError('Duplicate state name "' + name + '".')
         state = State(name, conducting)
+        state.indice = len(self.states)
         self.state_names[name] = state
         self.states.append(state)
+
         return state
 
     def add_rates(self, positive, negative):
@@ -72,7 +93,7 @@ class MarkovModel(object):
         elif not (isinstance(forward, Rate) and isinstance(backward, Rate)):
             raise ValueError('Rates can only be strings or Rate objects.')
         self.edges.append(
-            (state1, state2, forward, backward, fm, bm))
+            Edge(state1, state2, forward, fm, backward, bm))
 
     def show(self):
         print('='*40)
@@ -81,48 +102,145 @@ class MarkovModel(object):
         print('Edges: ' + str(len(self.edges)))
         print('-'*40)
         for edge in self.edges:
-            s1, s2, fw, bw, fm, bm = edge
-            fwn = str(fm) + fw.name
-            bwn = str(bm) + bw.name
+            fwn = str(edge.forward_multiplier) + edge.forward_rate.name
+            bwn = str(edge.backward_multiplier) + edge.backward_rate.name
             fwn += ' ' * (max(len(fwn), len(bwn)) - len(fwn))
             bwn += ' ' * (max(len(fwn), len(bwn)) - len(bwn))
-            print(s1.name + ' > ' + fwn + ' > ' + s2.name)
-            print(' ' * len(s1.name) + ' < ' + bwn + ' > ')
+            print(
+                edge.state_from.name + ' > '
+                + fwn + ' > ' + edge.state_to.name)
+            print(
+                ' ' * len(edge.state_from.name) + ' < '
+                + bwn + ' < ')
 
     def n_parameters(self):
         return len(self._edges) * 2
 
-    def model(self, E=50, g=1, comp='ikr', var='IKr'):
+    def model(self, E=50, g=1, component='ikr', current='IKr'):
         m = myokit.Model()
 
+        # Add time variable
         ce = m.add_component('engine')
         t = ce.add_variable('time')
         t.set_rhs(0)
         t.set_binding('time')
 
+        # Add membrane potential variable
         cm = m.add_component('membrane')
         v = cm.add_variable('V')
         v.set_rhs(-80)
         v.set_label('membrane_potential')
 
-        cc = m.add_component(comp)
+        # Add current component
+        cc = m.add_component(component)
+        cc.add_alias('V', v)
+
+        # Add parameters
+        i = 0
+        pvars = []
+        for rate in self.rates:
+            i += 1
+            p = cc.add_variable('p' + str(i))
+            p.set_rhs(rate.alpha)
+            pvars.append(p)
+            i += 1
+            p = cc.add_variable('p' + str(i))
+            p.set_rhs(rate.beta)
+            pvars.append(p)
+        i += 1
+        p = cc.add_variable('p' + str(i))
+        p.set_rhs(myokit.Number(g))
+        pvars.append(p)
+
+        # Add rates, store in map from names to variables
+        rvars = {}
+        for i, rate in enumerate(self.rates):
+            var = cc.add_variable(rate.name)
+            rvars[rate.name] = var
+
+            # Generate term a * exp(+-b * V)
+            alpha = myokit.Name(pvars[2 * i])
+            beta = myokit.Name(pvars[1 + 2 * i])
+            if not rate.positive:
+                beta = myokit.PrefixMinus(beta)
+            var.set_rhs(myokit.Multiply(
+                alpha, myokit.Exp(myokit.Multiply(beta, myokit.Name(v)))))
+
+        # Add reversal potential variable
         e = cc.add_variable('E')
-        e.set_rhs(E)
+        e.set_rhs(myokit.Number(E))
+
+        # Add maximum conductance variable
         g = cc.add_variable('g')
-        g.set_rhs(g)
+        g.set_rhs(myokit.Name(p))
 
-        iconducting = []
-        states = []
-        for i, x in enumerate(self.states):
-            states.append(cc.add_variable(x.name))
-            if x.conducting:
-                iconducting.append(i)
+        # Create states, store in map from names to variables
+        svars = {}
+        for i, state in enumerate(self.states):
+            var = cc.add_variable(state.name)
+            var.promote(0)
+            svars[state.name] = var
 
-        var = cc.add_variable(var)
+        # Set equations for states
+        for state in self.states:
+
+            incoming = []
+            outgoing = []
+            for edge in self.edges:
+                # Gather info
+                if state == edge.state_from:
+                    # Edge from this state to other state
+                    state2 = edge.state_to
+                    rate_in = edge.backward_rate
+                    rate_out = edge.forward_rate
+                    mult_in = edge.backward_multiplier
+                    mult_out = edge.forward_multiplier
+                elif state == edge.state_to:
+                    # Edge from other state to this state
+                    state2 = edge.state_from
+                    rate_in = edge.forward_rate
+                    rate_out = edge.backward_rate
+                    mult_in = edge.forward_multiplier
+                    mult_out = edge.backward_multiplier
+                else:
+                    continue
+
+                # Add incoming term
+                term = myokit.Name(svars[state2.name])
+                term = myokit.Multiply(
+                    myokit.Name(rvars[rate_in.name]), term)
+                if mult_in != 1:
+                    term = myokit.Multiply(myokit.Number(mult_in), term)
+                incoming.append(term)
+
+                # Add outgoing term
+                term = myokit.Name(rvars[rate_out.name])
+                if mult_out != 1:
+                    term = myokit.Multiply(myokit.Number(mult_out), term)
+                outgoing.append(term)
+
+            # Start with outgoing terms (grouped)
+            outgoing = iter(outgoing)
+            rhs = next(outgoing)
+            for term in outgoing:
+                rhs = myokit.Plus(rhs, term)
+            rhs = myokit.PrefixMinus(rhs)
+            rhs = myokit.Multiply(rhs, myokit.Name(svars[state.name]))
+
+            # Add incoming terms (one by one)
+            incoming = iter(incoming)
+            for term in incoming:
+                rhs = myokit.Plus(rhs, term)
+
+            # Set rhs
+            svars[state.name].set_rhs(rhs)
+
+        # Add current variable
+        var = cc.add_variable(current)
         rhs = myokit.Name(g)
-        conducting = [x for x in self.states if x.conducting]
-        for i in iconducting:
-            rhs = myokit.Multiply(rhs, myokit.Name(states[i]))
+        for state in self.states:
+            if state.conducting:
+                rhs = myokit.Multiply(rhs, myokit.Name(state_map[state.name]))
         rhs = myokit.Multiply(
             rhs, myokit.Minus(myokit.Name(v), myokit.Name(e)))
         var.set_rhs(rhs)
