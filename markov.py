@@ -129,6 +129,17 @@ class MarkovModel(object):
 
         print(m.code())
 
+    def rate_dict(self, parameters):
+        """
+        Generate a dictionary connecting rates to parameters.
+        """
+        assert(len(parameters) == 2 * len(self.rates) + 1)
+
+        param = iter(parameters)
+        rate_dict = {}
+        for rate in self.rates:
+            rate_dict[rate.name] = [next(param), next(param), rate.positive]
+        return rate_dict
 
 
 # Test
