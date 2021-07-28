@@ -82,26 +82,37 @@ class MarkovModel(object):
 
         graph = [self.states, self.edges]
 
-        def dfs_branch(graph, node):
-            unexplored_graph = [[],[]]
-            tree= [[],[]]
-            unexplored_graph[0] = list(filter(lambda n : n != node , graph[0]))
-            unexplored_graph[1] = list(filter(lambda e: not(e.state_from==node or e.state_to==node), graph[1]))
-            edges = list(filter(lambda e: e.state_from==node or e.state_to==node, graph[1]))
+        # TODO move this elsewhere
+        def remove_node(graph, n):
+            # remove nodes from graph
+            if n in graph[0]:
+                graph[0] = list(filter(lambda node : n != node, graph[0]))
+            for e in graph[1]:
+                graph[1] = list(filter(lambda e: e.state_from != n and e.state_to != n, graph[1]))
+            return graph
 
+
+        def dfs_branch(graph, node):
+            edges = list(filter(lambda e: e.state_from==node or e.state_to==node, graph[1]))
             tree=[[node], edges]
             print(edges)
+            unexplored_graph = remove_node(graph, node)
             for edge in edges:
                 print("here")
-                new_node = edge.state_to
+                print(tree)
+                new_node = edge.state_to if edge.state_to != node else edge.state_from
+                print(new_node.name)
+                if new_node not in unexplored_graph[0]:
+                    continue
                 branch = dfs_branch(unexplored_graph, new_node)
+                print("branch is: ")
+                for e in branch[1]:
+                    print("from {} to {}".format(e.state_from.name, e.state_to.name))
                 tree[0] = tree[0] + branch[0]
                 tree[1] = tree[1] + branch[1]
 
-                # Remove node from unexplored graph
-                unexplored_graph[0] = list(filter(lambda n: n != new_node, unexplored_graph[0]))
-                unexplored_graph[1] = list(filter(lambda e: not (e.state_from==new_node or e.state_to==new_node), unexplored_graph[1]))
-            print(tree)
+                for node in tree:
+                    unexplored_graph = remove_node(unexplored_graph, node)
             return tree
         return dfs_branch(graph, root)
 
@@ -309,17 +320,23 @@ m.connect(c3, c2, a, b, 3, 1)
 m.connect(c2, c1, a, b, 2, 2)
 m.connect(c1, oo, a, b, 1, 3)
 m.connect(oo, ii, 'c', 'd')
+m.connect(c1, ii, a, b, 1, 3)
 
-spanning_tree = m.dfs_spanning_tree(c2)
-print(len(spanning_tree[0]))
+spanning_tree = m.dfs_spanning_tree(c1)
+print(len(spanning_tree))
 
 m.show()
 
-m.model()
+
+print(spanning_tree)
+print(spanning_tree[0][-1].name)
+for e in spanning_tree[1]:
+    print("from {} to {}".format(e.state_from.name, e.state_to.name))
+
 
 if len(spanning_tree[0]) == len(m.states):
-    print("Graph is connected. Minimum spanning tree consists of {} edges".format(len(spanning_tree[1])))
+    print("Graph is connected. Minimum spanning tree consists of {} edges and has {} nodes".format(len(spanning_tree[1]), len(spanning_tree[0])))
+    print("there are {} states".format(len(m.states)))
 else:
     print("Spanning tree has {} edges and contains {} nodes".format(len(spanning_tree[1]), len(spanning_tree[0])))
     assert(False)
-
