@@ -73,6 +73,38 @@ class MarkovModel(object):
         self.rate_names[negative] = r2
         return r1, r2
 
+    def dfs_spanning_tree(self, root=None):
+        """
+        Finds a spanning tree by performing a depth first search using a recursive approach
+        """
+        if root is None:
+            root = self.states[0]
+
+        graph = [self.states, self.edges]
+
+        def dfs_branch(graph, node):
+            unexplored_graph = [[],[]]
+            tree= [[],[]]
+            unexplored_graph[0] = list(filter(lambda n : n != node , graph[0]))
+            unexplored_graph[1] = list(filter(lambda e: not(e.state_from==node or e.state_to==node), graph[1]))
+            edges = list(filter(lambda e: e.state_from==node or e.state_to==node, graph[1]))
+
+            tree=[[node], edges]
+            print(edges)
+            for edge in edges:
+                print("here")
+                new_node = edge.state_to
+                branch = dfs_branch(unexplored_graph, new_node)
+                tree[0] = tree[0] + branch[0]
+                tree[1] = tree[1] + branch[1]
+
+                # Remove node from unexplored graph
+                unexplored_graph[0] = list(filter(lambda n: n != new_node, unexplored_graph[0]))
+                unexplored_graph[1] = list(filter(lambda e: not (e.state_from==new_node or e.state_to==new_node), unexplored_graph[1]))
+            print(tree)
+            return tree
+        return dfs_branch(graph, root)
+
     def connect(self, state1, state2, forward, backward, fm=1, bm=1):
         """
         Connects two states. The transition from state1 to state2 should be
@@ -278,7 +310,16 @@ m.connect(c2, c1, a, b, 2, 2)
 m.connect(c1, oo, a, b, 1, 3)
 m.connect(oo, ii, 'c', 'd')
 
+spanning_tree = m.dfs_spanning_tree(c2)
+print(len(spanning_tree[0]))
 
 m.show()
 
 m.model()
+
+if len(spanning_tree[0]) == len(m.states):
+    print("Graph is connected. Minimum spanning tree consists of {} edges".format(len(spanning_tree[1])))
+else:
+    print("Spanning tree has {} edges and contains {} nodes".format(len(spanning_tree[1]), len(spanning_tree[0])))
+    assert(False)
+
