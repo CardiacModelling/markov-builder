@@ -6,6 +6,7 @@
 #
 from __future__ import print_function
 import myokit
+import numpy as np
 
 class State(object):
     def __init__(self, name, indice, conducting=False):
@@ -15,7 +16,7 @@ class State(object):
 
 
 class Rate(object):
-    def __init__(self, name, index, positive, alpha=1e-4, beta=1e-2):
+    def __init__(self, name, positive, alpha=1e-4, beta=1e-2):
         self.name = str(name)
         self.positive = bool(positive)
         assert(alpha > 0)
@@ -37,13 +38,32 @@ class Edge(object):
 
 
 class MarkovModel(object):
-    def __init__(self):
+    def __init__(self, rate_matrix=None, names=None, conducting_index=0):
 
-        self.states = []
-        self.state_names = {}   # Check for unique state names
         self.rates = []
         self.rate_names = {}    # Check for unique rate names
         self.edges = []         #
+        self.states = []
+
+        if names:
+            self.state_names = names
+        else:
+            self.state_names = {}   # Check for unique state names
+
+        if rate_matrix is not None:
+            assert(rate_matrix.shape[0] == rate_matrix.shape[1])
+            for i, row in enumerate(rate_matrix):
+                conducting = (conducting_index == i)
+                if i >= len(self.state_names):
+                    name = "state_{}".format(i)
+                    self.add_state(name, conducting)
+
+            for i, row in enumerate(rate_matrix):
+                for j, rate in enumerate(row):
+                    if j >= i:
+                        continue
+                    if rate != 0:
+                        self.connect(self.states[i], self.states[j], rate, rate)
 
     def add_state(self, name, conducting=False):
         if name in self.state_names:
@@ -65,8 +85,8 @@ class MarkovModel(object):
         if negative in self.rate_names:
             raise ValueError('Duplicate parameter name "' + negative + '".')
         n = len(self.rates)
-        r1 = Rate(positive, n, True)
-        r2 = Rate(negative, n + 1, False)
+        r1 = Rate(positive, True)
+        r2 = Rate(negative, False)
         self.rates.append(r1)
         self.rates.append(r2)
         self.rate_names[positive] = r1
@@ -95,19 +115,12 @@ class MarkovModel(object):
         def dfs_branch(graph, node):
             edges = list(filter(lambda e: e.state_from==node or e.state_to==node, graph[1]))
             tree=[[node], edges]
-            print(edges)
             unexplored_graph = remove_node(graph, node)
             for edge in edges:
-                print("here")
-                print(tree)
                 new_node = edge.state_to if edge.state_to != node else edge.state_from
-                print(new_node.name)
                 if new_node not in unexplored_graph[0]:
                     continue
                 branch = dfs_branch(unexplored_graph, new_node)
-                print("branch is: ")
-                for e in branch[1]:
-                    print("from {} to {}".format(e.state_from.name, e.state_to.name))
                 tree[0] = tree[0] + branch[0]
                 tree[1] = tree[1] + branch[1]
 
@@ -333,10 +346,18 @@ print(spanning_tree[0][-1].name)
 for e in spanning_tree[1]:
     print("from {} to {}".format(e.state_from.name, e.state_to.name))
 
-
 if len(spanning_tree[0]) == len(m.states):
     print("Graph is connected. Minimum spanning tree consists of {} edges and has {} nodes".format(len(spanning_tree[1]), len(spanning_tree[0])))
     print("there are {} states".format(len(m.states)))
 else:
     print("Spanning tree has {} edges and contains {} nodes".format(len(spanning_tree[1]), len(spanning_tree[0])))
     assert(False)
+
+r = Rate('r', True)
+rate_matrix = np.array([[0, r, 0, r],[r, 0, r, 0], [0, r, 0, r], [r, 0, r, 0]])
+
+# Test on a 4 state HH style topology
+mm = MarkovModel(rate_matrix, names=None, conducting_index=0)
+spanning_tree = mm.dfs_spanning_tree()
+assert(len(spanning_tree[0]) == rate_matrix.shape[0])
+
