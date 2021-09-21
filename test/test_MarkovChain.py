@@ -52,7 +52,7 @@ def construct_four_state_chain():
 
 class TestMarkovChain(unittest.TestCase):
     def setUp(self):
-        test_output_dir = os.environ.get('MARKOVMODELS_TEST_OUTPUT', os.path.join(os.path.dirname(os.path.realpath(__file__)), self.__class__.__name__))
+        test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join(os.path.dirname(os.path.realpath(__file__)), self.__class__.__name__))
         if not os.path.exists(test_output_dir):
             os.makedirs(test_output_dir)
         self.output_dir = test_output_dir
