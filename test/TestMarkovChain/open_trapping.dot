@@ -1,0 +1,28 @@
+strict digraph "" {
+	d_O	[open=False];
+	d_C	[open=False];
+	d_O -> d_C	[rate=k2];
+	d_I	[open=False];
+	d_O -> d_I	[rate=k3];
+	O	[open=True];
+	d_O -> O	[rate=drug_off];
+	d_C -> d_O	[rate=k1];
+	d_IC	[open=False];
+	d_C -> d_IC	[rate=k3];
+	d_I -> d_O	[rate=k4];
+	d_I -> d_IC	[rate=k2];
+	d_IC -> d_C	[rate=k4];
+	d_IC -> d_I	[rate=k1];
+	O -> d_O	[rate=drug_on];
+	C	[open=False];
+	O -> C	[rate=d_k2];
+	I	[open=False];
+	O -> I	[rate=d_k3];
+	C -> O	[rate=d_k1];
+	IC	[open=False];
+	C -> IC	[rate=d_k3];
+	I -> O	[rate=d_k4];
+	I -> IC	[rate=d_k2];
+	IC -> C	[rate=d_k4];
+	IC -> I	[rate=d_k1];
+}
