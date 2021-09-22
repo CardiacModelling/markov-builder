@@ -8,7 +8,7 @@ import MarkovModels
 import sympy as sp
 import networkx as nx
 
-from MarkovModels import MarkovChain
+from markov_builder import MarkovChain
 
 import numpy as np
 import pandas as pd
