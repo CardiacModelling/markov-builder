@@ -55,7 +55,7 @@ setup(
         'plotly>=5.3',
         'symengine>=0.8',
         'sympy>=1.8',
-        'pygraphviz==1.7',
+        #'pygraphviz==1.7',
     ],
     extras_require={
         'test': [
