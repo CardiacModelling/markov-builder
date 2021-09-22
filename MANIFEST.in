@@ -1,0 +1,4 @@
+include markov_builder/version.txt
+include README.md
+include RELEASE.md
+prune markov_builder/tests
