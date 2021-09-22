@@ -4,7 +4,7 @@ ignore =
     W391  # allow empty line at end of file
     W503  # break before binary operator - allow either style
     W504  # break after binary operator - allow either style
+    E225  #  E225 missing whitespace around operator
 exclude=
     .git,
-    dev-requirements,
     venv,

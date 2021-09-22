@@ -1,6 +1,8 @@
 """
 Main module for markov_builder
 """
+import inspect
+import os
 
 
 try:
@@ -29,6 +31,6 @@ def version(formatted=False):
     "markov-builder 1.0.0").
     """
     if formatted:
-        return 'markov_builder' + __version__
+        return 'markov_builder ' + __version__
     else:
         return __version_int__
