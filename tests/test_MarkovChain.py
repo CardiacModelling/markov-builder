@@ -186,6 +186,7 @@ class TestMarkovChain(unittest.TestCase):
         ax2.plot(times,voltages)
         plt.savefig(os.path.join(self.output_dir, "SimulateStepProtocol_{}.pdf".format(name)))
 
+        
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     unittest.main()
