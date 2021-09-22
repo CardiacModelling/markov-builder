@@ -1,16 +1,16 @@
-from typing import Union, Tuple
-import sympy as sp
-import logging
 import itertools
+import logging
+from typing import Tuple, Union
 
 import networkx as nx
-import pandas as pd
 import numpy as np
-
+import pandas as pd
+import sympy as sp
 from numpy.random import default_rng
 
+
 class MarkovChain():
-    def __init__(self, states : Union[list, None] = None, seed : Union[int, None] = None):
+    def __init__(self, states: Union[list, None] = None, seed: Union[int, None] = None):
         # Needs to be a MultiDiGraph to visualise properly (??)
         self.graph = nx.DiGraph()
         if states is not None:
@@ -18,7 +18,7 @@ class MarkovChain():
         self.rates = []
         self.rng = default_rng(seed)
 
-    def mirror_model(self, prefix : str, new_rates : bool = False):
+    def mirror_model(self, prefix: str, new_rates: bool = False):
         trapped_graph = nx.relabel_nodes(self.graph, dict([(n, "{}{}".format(prefix, n)) for n in self.graph.nodes]))
         nx.set_node_attributes(trapped_graph, False, 'open')
 
@@ -29,49 +29,48 @@ class MarkovChain():
                     self.rates.append(new_rate)
                 attr['rate'] = new_rate
 
-        new_graph     = nx.compose(trapped_graph, self.graph)
+        new_graph = nx.compose(trapped_graph, self.graph)
         # Get open state name
         open_nodes = [n for n, d in new_graph.nodes(data=True) if d['open']]
         assert(len(open_nodes) == 1)
 
-
         self.graph = new_graph
 
-    def add_open_trapping(self, prefix : str = "d_", new_rates : bool = False):
+    def add_open_trapping(self, prefix: str = "d_", new_rates: bool = False):
         self.mirror_model(prefix, new_rates)
         self.add_rates(("drug_on", "drug_off"))
         open_nodes = [n for n, d in self.graph.nodes(data=True) if d['open']]
         self.add_both_transitions(open_nodes[0], "d_{}".format(open_nodes[0]), 'drug_on', 'drug_off')
 
-    def add_state(self, label : Union[str, None], open : bool = False):
+    def add_state(self, label: Union[str, None], open: bool = False):
         if label is None:
             # TODO Generate new label name
-            label='undefined'
+            label = 'undefined'
         self.graph.add_node(label, open=open)
 
-    def add_states(self, states : list):
+    def add_states(self, states: list):
         for state in states:
             if isinstance(state, str):
                 self.add_state(state)
             else:
                 self.add_state(*state)
 
-    def add_rate(self, rate : str):
+    def add_rate(self, rate: str):
         if rate in self.rates:
             # TODO
             raise Exception()
         else:
             self.rates = self.rates + [rate]
 
-    def add_rates(self, rates : list):
+    def add_rates(self, rates: list):
         for rate in rates:
             self.add_rate(rate)
 
-    def add_both_transitions(self, frm: str, to : str, fwd_rate : Union[str, sp.Expr, None], bwd_rate : Union[str, None]):
+    def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None], bwd_rate: Union[str, None]):
         self.add_transition(frm, to, fwd_rate)
         self.add_transition(to, frm, bwd_rate)
 
-    def add_transition(self, from_node : str, to_node : str, transition_rate : Union[str, None]):
+    def add_transition(self, from_node: str, to_node: str, transition_rate: Union[str, None]):
         # TODO: Nice exceptions
         if from_node not in self.graph.nodes or to_node not in self.graph.nodes:
             raise Exception("A node wasn't present in the graph ({} or {})".format(from_node, to_node))
@@ -92,13 +91,13 @@ class MarkovChain():
 
     def get_transition_matrix(self):
         """
-        Returns a pair : labels, and the transition matrix
+        Returns a pair: labels, and the transition matrix
         """
         edges = self.graph.edges
 
-        matrix=[]
+        matrix = []
         for current_state in self.graph.nodes:
-            row=[]
+            row = []
             # Get edges incident to the state
             for incident_state in self.graph.nodes:
                 if current_state == incident_state:
@@ -115,18 +114,17 @@ class MarkovChain():
         # Compute diagonals
         n = matrix.shape[0]
         for i in range(n):
-            matrix[i, i] = -sum(matrix[i,:])
+            matrix[i, i] = -sum(matrix[i, :])
 
         return self.graph.nodes, matrix
 
-    def eval_transition_matrix(self, rates : dict):
+    def eval_transition_matrix(self, rates: dict):
         l, Q = self.get_transition_matrix()
         rates_list = [rates[rate] for rate in self.rates]
         Q_evaled = sp.lambdify(self.rates, Q)(*rates_list)
         return l, Q_evaled
 
-
-    def eliminate_state_from_transition_matrix(self, labels : Union[list, None] = None):
+    def eliminate_state_from_transition_matrix(self, labels: Union[list, None] = None):
         """eliminate_state_from_transition_matrix
 
         Because the state occupancy probabilities must add up to zero, the
@@ -147,7 +145,7 @@ class MarkovChain():
         """
 
         _, matrix = self.get_transition_matrix()
-        matrix=matrix.T
+        matrix = matrix.T
         shape = sp.shape(matrix)
         assert(shape[0] == shape[1])
 
@@ -160,25 +158,25 @@ class MarkovChain():
         # end.
         permutation = [labels.index(n) if n in labels else shape[0]-1 for n in self.graph.nodes]
 
-        matrix = matrix[permutation,permutation]
+        matrix = matrix[permutation, permutation]
 
         M = sp.eye(shape[0])
-        replacement_row = np.array([-1 for i in range(shape[0])])[None,:]
+        replacement_row = np.array([-1 for i in range(shape[0])])[None, :]
 
-        M[-1,:] = replacement_row
+        M[-1, :] = replacement_row
 
         matrix = M @ matrix
 
         # Construct vector
         vec = sp.Matrix([0 for i in range(shape[0])])
-        for j, el in enumerate(matrix[:,-1]):
+        for j, el in enumerate(matrix[:, -1]):
             if el != 0:
-                vec[j,0] = el
+                vec[j, 0] = el
                 for i in range(shape[0]):
                     matrix[j, i] -= el
-        return matrix[0:-1,0:-1], vec[0:-1,:]
+        return matrix[0:-1, 0:-1], vec[0:-1, :]
 
-    def get_embedded_chain(self,  rate_values : dict):
+    def get_embedded_chain(self, rate_values: dict):
         _, Q = self.get_transition_matrix()
         _, Q_evaled = self.eval_transition_matrix(rate_values)
 
@@ -190,20 +188,20 @@ class MarkovChain():
 
         embedded_markov_chain = np.zeros(Q_evaled.shape)
         for i, row in enumerate(Q_evaled):
-            s_row = sum(row) - Q_evaled[i,i]
+            s_row = sum(row) - Q_evaled[i, i]
             for j, val in enumerate(row):
                 if i == j:
-                    embedded_markov_chain[i,j] = 0
+                    embedded_markov_chain[i, j] = 0
                 else:
-                    embedded_markov_chain[i,j] = val/s_row
+                    embedded_markov_chain[i, j] = val/s_row
 
         logging.debug("Embedded markov chain is: {}".format(embedded_markov_chain))
         logging.debug("Waiting times are {}".format(mean_waiting_times))
 
         return mean_waiting_times, embedded_markov_chain
 
-
-    def sample_trajectories(self, no_trajectories : int, rate_values : dict, time_range : list=[0,1], starting_distribution : Union[list, None] = None):
+    def sample_trajectories(self, no_trajectories: int, rate_values: dict, time_range: list = [0, 1],
+                            starting_distribution: Union[list, None] = None):
         no_nodes = len(self.graph.nodes)
         logging.debug("There are {} nodes".format(no_nodes))
 
@@ -220,9 +218,9 @@ class MarkovChain():
         for i in range(e_chain.shape[0]):
             sum = 0
             for j in range(e_chain.shape[1]):
-                culm_rows[i,j] = e_chain[i,j] + sum
-                sum += e_chain[i,j]
-        t=0
+                culm_rows[i, j] = e_chain[i, j] + sum
+                sum += e_chain[i, j]
+        t = 0
         while True:
             waiting_times = np.zeros(mean_waiting_times.shape)
             for state_index, s_i in enumerate(distribution):
@@ -243,18 +241,18 @@ class MarkovChain():
 
             # Find what state we will jump to
             rand = self.rng.uniform()
-            jump_to = next(i for i, x in enumerate(culm_rows[state_to_jump,:]) if rand < x)
+            jump_to = next(i for i, x in enumerate(culm_rows[state_to_jump, :]) if rand < x)
 
             distribution[state_to_jump] -= 1
             distribution[jump_to] += 1
 
             data.append((t+time_range[0], *distribution))
 
-        df =  pd.DataFrame(data, columns=['time', *self.graph.nodes])
+        df = pd.DataFrame(data, columns=['time', *self.graph.nodes])
         return df
 
-    def get_equilibrium_distribution(self, rates : dict):
-        A,B = self.eliminate_state_from_transition_matrix()
+    def get_equilibrium_distribution(self, rates: dict):
+        A, B = self.eliminate_state_from_transition_matrix()
         labels = self.graph
         ss = -np.array(A.LUsolve(B).subs(rates)).astype(np.float64)
         ss = np.append(ss, 1-ss.sum())
@@ -262,15 +260,15 @@ class MarkovChain():
 
     def is_reversible(self):
         undirected_graph = self.graph.to_undirected(reciprocal=False, as_view=True)
-        cycle_basis=nx.cycle_basis(undirected_graph)
+        cycle_basis = nx.cycle_basis(undirected_graph)
 
         for cycle in cycle_basis:
             cycle.append(cycle[0])
             logging.debug("Checking cycle {}".format(cycle))
 
-            iter   = list(zip(cycle, itertools.islice(cycle, 1, None)))
-            forward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for frm, to in  iter]
-            backward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for to, frm in  iter]
+            iter = list(zip(cycle, itertools.islice(cycle, 1, None)))
+            forward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for frm, to in iter]
+            backward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for to, frm in iter]
 
             logging.debug("Rates moving forwards around the cycle are: %s", forward_rate_list)
             logging.debug("Rates moving backwards around the cycle are: %s", backward_rate_list)

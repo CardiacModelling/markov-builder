@@ -4,9 +4,9 @@ Main module for markov_builder
 import inspect
 import os
 
-from . MarkovChain import MarkovChain
-from . common import *
-from . settings import settings
+from common import *
+from MarkovChain import MarkovChain
+from settings import settings
 
 
 try:

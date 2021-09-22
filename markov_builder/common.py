@@ -1,26 +1,25 @@
-#!/usr/bin/env python3
-
 import argparse
-import matplotlib
-import matplotlib.pyplot as plt
-import scipy
-import scipy.stats
-import numpy as np
-import pandas as pd
 import math
 import os
+
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import pints
+import scipy
+import scipy.stats
 import symengine as se
 
+
 def get_protocol_directory():
-    return os.path.join(os.path.dirname( os.path.realpath(__file__)), "protocols")
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), "protocols")
+
 
 def get_args(data_reqd=False, description=None):
     """Get command line arguments from using get_parser
 
-
     Params:
-
     data_reqd: is a flag which is set to True when a positional argument
     giving a path to some input data is needed
 
@@ -81,7 +80,7 @@ def calculate_reversal_potential(temp=20):
 
     Params:
 
-    temp : temperature in degrees celcius, this defaults to 20
+    temp: temperature in degrees celcius, this defaults to 20
 
     """
     # E is the Nernst potential for potassium ions across the membrane
@@ -110,17 +109,17 @@ def cov_ellipse(cov, offset=[0, 0], q=None,
     ----------
 
 
-    cov : (2, 2) array
+    cov: (2, 2) array
         Covariance matrix.
-    q : float, optional
+    q: float, optional
         Confidence level, should be in (0, 1)
-    nsig : int, optional
+    nsig: int, optional
         Confidence level in unit of standard deviations.
         E.g. 1 stands for 68.3% and 2 stands for 95.4%.
 
     Returns
     -------
-    width, height, rotation :
+    width, height, rotation:
          The lengths of two axises and the rotation angle in degree
     for the ellipse.
     """
@@ -220,8 +219,8 @@ def detect_spikes(x, y):
     to find 'capacitive spikes' in protocols.
 
     Params:
-    x : the independent variable (usually time)
-    y : the dependent variable (usually voltage)
+    x: the independent variable (usually time)
+    y: the dependent variable (usually voltage)
 
     """
     dx = np.diff(x)
@@ -275,7 +274,7 @@ def beattie_sine_wave(t):
     return V
 
 
-def get_protocol_from_csv(protocol_name : str, directory=None, holding_potential=-80):
+def get_protocol_from_csv(protocol_name: str, directory=None, holding_potential=-80):
     """Generate a function by interpolating
     time-series data.
 
@@ -303,7 +302,7 @@ def get_protocol_from_csv(protocol_name : str, directory=None, holding_potential
         times, voltages, kind="linear")
 
     def staircase_protocol_safe(t): return staircase_protocol(
-    t) if t < times[-1] and t > times[0] else holding_potential
+t) if t < times[-1] and t > times[0] else holding_potential
     return staircase_protocol_safe
 
 
@@ -355,7 +354,7 @@ def draw_cov_ellipses(S1=None, sigma2=None, cov=None, plot_dir=None):
                 sub_cov = sigma2 * np.linalg.inv(np.dot(sub_sens.T, sub_sens))
             # Else use cov
             else:
-                sub_cov = cov[parameters_to_view[:, None], np.array((i,j))]
+                sub_cov = cov[parameters_to_view[:, None], np.array((i, j))]
             eigen_val, eigen_vec = np.linalg.eigh(sub_cov)
             eigen_val = eigen_val.real
             if eigen_val[0] > 0 and eigen_val[1] > 0:
@@ -376,7 +375,7 @@ def draw_cov_ellipses(S1=None, sigma2=None, cov=None, plot_dir=None):
                 plt.clf()
             else:
                 print(
-                    "COV_{},{} : negative eigenvalue: {}".format(
+                    "COV_{},{}: negative eigenvalue: {}".format(
                         i, j, eigen_val))
 
 
@@ -516,7 +515,7 @@ def fit_model(funcs, data, starting_parameters, fix_parameters=None,
     return found_parameters, found_value
 
 
-def get_protocol(protocol_name : str):
+def get_protocol(protocol_name: str):
     """Returns a function describing the voltage trace.
 
     params:
