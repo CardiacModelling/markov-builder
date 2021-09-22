@@ -46,25 +46,25 @@ setup(
 
     # List of dependencies
     install_requires=[
-        #'pints>=0.3',
-        #'scipy>=1.7',
-        #'numpy>=1.21',
-        #'matplotlib>=3.4',
-        #'pandas>=1.3',
-        #'networkx>=2.6',
-        #'plotly>=5.3',
-        #'symengine>=0.8',
-        #'sympy>=1.8',
-        #'pygraphviz==1.7',
+        'pints>=0.3',
+        'scipy>=1.7',
+        'numpy>=1.21',
+        'matplotlib>=3.4',
+        'pandas>=1.3',
+        'networkx>=2.6',
+        'plotly>=5.3',
+        'symengine>=0.8',
+        'sympy>=1.8',
+        'pygraphviz==1.7',
     ],
     extras_require={
         'test': [
-            #'pytest-cov>=2.10',     # For coverage checking
-            #'pytest>=4.6',          # For unit tests
-            #'flake8>=3',            # For code style checking
-            #'isort',
-            #'mock>=3.0.5',         # For mocking command line args etc.
-            #'codecov>=2.1.3',
+            'pytest-cov>=2.10',     # For coverage checking
+            'pytest>=4.6',          # For unit tests
+            'flake8>=3',            # For code style checking
+            'isort',
+            'mock>=3.0.5',         # For mocking command line args etc.
+            'codecov>=2.1.3',
         ],
     },
 )
