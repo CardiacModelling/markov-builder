@@ -59,12 +59,12 @@ setup(
     ],
     extras_require={
         'test': [
-            'pytest-cov>=2.10',     # For coverage checking
-            'pytest>=4.6',          # For unit tests
-            'flake8>=3',            # For code style checking
-            'isort',
-            'mock>=3.0.5',         # For mocking command line args etc.
-            'codecov>=2.1.3',
+            #'pytest-cov>=2.10',     # For coverage checking
+            #'pytest>=4.6',          # For unit tests
+            #'flake8>=3',            # For code style checking
+            #'isort',
+            #'mock>=3.0.5',         # For mocking command line args etc.
+            #'codecov>=2.1.3',
         ],
     }
     },
