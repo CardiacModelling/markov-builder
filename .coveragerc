@@ -1,0 +1,16 @@
+[run]
+source = markov_builder
+omit =
+    markov_builder/tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    pragma: no linux cover
+    pragma: no python 3 cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    except ImportError:
+    if False:
+    if __name__ == .__main__.:
