@@ -1,5 +1,6 @@
 from . MarkovChain import MarkovChain
 
+
 def construct_M10_chain():
     mc = MarkovChain()
 
@@ -39,4 +40,3 @@ def construct_four_state_chain():
     for r in rates:
         mc.add_both_transitions(*r)
     return mc
-

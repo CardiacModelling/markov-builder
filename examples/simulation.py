@@ -19,13 +19,13 @@ def main():
     def beattie_get_rates(voltage: float, parameters: list):
         # Now get the waiting times and embedded MC
         rates = [parameters[2 * i] + np.exp(parameters[2 * i + 1] * voltage)
-                    for i in range(int((len(parameters) - 1) / 2))]
+                 for i in range(int((len(parameters) - 1) / 2))]
 
         rate_vals = {"k1": rates[0],
-                        "k2": rates[1],
-                        "k3": rates[2],
-                        "k4": rates[3]
-                        }
+                     "k2": rates[1],
+                     "k3": rates[2],
+                     "k4": rates[3]
+                     }
         return rate_vals
 
     def M10_get_rates(voltage: float, params: list):
@@ -49,6 +49,7 @@ def main():
     # M10-IKr model
     mc = construct_M10_chain()
     SimulateStepProtocol(mc, M10_get_rates, protocol, M10_params, name="M10")
+
 
 def SimulateStepProtocol(mc, rates_func, protocol, params, name: str = ""):
     fig = plt.figure(figsize=(8, 8))
@@ -89,6 +90,7 @@ def SimulateStepProtocol(mc, rates_func, protocol, params, name: str = ""):
     fpath = os.path.join(output_dir, "SimulateStepProtocol_{}.pdf".format(name))
     plt.savefig(fpath)
     logging.info("wrote to %s" % fpath)
+
 
 if __name__ == "__main__":
     global output_dir
