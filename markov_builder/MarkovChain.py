@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Tuple, Union
+from typing import Union
 
 import networkx as nx
 import numpy as np
@@ -93,8 +93,6 @@ class MarkovChain():
         """
         Returns a pair: labels, and the transition matrix
         """
-        edges = self.graph.edges
-
         matrix = []
         for current_state in self.graph.nodes:
             row = []
@@ -179,8 +177,6 @@ class MarkovChain():
     def get_embedded_chain(self, rate_values: dict):
         _, Q = self.get_transition_matrix()
         _, Q_evaled = self.eval_transition_matrix(rate_values)
-
-        n = Q.shape[0]
 
         logging.debug("Q is {}".format(Q_evaled))
 

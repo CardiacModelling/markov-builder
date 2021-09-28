@@ -4,10 +4,6 @@ Main module for markov_builder
 import inspect
 import os
 
-from . MarkovChain import MarkovChain
-from . models import *
-
-
 try:
     frame = inspect.currentframe()
     MODULE_DIR = os.path.dirname(inspect.getfile(frame))

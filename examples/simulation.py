@@ -10,7 +10,8 @@ import sys
 import logging
 import numpy as np
 import pandas as pd
-from markov_builder import construct_four_state_chain, construct_M10_chain
+
+import markov_builder.example_models as example_models
 
 
 def main():
@@ -42,12 +43,12 @@ def main():
                   4.1e-02)
 
     # Perform the simulations
-    mc = construct_four_state_chain()
+    mc = example_models.construct_four_state_chain()
     protocol = ((-80, 100), (20, 200))
     SimulateStepProtocol(mc, beattie_get_rates, protocol, beattie_params, name="Beattie")
 
     # M10-IKr model
-    mc = construct_M10_chain()
+    mc = example_models.construct_M10_chain()
     SimulateStepProtocol(mc, M10_get_rates, protocol, M10_params, name="M10")
 
 
@@ -70,8 +71,7 @@ def SimulateStepProtocol(mc, rates_func, protocol, params, name: str = ""):
         eqm_data = eqm_data + [[last_time, *ss]] + [[time_to, *ss]]
         last_time = time_to
 
-    eqm_data = pd.DataFrame(eqm_data, columns=['time'] +
-                            [l + ' eqm distribution' for l in labels]).set_index("time")
+    eqm_data = pd.DataFrame(eqm_data, columns=['time'] + [lb + ' eqm distribution' for lb in labels]).set_index("time")
     data = pd.concat(data).set_index("time").sort_index()
 
     data.plot(ax=ax1)

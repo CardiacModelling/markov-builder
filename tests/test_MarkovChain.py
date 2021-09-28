@@ -4,17 +4,14 @@ import sys
 import os
 import logging
 import unittest
-import markov_builder
 import sympy as sp
 import networkx as nx
 
-from markov_builder import MarkovChain, construct_four_state_chain, construct_M10_chain, construct_non_reversible_chain
+import markov_builder.example_models as example_models
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 
 class TestMarkovChain(unittest.TestCase):
+
     def setUp(self):
         """Run by unittest before the tests in this class are performed.
 
@@ -43,8 +40,7 @@ class TestMarkovChain(unittest.TestCase):
 
         logging.info("Constructing four-state Beattie model")
 
-        mc = construct_four_state_chain()
-        pos = nx.spring_layout(mc.graph)
+        mc = example_models.construct_four_state_chain()
 
         # Output DOT file
         nx.drawing.nx_agraph.write_dot(mc.graph, "Beattie_dotfile.dot")
@@ -64,9 +60,8 @@ class TestMarkovChain(unittest.TestCase):
         self.assertEqual(pen_and_paper_B, system[1])
 
         # Construct M10 model
-        m10 = construct_M10_chain()
+        m10 = example_models.construct_M10_chain()
         nx.drawing.nx_agraph.write_dot(m10.graph, "m10_dotfile.dot")
-
 
     def test_construct_open_trapping_model(self):
         """
@@ -75,7 +70,7 @@ class TestMarkovChain(unittest.TestCase):
         model and add drug trapping to the open channel.
 
         """
-        mc = construct_four_state_chain()
+        mc = example_models.construct_four_state_chain()
         mc.add_open_trapping(prefix="d_", new_rates=True)
 
         labels = ('O', 'C', 'I', 'd_O', 'd_C', 'd_I', 'd_O', 'd_IC')
@@ -85,19 +80,20 @@ class TestMarkovChain(unittest.TestCase):
         nx.drawing.nx_agraph.write_dot(mc.graph, os.path.join(self.output_dir, "open_trapping.dot"))
         logging.debug(mc.graph)
 
-
     def test_assert_reversibility_using_cycles(self):
 
         """Test that MarkovChain().is_reversible correctly identifies if markov
         chains are reversible or not.
 
-        MarkovChain().is_reversible checks reversibility using the method presented in Colquhoun et al. (2014) https://doi.org/10.1529/biophysj.103.038679
+        MarkovChain().is_reversible checks reversibility using the method
+        presented in Colquhoun et al. (2014)
+        https://doi.org/10.1529/biophysj.103.038679
 
         TODO add more test cases
 
         """
 
-        models = [construct_four_state_chain(), construct_M10_chain()]
+        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain()]
 
         for mc in models:
             logging.info("Checking reversibility")
@@ -106,12 +102,11 @@ class TestMarkovChain(unittest.TestCase):
             mc.add_open_trapping(new_rates=True)
             assert(mc.is_reversible())
 
-
         # Test is_reversible on a model we know is not reversible. This example
         # is a simple three state model with 6 independent transition rates
 
         logging.info("Checking reversibility of non-reversible chain")
-        mc = construct_non_reversible_chain()
+        mc = example_models.construct_non_reversible_chain()
         logging.debug("graph is %s", mc.graph)
 
         assert(not mc.is_reversible())
@@ -119,6 +114,7 @@ class TestMarkovChain(unittest.TestCase):
         mc.add_open_trapping()
         logging.debug("graph is %s", mc.graph)
         assert(not mc.is_reversible())
+
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
