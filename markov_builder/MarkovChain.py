@@ -230,7 +230,7 @@ class MarkovChain():
         """
         l, Q = self.get_transition_matrix()
         rates_list = [rates[rate] for rate in self.rates]
-        Q_evaled = sp.lambdify(self.rates, Q)(*rates_list)
+        Q_evaled = sp.lambdify(list(self.rates), Q)(*rates_list)
         return l, Q_evaled
 
     def eliminate_state_from_transition_matrix(self, labels: Union[list, None] = None):
@@ -350,7 +350,7 @@ class MarkovChain():
 
         distribution = starting_distribution
 
-        mean_waiting_times, e_chain = self.get_embedded_chain(rate_values)
+        labels, mean_waiting_times, e_chain = self.get_embedded_chain(rate_values)
 
         data = [(time_range[0], *distribution)]
         culm_rows = np.zeros(e_chain.shape)
