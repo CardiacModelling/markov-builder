@@ -4,6 +4,7 @@ Main module for markov_builder
 import inspect
 import os
 
+
 try:
     frame = inspect.currentframe()
     MODULE_DIR = os.path.dirname(inspect.getfile(frame))

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import sys
-import os
 import logging
+import os
+import sys
 import unittest
-import sympy as sp
+
 import networkx as nx
+import sympy as sp
 
 import markov_builder.example_models as example_models
 

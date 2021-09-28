@@ -4,10 +4,11 @@
 # algorithm output plots into examples/example_output or
 # MARKOVBUILDER_EXAMPLE_OUTPUT if it exists
 
-import matplotlib.pyplot as plt
+import logging
 import os
 import sys
-import logging
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 

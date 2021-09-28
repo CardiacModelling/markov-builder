@@ -1,4 +1,4 @@
-from . MarkovChain import MarkovChain
+from .MarkovChain import MarkovChain
 
 
 def construct_M10_chain():
