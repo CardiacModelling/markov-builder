@@ -82,7 +82,6 @@ class TestMarkovChain(unittest.TestCase):
         logging.debug(mc.graph)
 
     def test_assert_reversibility_using_cycles(self):
-
         """Test that MarkovChain().is_reversible correctly identifies if markov
         chains are reversible or not.
 

@@ -170,7 +170,6 @@ class MarkovChain():
 
         self.graph.add_edge(from_node, to_node, rate=transition_rate)
 
-
     def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None], bwd_rate: Union[str, None]):
         """A helper function to add forwards and backwards rates between two
         states. This is a convenient way to connect new states to the model.
@@ -326,7 +325,6 @@ class MarkovChain():
 
     def sample_trajectories(self, no_trajectories: int, rate_values: dict, time_range: list = [0, 1],
                             starting_distribution: Union[list, None] = None):
-
         """Samples trajectories of the Markov chain using a Gillespie algorithm.
 
         @params no_trajectories: The number of simulations to run (number of
@@ -412,7 +410,6 @@ class MarkovChain():
         return labels, ss
 
     def is_reversible(self):
-
         """Checks whether or not the Markov chain is reversible for any set of non-zero
         transition rate values. This method does not check for specific
         transition rate values. We assume that all transition rates are
