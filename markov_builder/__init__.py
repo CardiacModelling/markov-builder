@@ -5,6 +5,7 @@ import inspect
 import os
 
 from . MarkovChain import MarkovChain
+from . models import *
 
 
 try:
