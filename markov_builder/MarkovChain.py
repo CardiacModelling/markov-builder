@@ -156,7 +156,7 @@ class MarkovChain():
         # permutation[i] = j corresponds to a mapping which takes
         # graph.nodes[i] to graph.nodes[j]. Map the row to be eliminated to the
         # end.
-        permutation = [labels.index(n) if n in labels else shape[0]-1 for n in self.graph.nodes]
+        permutation = [labels.index(n) if n in labels else shape[0] - 1 for n in self.graph.nodes]
 
         matrix = matrix[permutation, permutation]
 
@@ -184,7 +184,7 @@ class MarkovChain():
 
         logging.debug("Q is {}".format(Q_evaled))
 
-        mean_waiting_times = -1/np.diagonal(Q_evaled)
+        mean_waiting_times = -1 / np.diagonal(Q_evaled)
 
         embedded_markov_chain = np.zeros(Q_evaled.shape)
         for i, row in enumerate(Q_evaled):
@@ -193,7 +193,7 @@ class MarkovChain():
                 if i == j:
                     embedded_markov_chain[i, j] = 0
                 else:
-                    embedded_markov_chain[i, j] = val/s_row
+                    embedded_markov_chain[i, j] = val / s_row
 
         logging.debug("Embedded markov chain is: {}".format(embedded_markov_chain))
         logging.debug("Waiting times are {}".format(mean_waiting_times))
@@ -206,7 +206,7 @@ class MarkovChain():
         logging.debug("There are {} nodes".format(no_nodes))
 
         if starting_distribution is None:
-            starting_distribution = np.around(np.array([no_trajectories]*no_nodes)/no_nodes)
+            starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
             starting_distribution[0] += no_trajectories - starting_distribution.sum()
 
         distribution = starting_distribution
@@ -227,12 +227,12 @@ class MarkovChain():
                 if s_i == 0:
                     waiting_times[state_index] = np.inf
                 else:
-                    waiting_times[state_index] = self.rng.exponential(mean_waiting_times[state_index]/(s_i))
+                    waiting_times[state_index] = self.rng.exponential(mean_waiting_times[state_index] / (s_i))
 
-            if t+min(waiting_times) > time_range[1]-time_range[0]:
+            if t + min(waiting_times) > time_range[1] - time_range[0]:
                 break
 
-            new_t = t+min(waiting_times)
+            new_t = t + min(waiting_times)
             if new_t == t:
                 logging.warning("Underflow warning: timestep too small")
             t = new_t
@@ -246,7 +246,7 @@ class MarkovChain():
             distribution[state_to_jump] -= 1
             distribution[jump_to] += 1
 
-            data.append((t+time_range[0], *distribution))
+            data.append((t + time_range[0], *distribution))
 
         df = pd.DataFrame(data, columns=['time', *self.graph.nodes])
         return df
@@ -255,7 +255,7 @@ class MarkovChain():
         A, B = self.eliminate_state_from_transition_matrix()
         labels = self.graph
         ss = -np.array(A.LUsolve(B).subs(rates)).astype(np.float64)
-        ss = np.append(ss, 1-ss.sum())
+        ss = np.append(ss, 1 - ss.sum())
         return labels, ss
 
     def is_reversible(self):
