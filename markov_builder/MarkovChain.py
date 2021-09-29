@@ -11,7 +11,7 @@ from numpy.random import default_rng
 
 
 class MarkovChain():
-    def __init__(self, states: Union[list, None] = None, seed: Union[int, None] = None):
+    def __init__(self, states: Union[list, None] = None, seed: Union[int, None] = None, name: Union[str, None] = None):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
@@ -25,6 +25,7 @@ class MarkovChain():
         # Initialise a random number generator for simulation. Optionally, a
         # seed can be specified.
         self.rng = default_rng(seed)
+        self.name = name
 
     def mirror_model(self, prefix: str, new_rates: bool = False):
         """

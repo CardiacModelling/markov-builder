@@ -2,7 +2,7 @@ from .MarkovChain import MarkovChain
 
 
 def construct_M10_chain():
-    mc = MarkovChain()
+    mc = MarkovChain(name='M10')
 
     mc.add_states(('IC1', 'IC2', 'IO', 'C1', 'C2'))
     mc.add_state('O', open=True)
@@ -11,11 +11,12 @@ def construct_M10_chain():
 
     for r in rates:
         mc.add_both_transitions(*r)
+
     return mc
 
 
 def construct_non_reversible_chain():
-    mc = MarkovChain()
+    mc = MarkovChain(name='non_reversible_example')
 
     mc.add_states(('A', 'D'))
     mc.add_state('B', open=True)
@@ -27,7 +28,7 @@ def construct_non_reversible_chain():
 
 
 def construct_four_state_chain():
-    mc = MarkovChain()
+    mc = MarkovChain(name='Beattie_model')
     rates = ['k{}'.format(i) for i in [1, 2, 3, 4]]
     mc.add_rates(rates)
     states = [('O', True), ('C', False), ('I', False), ('IC', False)]
