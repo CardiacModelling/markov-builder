@@ -56,6 +56,7 @@ setup(
         'symengine>=0.8',
         'sympy>=1.8',
         'pygraphviz==1.7',
+        'pyvis==0.1.9'
     ],
     extras_require={
         'test': [
