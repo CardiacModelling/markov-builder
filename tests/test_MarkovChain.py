@@ -29,8 +29,8 @@ class TestMarkovChain(unittest.TestCase):
         logging.info("outputting to " + test_output_dir)
 
     def test_construct_chain(self):
-        """Construct various examples of Markov models. Test that no exceptions are
-        raised. Output dot files of these graphs in the test output directory.
+        """Construct various examples of Markov models.
+        Output dot files of these graphs in the test output directory.
 
         Check that our transition rate matrix for the Beattie model is correct
         by comparing it against a reference solution.
@@ -46,6 +46,8 @@ class TestMarkovChain(unittest.TestCase):
         # Output DOT file
         nx.drawing.nx_agraph.write_dot(mc.graph, "Beattie_dotfile.dot")
 
+        # Draw graph using pyvis
+        mc.draw_graph(os.path.join(self.output_dir, "BeattieModel.html"))
         logging.debug(mc.graph)
 
         labels, Q = mc.get_transition_matrix()
@@ -62,7 +64,10 @@ class TestMarkovChain(unittest.TestCase):
 
         # Construct M10 model
         m10 = example_models.construct_M10_chain()
-        nx.drawing.nx_agraph.write_dot(m10.graph, "m10_dotfile.dot")
+        # Save DOTfile
+        nx.drawing.nx_agraph.write_dot(m10.graph, "M10_dotfile.dot")
+        # Save html visualisation using pyvis
+        m10.draw_graph(os.path.join(self.output_dir, "M10.html"))
 
     def test_construct_open_trapping_model(self):
         """

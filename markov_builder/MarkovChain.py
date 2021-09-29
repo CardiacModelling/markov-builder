@@ -5,6 +5,7 @@ from typing import Union
 import networkx as nx
 import numpy as np
 import pandas as pd
+import pyvis
 import sympy as sp
 from numpy.random import default_rng
 
@@ -446,3 +447,27 @@ class MarkovChain():
             if(forward_rate_product - backward_rate_product).evalf() != 0:
                 return False
         return True
+
+    def draw_graph(self, filepath: Union[None, str] = None, show_options: bool = False):
+        """Visualise the graph as a webpage using pyvis.
+
+        @params
+
+        filepath: An optional filepath to save the file to. If this is
+        None, the graph won't be saved and will be opened in a web browser (if possible)
+
+        show_options: Whether or not the options menu should be displayed on the webpage
+
+        """
+        for frm, to, data in self.graph.edges(data=True):
+            data['label'] = data['rate']
+
+        nt = pyvis.network.Network(directed=True)
+        nt.from_nx(self.graph)
+        nt.set_edge_smooth('dynamic')
+        if show_options:
+            nt.show_buttons()
+        if filepath is not None:
+            nt.save_graph(filepath)
+        else:
+            nt.show_graph()
