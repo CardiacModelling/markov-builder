@@ -3,3 +3,4 @@ pyvis==0.1.9
 numpy==1.21.2
 networkx==2.6.3
 pandas==1.3.3
+pygraphviz==1.7
