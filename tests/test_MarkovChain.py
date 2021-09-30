@@ -39,6 +39,7 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
+        # Construct Beattie model
         logging.info("Constructing four-state Beattie model")
 
         mc = example_models.construct_four_state_chain()
@@ -63,11 +64,26 @@ class TestMarkovChain(unittest.TestCase):
         self.assertEqual(pen_and_paper_B, system[1])
 
         # Construct M10 model
+        logging.info("Constructing six-state M10 model")
+
         m10 = example_models.construct_M10_chain()
+
         # Save DOTfile
         nx.drawing.nx_agraph.write_dot(m10.graph, "M10_dotfile.dot")
+
         # Save html visualisation using pyvis
         m10.draw_graph(os.path.join(self.output_dir, "M10.html"))
+
+        # Construct Mazhari model
+        logging.info("Constructing five-state Mazhari model")
+
+        mazhari = example_models.construct_mazhari_chain()
+
+        # Save DOTfile
+        nx.drawing.nx_agraph.write_dot(mazhari.graph, "Mazhari_dotfile.dot")
+        
+        # Save html visualisation using pyvis
+        mazhari.draw_graph(os.path.join(self.output_dir, "Mazhari.html"))
 
     def test_construct_open_trapping_model(self):
         """
@@ -101,10 +117,14 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
-        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain()]
+        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(), 
+                  example_models.construct_mazhari_chain()]
 
+        m = 0
         for mc in models:
+            m += 1
             logging.info("Checking reversibility")
+            logging.info("Model = " + str(m))
             assert(mc.is_reversible())
             logging.info("Checking reversibility with open trapping")
             mc.add_open_trapping(new_rates=True)
