@@ -46,10 +46,15 @@ class MarkovChain():
 
         if new_rates:
             for frm, to, attr in self.graph.edges(data=True):
-                new_rate = prefix + attr['rate']
-                if new_rate not in self.rates:
-                    self.rates.add(new_rate)
-                attr['rate'] = new_rate
+                new_rate = sp.sympify(attr['rate'])
+                for symbol in new_rate.free_symbols:
+                    new_symbol = prefix + str(symbol)
+                    new_rate = new_rate.subs(symbol, new_symbol)
+
+                    if new_symbol not in self.rates:
+                        self.rates.add(str(new_rate))
+
+                attr['rate'] = str(new_rate)
 
         new_graph = nx.compose(trapped_graph, self.graph)
         # Get open state name
