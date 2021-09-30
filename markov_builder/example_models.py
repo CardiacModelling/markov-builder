@@ -50,9 +50,12 @@ def construct_mazhari_chain():
     mc.add_state('O', open=True)
 
     rates = (('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 'O', 'a1', 'b1'), 
-             ('O', 'I', 'ai', 'bi'), ('I', 'C3', '(ai3*bi*b1)/(a1*ai)', 'ai3'))
+             ('O', 'I', 'ai', 'bi'), ('I', 'C3', 'psi', 'ai3'))
 
     for r in rates:
         mc.add_both_transitions(*r)
+
+    mc.substitute_rates({'psi': '(ai3*bi*b1)/(a1*ai)'})
+
     return mc
 
