@@ -153,7 +153,6 @@ class TestMarkovChain(unittest.TestCase):
         rates_dict = {'k1': 'k2*k4'}
         mc.substitute_rates(rates_dict)
         mc.draw_graph(os.path.join(self.output_dir, '%s_rates_substitution.html' % mc.name), show_rates=True)
-
         label_found = False
         for u, v, d in mc.graph.edges(data=True):
             if 'label' in d:
@@ -161,6 +160,21 @@ class TestMarkovChain(unittest.TestCase):
                 if d['label'] == 'k1':
                     self.assertEqual(rates_dict['k1'], d['rate'])
         self.assertTrue(label_found)
+
+        mc = example_models.construct_four_state_chain()
+        mc.substitute_rates(rates_dict)
+        mc.add_open_trapping(new_rates=True)
+        mc.draw_graph(os.path.join(self.output_dir,
+                                   '%s_open_trapping_rates_substitution.html' %
+                                   mc.name), show_rates=True)
+        transition_rates = [d['rate'] for u, v, d in mc.graph.edges(data=True)]
+
+        # Check that new mirrored rates have been handled correctly
+        self.assertIn('d_k2*d_k4', transition_rates)
+        self.assertIn('d_k2', mc.rates)
+        self.assertIn('d_k4', mc.rates)
+        # Check reversibility still holds for good measure
+        self.assertTrue(mc.is_reversible())
 
 
 if __name__ == "__main__":
