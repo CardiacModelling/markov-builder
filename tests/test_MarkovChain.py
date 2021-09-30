@@ -28,6 +28,7 @@ class TestMarkovChain(unittest.TestCase):
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
 
+
     def test_construct_chain(self):
         """Construct various examples of Markov models.
         Output dot files of these graphs in the test output directory.
@@ -85,6 +86,7 @@ class TestMarkovChain(unittest.TestCase):
         # Save html visualisation using pyvis
         mazhari.draw_graph(os.path.join(self.output_dir, "Mazhari.html"))
 
+
     def test_construct_open_trapping_model(self):
         """
 
@@ -105,6 +107,7 @@ class TestMarkovChain(unittest.TestCase):
             mc.draw_graph(os.path.join(self.output_dir, "%s_open_trapping.html" % mc.name))
             logging.debug(mc.graph)
 
+
     def test_assert_reversibility_using_cycles(self):
         """Test that MarkovChain().is_reversible correctly identifies if markov
         chains are reversible or not.
@@ -120,11 +123,8 @@ class TestMarkovChain(unittest.TestCase):
         models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(), 
                   example_models.construct_mazhari_chain()]
 
-        m = 0
         for mc in models:
-            m += 1
             logging.info("Checking reversibility")
-            logging.info("Model = " + str(m))
             assert(mc.is_reversible())
             logging.info("Checking reversibility with open trapping")
             mc.add_open_trapping(new_rates=True)
@@ -143,6 +143,7 @@ class TestMarkovChain(unittest.TestCase):
         logging.debug("graph is %s", mc.graph)
         assert(not mc.is_reversible())
 
+
     def test_equate_rates(self):
         """
         Test that the MarkovChain.substitute_rates function performs the expected substitution
@@ -154,7 +155,7 @@ class TestMarkovChain(unittest.TestCase):
         mc.substitute_rates(rates_dict)
         mc.draw_graph(os.path.join(self.output_dir, '%s_rates_substitution.html' % mc.name), show_rates=True)
         label_found = False
-        for u, v, d in mc.graph.edges(data=True):
+        for _, _, d in mc.graph.edges(data=True):
             if 'label' in d:
                 label_found = True
                 if d['label'] == 'k1':
@@ -167,12 +168,13 @@ class TestMarkovChain(unittest.TestCase):
         mc.draw_graph(os.path.join(self.output_dir,
                                    '%s_open_trapping_rates_substitution.html' %
                                    mc.name), show_rates=True)
-        transition_rates = [d['rate'] for u, v, d in mc.graph.edges(data=True)]
+        transition_rates = [d['rate'] for _, _, d in mc.graph.edges(data=True)]
 
         # Check that new mirrored rates have been handled correctly
         self.assertIn('d_k2*d_k4', transition_rates)
         self.assertIn('d_k2', mc.rates)
         self.assertIn('d_k4', mc.rates)
+
         # Check reversibility still holds for good measure
         self.assertTrue(mc.is_reversible())
 
