@@ -24,7 +24,7 @@ def construct_non_reversible_chain():
 
     for r in rates:
         mc.add_both_transitions(*r)
-        
+
     return mc
 
 
@@ -51,7 +51,7 @@ def construct_mazhari_chain():
     mc.add_states(('C1', 'C2', 'C3', 'I'))
     mc.add_state('O', open=True)
 
-    rates = [('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 'O', 'a1', 'b1'), 
+    rates = [('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 'O', 'a1', 'b1'),
              ('O', 'I', 'ai', 'bi'), ('I', 'C3', 'psi', 'ai3')]
 
     for r in rates:

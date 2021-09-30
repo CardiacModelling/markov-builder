@@ -28,7 +28,6 @@ class TestMarkovChain(unittest.TestCase):
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
 
-
     def test_construct_chain(self):
         """Construct various examples of Markov models.
         Output dot files of these graphs in the test output directory.
@@ -82,7 +81,7 @@ class TestMarkovChain(unittest.TestCase):
 
         # Save DOTfile
         nx.drawing.nx_agraph.write_dot(mazhari.graph, "Mazhari_dotfile.dot")
-        
+
         # Save html visualisation using pyvis
         mazhari.draw_graph(os.path.join(self.output_dir, "Mazhari.html"))
 
@@ -93,10 +92,9 @@ class TestMarkovChain(unittest.TestCase):
 
         # Save DOTfile
         nx.drawing.nx_agraph.write_dot(wang.graph, "Wang_dotfile.dot")
-        
+
         # Save html visualisation using pyvis
         wang.draw_graph(os.path.join(self.output_dir, "Wang.html"))
-
 
     def test_construct_open_trapping_model(self):
         """
@@ -119,7 +117,6 @@ class TestMarkovChain(unittest.TestCase):
             mc.draw_graph(os.path.join(self.output_dir, "%s_open_trapping.html" % mc.name))
             logging.debug(mc.graph)
 
-
     def test_assert_reversibility_using_cycles(self):
         """Test that MarkovChain().is_reversible correctly identifies if markov
         chains are reversible or not.
@@ -132,7 +129,7 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
-        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(), 
+        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
                   example_models.construct_mazhari_chain()]
 
         for mc in models:
@@ -154,7 +151,6 @@ class TestMarkovChain(unittest.TestCase):
         mc.add_open_trapping()
         logging.debug("graph is %s", mc.graph)
         assert(not mc.is_reversible())
-
 
     def test_equate_rates(self):
         """
