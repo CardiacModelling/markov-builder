@@ -45,7 +45,7 @@ class MarkovChain():
         nx.set_node_attributes(trapped_graph, False, 'open')
 
         if new_rates:
-            for frm, to, attr in self.graph.edges(data=True):
+            for frm, to, attr in trapped_graph.edges(data=True):
                 new_rate = sp.sympify(attr['rate'])
                 for symbol in new_rate.free_symbols:
                     new_symbol = prefix + str(symbol)
