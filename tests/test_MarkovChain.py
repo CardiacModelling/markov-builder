@@ -86,6 +86,17 @@ class TestMarkovChain(unittest.TestCase):
         # Save html visualisation using pyvis
         mazhari.draw_graph(os.path.join(self.output_dir, "Mazhari.html"))
 
+        # Construct Wang model
+        logging.info("Constructing five-state Wang model")
+
+        wang = example_models.construct_wang_chain()
+
+        # Save DOTfile
+        nx.drawing.nx_agraph.write_dot(wang.graph, "Wang_dotfile.dot")
+        
+        # Save html visualisation using pyvis
+        wang.draw_graph(os.path.join(self.output_dir, "Wang.html"))
+
 
     def test_construct_open_trapping_model(self):
         """
@@ -95,8 +106,9 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
-        models = (example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
-                  example_models.construct_non_reversible_chain())
+        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
+                  example_models.construct_non_reversible_chain(), example_models.construct_mazhari_chain(),
+                  example_models.construct_wang_chain()]
 
         for mc in models:
             mc.add_open_trapping(prefix="d_", new_rates=True)
