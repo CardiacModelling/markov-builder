@@ -140,8 +140,11 @@ class MarkovChain():
         for rate in rates:
             self.add_rate(rate)
 
-    def add_transition(self, from_node: str, to_node: str, transition_rate: Union[str, None]):
-        """Adds an edge describing the transition rate between `from_node` and `to_node`.
+    def add_transition(self, from_node: str, to_node: str, transition_rate: Union[str, None],
+                       label: Union[str, None] = None):
+        """
+
+        Adds an edge describing the transition rate between `from_node` and `to_node`.
 
         @params
 
@@ -170,7 +173,9 @@ class MarkovChain():
         if transition_rate not in self.rates:
             self.rates.add(transition_rate)
 
-        self.graph.add_edge(from_node, to_node, rate=transition_rate)
+        if label is None:
+            label = transition_rate
+        self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
 
     def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None], bwd_rate: Union[str, None]):
         """A helper function to add forwards and backwards rates between two
@@ -449,7 +454,7 @@ class MarkovChain():
                 return False
         return True
 
-    def draw_graph(self, filepath: Union[None, str] = None, show_options: bool = False):
+    def draw_graph(self, filepath: Union[None, str] = None, show_options: bool = False, show_rates: bool = False):
         """Visualise the graph as a webpage using pyvis.
 
         @params
@@ -461,7 +466,8 @@ class MarkovChain():
 
         """
         for frm, to, data in self.graph.edges(data=True):
-            data['label'] = data['rate']
+            if 'label' not in data or show_rates:
+                data['label'] = data['rate']
 
         nt = pyvis.network.Network(directed=True)
         nt.from_nx(self.graph)
@@ -471,4 +477,23 @@ class MarkovChain():
         if filepath is not None:
             nt.save_graph(filepath)
         else:
-            nt.show_graph()
+            nt.show('Markov_builder_graph.html')
+
+    def substitute_rates(self, rates_dict: dict):
+        """Substitute expressions for into the transition rates.
+
+        This function modifies the `rate` attribute of edges in self.graph
+
+        @param: rates_dict: A dictionary where each key must be in self.rates
+        and the value is the corresponding expression to be substituted in.
+
+        """
+
+        for rate in rates_dict:
+            if rate not in self.rates:
+                raise Exception()
+        for u, v, d in self.graph.edges(data=True):
+            if d['rate'] in rates_dict:
+                if 'label' not in d:
+                    d['label'] = d['rate']
+                d['rate'] = str(sp.sympify(d['rate']).subs(rates_dict))

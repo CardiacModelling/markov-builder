@@ -123,6 +123,25 @@ class TestMarkovChain(unittest.TestCase):
         logging.debug("graph is %s", mc.graph)
         assert(not mc.is_reversible())
 
+    def test_equate_rates(self):
+        """
+        Test that the MarkovChain.substitute_rates function performs the expected substitution
+
+        TODO: add more test cases
+        """
+        mc = example_models.construct_four_state_chain()
+        rates_dict = {'k1': 'k2*k4'}
+        mc.substitute_rates(rates_dict)
+        mc.draw_graph(os.path.join(self.output_dir, '%s_rates_substitution.html' % mc.name), show_rates=True)
+
+        label_found = False
+        for u, v, d in mc.graph.edges(data=True):
+            if 'label' in d:
+                label_found = True
+                if d['label'] == 'k1':
+                    self.assertEqual(rates_dict['k1'], d['rate'])
+        self.assertTrue(label_found)
+
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
