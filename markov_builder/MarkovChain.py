@@ -435,6 +435,12 @@ class MarkovChain():
 
         """
 
+        # Digraph must be strongly connected in order for the chain to be
+        # reversible. In other words it must be possible to transition from any
+        # state to any other state in some finite number of transitions
+        if not nx.algorithms.components.is_strongly_connected(self.graph):
+            return False
+
         undirected_graph = self.graph.to_undirected(reciprocal=False, as_view=True)
         cycle_basis = nx.cycle_basis(undirected_graph)
 
