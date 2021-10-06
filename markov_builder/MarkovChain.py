@@ -503,7 +503,7 @@ class MarkovChain():
         for rate in rates_dict:
             if rate not in self.rates:
                 raise Exception()
-        for u, v, d in self.graph.edges(data=True):
+        for _, _, d in self.graph.edges(data=True):
             if d['rate'] in rates_dict:
                 if 'label' not in d:
                     d['label'] = d['rate']
