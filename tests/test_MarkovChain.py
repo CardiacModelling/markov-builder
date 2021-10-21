@@ -73,7 +73,7 @@ class TestMarkovChain(unittest.TestCase):
 
         # Save html visualisation using pyvis
         m10.draw_graph(os.path.join(self.output_dir, "M10.html"))
-        
+
         # Construct Mazhari model
         logging.info("Constructing five-state Mazhari model")
 
