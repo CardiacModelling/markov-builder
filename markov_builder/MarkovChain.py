@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Optional, Union
+from typing import Optional, Union, Set
 
 import networkx as nx
 import numpy as np
@@ -201,9 +201,11 @@ class MarkovChain():
         self.add_transition(frm, to, fwd_rate)
         self.add_transition(to, frm, bwd_rate)
 
-    def get_transition_matrix(self):
+    def get_transition_matrix(self, use_parameters: bool = False):
         """Computes a matrix where the off-diagonals describe the transition rates
         between states. This matrix is the Q matrix of the Markov Chain.
+
+        use_parameters: If true substitute in parameters of the transition rates
 
         @Returns
 
@@ -232,7 +234,13 @@ class MarkovChain():
         for i in range(n):
             matrix[i, i] = -sum(matrix[i, :])
 
-        return self.graph.nodes, matrix
+        if use_parameters:
+            if len(self.rate_expressions) == 0:
+                raise Exception()
+            else:
+                matrix = matrix.subs(self.rate_expressions)
+
+        return list(self.graph.nodes), matrix
 
     def eval_transition_matrix(self, rates: dict):
         """
@@ -247,7 +255,7 @@ class MarkovChain():
         Q_evaled = sp.lambdify(list(self.rates), Q)(*rates_list)
         return l, Q_evaled
 
-    def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None):
+    def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None, use_parameters: bool = False):
         """eliminate_state_from_transition_matrix
 
         Because the state occupancy probabilities must add up to zero, the
@@ -261,6 +269,8 @@ class MarkovChain():
         labels: A list of labels. This must be one less than the number of
         states in the model. The order of this list determines the ordering of
         the state variable in the outputted dynamical system.
+
+        use_parameters: If true substitute in parameters of the transition rates
 
         @returns
 
@@ -297,6 +307,13 @@ class MarkovChain():
                 vec[j, 0] = el
                 for i in range(shape[0]):
                     matrix[j, i] -= el
+
+        if use_parameters:
+            if len(self.rate_expressions) == 0:
+                raise Exception()
+            else:
+                matrix = matrix.subs(self.rate_expressions)
+
         return matrix[0:-1, 0:-1], vec[0:-1, :]
 
     def get_embedded_chain(self, rate_values: dict):
@@ -553,3 +570,16 @@ class MarkovChain():
             rate_expressions[r] = sp.sympify(rate_dict[r][0]).subs(subs_dict)
 
         self.rate_expressions = rate_expressions
+
+    def get_parameter_list(self) -> Set[str]:
+        """
+        Returns a list of strings corresponding the symbols in self.rate_expressions.
+        """
+
+        rates = set()
+
+        for r in self.rate_expressions:
+            for symbol in self.rate_expressions[r].free_symbols:
+                rates.add(str(symbol))
+
+        return sorted(rates)

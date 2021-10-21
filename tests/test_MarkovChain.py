@@ -84,6 +84,16 @@ class TestMarkovChain(unittest.TestCase):
         mc.parameterise_rates(rate_dictionary)
         mc.draw_graph("test_parameterise_rates_%s.html" % mc.name, show_parameters=True)
 
+        # Output system of equations
+        logging.debug("ODE system is %s" % str(mc.get_transition_matrix(use_parameters=True)))
+
+        # Output reduced system of equations
+        logging.debug("Reduced ODE system is :%s" %
+                      str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-2], use_parameters=True)))
+
+        # Output list of parameters
+        logging.debug("parameters are %s" % mc.get_parameter_list())
+
     def test_construct_open_trapping_model(self):
         """
 
