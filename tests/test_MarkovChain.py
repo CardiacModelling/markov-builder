@@ -103,12 +103,16 @@ class TestMarkovChain(unittest.TestCase):
 
         mc = example_models.construct_four_state_chain()
 
+        # Expressions to be used for the rates. The variable V (membrane
+        # voltage) is shared across expressions and so it should only appear
+        # once in the parameter list.
+
         positive_rate_expr = ('exp(a+b*V)', ('a', 'b'))
         negative_rate_expr = ('exp(a-b*V)', ('a', 'b'))
 
         rate_dictionary = dict(zip(['k1', 'k3', 'k2', 'k4'], [positive_rate_expr] * 2 + [negative_rate_expr] * 2))
 
-        mc.parameterise_rates(rate_dictionary)
+        mc.parameterise_rates(rate_dictionary, ['V'])
         mc.draw_graph("test_parameterise_rates_%s.html" % mc.name, show_parameters=True)
 
         # Output system of equations
@@ -120,7 +124,10 @@ class TestMarkovChain(unittest.TestCase):
                                                                     use_parameters=True)))
 
         # Output list of parameters
+        param_list = mc.get_parameter_list()
         logging.debug("parameters are %s" % mc.get_parameter_list())
+
+        self.assertEqual(param_list.count('V'), 1)
 
     def test_construct_open_trapping_model(self):
         """

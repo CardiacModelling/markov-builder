@@ -538,20 +538,25 @@ class MarkovChain():
                     d['label'] = d['rate']
                 d['rate'] = str(sp.sympify(d['rate']).subs(rates_dict))
 
-    def parameterise_rates(self, rate_dict: dict) -> None:
+    def parameterise_rates(self, rate_dict: dict, shared_variables: list = []) -> None:
         """Define a set of parameters for the transition rates. Parameters declared as
         'dummy variables' are relabelled and the expressions stored in
         self.rate_expressions. This results in a parameterisation of the whole
         model. The most common choice is to use an expression of the form k =
         exp(a + b*V) or k = exp(a - b*V) where a and b are dummy variables and
-        V is the membrane voltage.
+        V is the membrane voltage (a variable shared between transition rates).
 
         @params
         rate_dict: A dictionary containing a key for each rate in self.rates
         with corresponding tuples defining an expression for the rate and a
         list of relevant dummy variables e.g {k: ('exp(e + bV)', (a,b))}.
 
+        TODO Exception messages
         """
+
+        # Check that shared_variables is a list (and not a string!!)
+        if isinstance(shared_variables, str):
+            raise TypeError("shared_variables is a string but must be a list")
 
         # Validate rate dictionary
         for r in rate_dict:
@@ -564,10 +569,16 @@ class MarkovChain():
         rate_expressions = dict()
         param_counter = 0
         for r in rate_dict:
-            dummy_variables = rate_dict[r][1]
+            expression, dummy_variables = rate_dict[r]
+            expression = sp.sympify(expression)
+            for symbol in expression.free_symbols:
+                variables = list(dummy_variables) + list(shared_variables)
+                if str(symbol) not in variables:
+                    raise Exception(
+                        f"Symbol, {symbol} was not found in dummy variables or shared_variables, {variables}.")
             subs_dict = dict([(u, f"p_{i + param_counter}") for i, u in enumerate(dummy_variables)])
             param_counter += len(dummy_variables)
-            rate_expressions[r] = sp.sympify(rate_dict[r][0]).subs(subs_dict)
+            rate_expressions[r] = sp.sympify(expression).subs(subs_dict)
 
         self.rate_expressions = rate_expressions
 
