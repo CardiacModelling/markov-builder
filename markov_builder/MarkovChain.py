@@ -551,10 +551,16 @@ class MarkovChain():
         with corresponding tuples defining an expression for the rate and a
         list of relevant dummy variables e.g {k: ('exp(e + bV)', (a,b))}.
 
+        shared_variables: A list of variables that may be shared between
+        transition rates (such as the membrane voltage). All free symbols in
+        each expression which are not dummy_variables must be defined as
+        shared_variables.
+
         TODO Exception messages
+
         """
 
-        # Check that shared_variables is a list (and not a string!!)
+        # Check that shared_variables is a list (and not a string!)
         if isinstance(shared_variables, str):
             raise TypeError("shared_variables is a string but must be a list")
 
