@@ -70,10 +70,19 @@ class TestMarkovChain(unittest.TestCase):
         m10.draw_graph(os.path.join(self.output_dir, "M10.html"))
 
     def test_parameterise_rates(self):
+        """
+        Test the MarkovChain.parameterise_rates function.
+        """
+
         mc = example_models.construct_four_state_chain()
-        rate_dictionary = dict(zip(['k1', 'k2', 'k3', 'k4'], [('exp(a+b*V)', ('a', 'b'))] * 4))
+
+        positive_rate_expr = ('exp(a+b*V)', ('a', 'b'))
+        negative_rate_expr = ('exp(a-b*V)', ('a', 'b'))
+
+        rate_dictionary = dict(zip(['k1', 'k3', 'k2', 'k4'], [positive_rate_expr] * 2 + [negative_rate_expr] * 2))
+
         mc.parameterise_rates(rate_dictionary)
-        mc.draw_graph(show_parameters=True)
+        mc.draw_graph("test_parameterise_rates_%s.html" % mc.name, show_parameters=True)
 
     def test_construct_open_trapping_model(self):
         """

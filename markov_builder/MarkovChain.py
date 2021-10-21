@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Union, Optional
+from typing import Optional, Union
 
 import networkx as nx
 import numpy as np
@@ -525,7 +525,7 @@ class MarkovChain():
         """Define a set of parameters for the transition rates. Parameters declared as
         'dummy variables' are relabelled and the expressions stored in
         self.rate_expressions. This results in a parameterisation of the whole
-        model. The most common choice is to use an expresison of the form k =
+        model. The most common choice is to use an expression of the form k =
         exp(a + b*V) or k = exp(a - b*V) where a and b are dummy variables and
         V is the membrane voltage.
 
