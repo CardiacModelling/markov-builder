@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Optional, Union, Set
+from typing import Optional, Set, Union
 
 import networkx as nx
 import numpy as np

@@ -89,7 +89,8 @@ class TestMarkovChain(unittest.TestCase):
 
         # Output reduced system of equations
         logging.debug("Reduced ODE system is :%s" %
-                      str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-2], use_parameters=True)))
+                      str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-2],
+                                                                    use_parameters=True)))
 
         # Output list of parameters
         logging.debug("parameters are %s" % mc.get_parameter_list())
