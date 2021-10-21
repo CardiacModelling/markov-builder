@@ -6,8 +6,8 @@ def construct_M10_chain():
 
     mc.add_states(('IC1', 'IC2', 'IO', 'C1', 'C2'))
     mc.add_state('O', open=True)
-    rates = (('IC2', 'IC1', 'a1', 'b1'), ('IC1', 'IO', 'a2', 'b2'), ('IO', 'O', 'ah', 'bh'), ('O', 'C1',
-             'b2', 'a2'), ('C1', 'C2', 'b1', 'a1'), ('C2', 'IC2', 'bh', 'ah'), ('C1', 'IC1', 'bh', 'ah'))
+    rates = [('IC2', 'IC1', 'a1', 'b1'), ('IC1', 'IO', 'a2', 'b2'), ('IO', 'O', 'ah', 'bh'), ('O', 'C1',
+             'b2', 'a2'), ('C1', 'C2', 'b1', 'a1'), ('C2', 'IC2', 'bh', 'ah'), ('C1', 'IC1', 'bh', 'ah')]
 
     for r in rates:
         mc.add_both_transitions(*r)
@@ -20,10 +20,11 @@ def construct_non_reversible_chain():
 
     mc.add_states(('A', 'D'))
     mc.add_state('B', open=True)
-    rates = (('B', 'A', 'k1', 'k2'), ('A', 'D', 'k3', 'k4'), ('B', 'D', 'k5', 'k6'))
+    rates = [('B', 'A', 'k1', 'k2'), ('A', 'D', 'k3', 'k4'), ('B', 'D', 'k5', 'k6')]
 
     for r in rates:
         mc.add_both_transitions(*r)
+
     return mc
 
 
@@ -40,4 +41,37 @@ def construct_four_state_chain():
 
     for r in rates:
         mc.add_both_transitions(*r)
+
+    return mc
+
+
+def construct_mazhari_chain():
+    mc = MarkovChain(name='Mazhari_model')
+
+    mc.add_states(('C1', 'C2', 'C3', 'I'))
+    mc.add_state('O', open=True)
+
+    rates = [('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 'O', 'a1', 'b1'),
+             ('O', 'I', 'ai', 'bi'), ('I', 'C3', 'psi', 'ai3')]
+
+    for r in rates:
+        mc.add_both_transitions(*r)
+
+    mc.substitute_rates({'psi': '(ai3*bi*b1)/(a1*ai)'})
+
+    return mc
+
+
+def construct_wang_chain():
+    mc = MarkovChain(name='Wang_model')
+
+    mc.add_states(('C0', 'C1', 'C2', 'I'))
+    mc.add_state('O', open=True)
+
+    rates = [('C0', 'C1', 'aa0', 'ba0'), ('C1', 'C2', 'kf', 'kb'), ('C2', 'O', 'aa1', 'ba1'),
+             ('O', 'I', 'ai', 'bi')]
+
+    for r in rates:
+        mc.add_both_transitions(*r)
+
     return mc

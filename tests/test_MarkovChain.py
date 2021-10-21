@@ -39,6 +39,7 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
+        # Construct Beattie model
         logging.info("Constructing four-state Beattie model")
 
         mc = example_models.construct_four_state_chain()
@@ -63,11 +64,37 @@ class TestMarkovChain(unittest.TestCase):
         self.assertEqual(pen_and_paper_B, system[1])
 
         # Construct M10 model
+        logging.info("Constructing six-state M10 model")
+
         m10 = example_models.construct_M10_chain()
+
         # Save DOTfile
         nx.drawing.nx_agraph.write_dot(m10.graph, "M10_dotfile.dot")
+
         # Save html visualisation using pyvis
         m10.draw_graph(os.path.join(self.output_dir, "M10.html"))
+        
+        # Construct Mazhari model
+        logging.info("Constructing five-state Mazhari model")
+
+        mazhari = example_models.construct_mazhari_chain()
+
+        # Save DOTfile
+        nx.drawing.nx_agraph.write_dot(mazhari.graph, "Mazhari_dotfile.dot")
+
+        # Save html visualisation using pyvis
+        mazhari.draw_graph(os.path.join(self.output_dir, "Mazhari.html"))
+
+        # Construct Wang model
+        logging.info("Constructing five-state Wang model")
+
+        wang = example_models.construct_wang_chain()
+
+        # Save DOTfile
+        nx.drawing.nx_agraph.write_dot(wang.graph, "Wang_dotfile.dot")
+
+        # Save html visualisation using pyvis
+        wang.draw_graph(os.path.join(self.output_dir, "Wang.html"))
 
     def test_parameterise_rates(self):
         """
@@ -103,8 +130,9 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
-        models = (example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
-                  example_models.construct_non_reversible_chain())
+        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
+                  example_models.construct_non_reversible_chain(), example_models.construct_mazhari_chain(),
+                  example_models.construct_wang_chain()]
 
         for mc in models:
             mc.add_open_trapping(prefix="d_", new_rates=True)
@@ -127,7 +155,8 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
-        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain()]
+        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
+                  example_models.construct_mazhari_chain()]
 
         for mc in models:
             logging.info("Checking reversibility")
@@ -160,7 +189,7 @@ class TestMarkovChain(unittest.TestCase):
         mc.substitute_rates(rates_dict)
         mc.draw_graph(os.path.join(self.output_dir, '%s_rates_substitution.html' % mc.name), show_rates=True)
         label_found = False
-        for u, v, d in mc.graph.edges(data=True):
+        for _, _, d in mc.graph.edges(data=True):
             if 'label' in d:
                 label_found = True
                 if d['label'] == 'k1':
@@ -173,12 +202,13 @@ class TestMarkovChain(unittest.TestCase):
         mc.draw_graph(os.path.join(self.output_dir,
                                    '%s_open_trapping_rates_substitution.html' %
                                    mc.name), show_rates=True)
-        transition_rates = [d['rate'] for u, v, d in mc.graph.edges(data=True)]
+        transition_rates = [d['rate'] for _, _, d in mc.graph.edges(data=True)]
 
         # Check that new mirrored rates have been handled correctly
         self.assertIn('d_k2*d_k4', transition_rates)
         self.assertIn('d_k2', mc.rates)
         self.assertIn('d_k4', mc.rates)
+
         # Check reversibility still holds for good measure
         self.assertTrue(mc.is_reversible())
 
