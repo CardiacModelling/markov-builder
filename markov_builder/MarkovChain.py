@@ -539,7 +539,9 @@ class MarkovChain():
                 d['rate'] = str(sp.sympify(d['rate']).subs(rates_dict))
 
     def parameterise_rates(self, rate_dict: dict, shared_variables: list = []) -> None:
-        """Define a set of parameters for the transition rates. Parameters declared as
+        """Define a set of parameters for the transition rates.
+
+        Parameters declared as
         'dummy variables' are relabelled and the expressions stored in
         self.rate_expressions. This results in a parameterisation of the whole
         model. The most common choice is to use an expression of the form k =
