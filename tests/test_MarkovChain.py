@@ -69,6 +69,12 @@ class TestMarkovChain(unittest.TestCase):
         # Save html visualisation using pyvis
         m10.draw_graph(os.path.join(self.output_dir, "M10.html"))
 
+    def test_parameterise_rates(self):
+        mc = example_models.construct_four_state_chain()
+        rate_dictionary = dict(zip(['k1', 'k2', 'k3', 'k4'], [('exp(a+b*V)', ('a', 'b'))] * 4))
+        mc.parameterise_rates(rate_dictionary)
+        mc.draw_graph(show_parameters=True)
+
     def test_construct_open_trapping_model(self):
         """
 

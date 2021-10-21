@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Union
+from typing import Union, Optional
 
 import networkx as nx
 import numpy as np
@@ -11,7 +11,7 @@ from numpy.random import default_rng
 
 
 class MarkovChain():
-    def __init__(self, states: Union[list, None] = None, seed: Union[int, None] = None, name: Union[str, None] = None):
+    def __init__(self, states: Optional[list] = None, seed: Optional[int] = None, name: Optional[str] = None):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
@@ -21,6 +21,8 @@ class MarkovChain():
         if states is not None:
             self.graph.add_nodes_from(states)
         self.rates = set()
+
+        self.rate_expressions = dict()
 
         # Initialise a random number generator for simulation. Optionally, a
         # seed can be specified.
@@ -145,8 +147,8 @@ class MarkovChain():
         for rate in rates:
             self.add_rate(rate)
 
-    def add_transition(self, from_node: str, to_node: str, transition_rate: Union[str, None],
-                       label: Union[str, None] = None):
+    def add_transition(self, from_node: str, to_node: str, transition_rate: Optional[str],
+                       label: Optional[str] = None):
         """
 
         Adds an edge describing the transition rate between `from_node` and `to_node`.
@@ -182,7 +184,7 @@ class MarkovChain():
             label = transition_rate
         self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
 
-    def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None], bwd_rate: Union[str, None]):
+    def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None], bwd_rate: Optional[str]):
         """A helper function to add forwards and backwards rates between two
         states. This is a convenient way to connect new states to the model.
 
@@ -245,7 +247,7 @@ class MarkovChain():
         Q_evaled = sp.lambdify(list(self.rates), Q)(*rates_list)
         return l, Q_evaled
 
-    def eliminate_state_from_transition_matrix(self, labels: Union[list, None] = None):
+    def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None):
         """eliminate_state_from_transition_matrix
 
         Because the state occupancy probabilities must add up to zero, the
@@ -298,7 +300,7 @@ class MarkovChain():
         return matrix[0:-1, 0:-1], vec[0:-1, :]
 
     def get_embedded_chain(self, rate_values: dict):
-        """Compute the embedded DTMC for the Markov chain and associated waiting times
+        """Compute the embedded DTMC and associated waiting times
         given values for each of the transition rates
 
         @param
@@ -307,7 +309,7 @@ class MarkovChain():
 
         @returns
 
-        Returns a 3-tuple: `labs` describes the order states in the returned
+        A 3-tuple: `labs` describes the order states in the returned
         values, `mean_wainting_times` is a numpy array describing the mean
         waiting times for each state, `embedded_markov_chain` is a numpy array
         describing the embedded DTMC of this Markov chain
@@ -336,7 +338,7 @@ class MarkovChain():
         return labs, mean_waiting_times, embedded_markov_chain
 
     def sample_trajectories(self, no_trajectories: int, rate_values: dict, time_range: list = [0, 1],
-                            starting_distribution: Union[list, None] = None):
+                            starting_distribution: Optional[list] = None):
         """Samples trajectories of the Markov chain using a Gillespie algorithm.
 
         @params no_trajectories: The number of simulations to run (number of
@@ -465,7 +467,8 @@ class MarkovChain():
                 return False
         return True
 
-    def draw_graph(self, filepath: Union[None, str] = None, show_options: bool = False, show_rates: bool = False):
+    def draw_graph(self, filepath: Optional[str] = None, show_options: bool =
+                   False, show_rates: bool = False, show_parameters: bool = False):
         """Visualise the graph as a webpage using pyvis.
 
         @params
@@ -475,10 +478,19 @@ class MarkovChain():
 
         show_options: Whether or not the options menu should be displayed on the webpage
 
+        show_parameters: Whether or not we should display the transition rates instead of their labels
+
+        show_parameters: Whether or not we should show the parameterised version of each transition rate
+
         """
         for frm, to, data in self.graph.edges(data=True):
             if 'label' not in data or show_rates:
                 data['label'] = data['rate']
+            elif show_parameters:
+                if len(self.rate_expressions) == 0:
+                    raise Exception()
+                else:
+                    data['label'] = str(self.rate_expressions[data['rate']])
 
         nt = pyvis.network.Network(directed=True)
         nt.from_nx(self.graph)
@@ -508,3 +520,36 @@ class MarkovChain():
                 if 'label' not in d:
                     d['label'] = d['rate']
                 d['rate'] = str(sp.sympify(d['rate']).subs(rates_dict))
+
+    def parameterise_rates(self, rate_dict: dict) -> None:
+        """Define a set of parameters for the transition rates. Parameters declared as
+        'dummy variables' are relabelled and the expressions stored in
+        self.rate_expressions. This results in a parameterisation of the whole
+        model. The most common choice is to use an expresison of the form k =
+        exp(a + b*V) or k = exp(a - b*V) where a and b are dummy variables and
+        V is the membrane voltage.
+
+        @params
+        rate_dict: A dictionary containing a key for each rate in self.rates
+        with corresponding tuples defining an expression for the rate and a
+        list of relevant dummy variables e.g {k: ('exp(e + bV)', (a,b))}.
+
+        """
+
+        # Validate rate dictionary
+        for r in rate_dict:
+            if r not in self.rates:
+                raise Exception()
+
+        if len(rate_dict) != len(self.rates):
+            raise Exception()
+
+        rate_expressions = dict()
+        param_counter = 0
+        for r in rate_dict:
+            dummy_variables = rate_dict[r][1]
+            subs_dict = dict([(u, f"p_{i + param_counter}") for i, u in enumerate(dummy_variables)])
+            param_counter += len(dummy_variables)
+            rate_expressions[r] = sp.sympify(rate_dict[r][0]).subs(subs_dict)
+
+        self.rate_expressions = rate_expressions
