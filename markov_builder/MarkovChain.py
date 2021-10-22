@@ -2,12 +2,12 @@ import itertools
 import logging
 from typing import Optional, Set, Union
 
+import myokit
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pyvis
 import sympy as sp
-import myokit
 from numpy.random import default_rng
 
 
