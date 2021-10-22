@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Optional, Set, Union, Tuple, List
+from typing import Optional, Union, Tuple, List
 
 import myokit
 import networkx as nx
@@ -146,7 +146,6 @@ class MarkovChain():
 
     def add_rates(self, rates: list) -> None:
         """
-
         Add a list of rates to the model
 
         @param
@@ -194,7 +193,8 @@ class MarkovChain():
             label = transition_rate
         self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
 
-    def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None], bwd_rate: Optional[str]) -> None:
+    def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None],
+                             bwd_rate: Optional[str]) -> None:
         """A helper function to add forwards and backwards rates between two
         states. This is a convenient way to connect new states to the model.
 
@@ -264,7 +264,8 @@ class MarkovChain():
         Q_evaled = sp.lambdify(list(self.rates), Q)(*rates_list)
         return l, Q_evaled
 
-    def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None, use_parameters: bool = False) -> Tuple[sp.Matrix, sp.Matrix]:
+    def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None,
+                                               use_parameters: bool = False) -> Tuple[sp.Matrix, sp.Matrix]:
         """eliminate_state_from_transition_matrix
 
         Because the state occupancy probabilities must add up to zero, the
