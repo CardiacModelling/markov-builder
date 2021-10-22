@@ -131,7 +131,9 @@ class TestMarkovChain(unittest.TestCase):
 
         # Generate myokit code
         myokitmodel = mc.get_myokit_model()
-        logging.debug(myokitmodel.code)
+
+        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+        logging.info(myokitmodel.code())
 
     def test_construct_open_trapping_model(self):
         """
@@ -226,4 +228,5 @@ class TestMarkovChain(unittest.TestCase):
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
     unittest.main()

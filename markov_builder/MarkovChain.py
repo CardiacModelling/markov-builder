@@ -617,7 +617,7 @@ class MarkovChain():
 
         return sorted(rates)
 
-    def get_myokit_model(self, name: str = ""):
+    def get_myokit_model(self, name: str = "", voltage: str = 'V'):
 
         if name == "":
             name = self.name
@@ -630,9 +630,27 @@ class MarkovChain():
         states, Q = self.get_transition_matrix()
         d_equations = dict(zip(states, sp.Matrix(states).T * Q))
 
+        # Add required time and pace variables
+        model.add_component('engine')
+        model['engine'].add_variable('time')
+        model['engine'].add_variable('pace')
+
+        model['engine']['time'].set_binding('time')
+        model['engine']['time'].set_rhs(0)
+
+        model['engine']['pace'].set_binding('pace')
+        model['engine']['pace'].set_rhs(0)
+
         # Add parameters to the model
         for parameter in self.get_parameter_list():
-            comp.add_variable(parameter)
+            if parameter == voltage:
+                model.add_component('membrane')
+                model['membrane'].add_variable('V')
+                model['membrane']['V'].set_rhs('engine.pace')
+                model['membrane']['V'].set_rhs(0)
+                comp.add_alias(voltage, model['membrane']['V'])
+            else:
+                comp.add_variable(parameter)
 
         for rate in self.rates:
             comp.add_variable(rate)
