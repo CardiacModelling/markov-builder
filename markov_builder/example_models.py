@@ -6,8 +6,10 @@ def construct_M10_chain():
 
     mc.add_states(('IC1', 'IC2', 'IO', 'C1', 'C2'))
     mc.add_state('s_O', open=True)
-    rates = [('IC2', 'IC1', 'a1', 'b1'), ('IC1', 'IO', 'a2', 'b2'), ('IO', 's_O', 'ah', 'bh'), ('s_O', 'C1',
-                                                                                                'b2', 'a2'), ('C1', 'C2', 'b1', 'a1'), ('C2', 'IC2', 'bh', 'ah'), ('C1', 'IC1', 'bh', 'ah')]
+    rates = [('IC2', 'IC1', 'a1', 'b1'), ('IC1', 'IO', 'a2', 'b2'),
+             ('IO', 's_O', 'ah', 'bh'), ('s_O', 'C1', 'b2', 'a2'),
+             ('C1', 'C2', 'b1', 'a1'), ('C2', 'IC2', 'bh', 'ah'),
+             ('C1', 'IC1', 'bh', 'ah')]
 
     for r in rates:
         mc.add_both_transitions(*r)
