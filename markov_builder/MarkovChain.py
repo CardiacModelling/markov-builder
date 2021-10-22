@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import Optional, Set, Union
+from typing import Optional, Set, Union, Tuple, List
 
 import myokit
 import networkx as nx
@@ -31,7 +31,7 @@ class MarkovChain():
         self.name = name
         self.shared_rate_variables = []
 
-    def mirror_model(self, prefix: str, new_rates: bool = False):
+    def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
         """
 
         Duplicate the graph. The new nodes will be disconnected from the nodes
@@ -67,7 +67,7 @@ class MarkovChain():
 
         self.graph = new_graph
 
-    def add_open_trapping(self, prefix: str = "d_", new_rates: bool = False):
+    def add_open_trapping(self, prefix: str = "d_", new_rates: bool = False) -> None:
         """
 
         Construct an open trapping model by mirroring the current model and
@@ -79,7 +79,7 @@ class MarkovChain():
         open_nodes = [n for n, d in self.graph.nodes(data=True) if d['open']]
         self.add_both_transitions(open_nodes[0], "d_{}".format(open_nodes[0]), 'drug_on', 'drug_off')
 
-    def add_state(self, label, open: bool = False):
+    def add_state(self, label, open: bool = False) -> None:
         """
 
         Add a new state to the model
@@ -101,7 +101,7 @@ class MarkovChain():
         else:
             raise Exception(f'{label} is not a valid state label.')
 
-    def add_states(self, states: list):
+    def add_states(self, states: list) -> None:
         """
 
         Adds a list of states to the model.
@@ -120,7 +120,7 @@ class MarkovChain():
             else:
                 self.add_state(*state)
 
-    def add_rate(self, rate: str):
+    def add_rate(self, rate: str) -> None:
         """
 
         Add a new transition rate to the model. These are stored in self.rates.
@@ -144,7 +144,7 @@ class MarkovChain():
         else:
             self.rates.add(rate)
 
-    def add_rates(self, rates: list):
+    def add_rates(self, rates: list) -> None:
         """
 
         Add a list of rates to the model
@@ -158,7 +158,7 @@ class MarkovChain():
             self.add_rate(rate)
 
     def add_transition(self, from_node: str, to_node: str, transition_rate: Optional[str],
-                       label: Optional[str] = None):
+                       label: Optional[str] = None) -> None:
         """
 
         Adds an edge describing the transition rate between `from_node` and `to_node`.
@@ -194,7 +194,7 @@ class MarkovChain():
             label = transition_rate
         self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
 
-    def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None], bwd_rate: Optional[str]):
+    def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None], bwd_rate: Optional[str]) -> None:
         """A helper function to add forwards and backwards rates between two
         states. This is a convenient way to connect new states to the model.
 
@@ -211,7 +211,7 @@ class MarkovChain():
         self.add_transition(frm, to, fwd_rate)
         self.add_transition(to, frm, bwd_rate)
 
-    def get_transition_matrix(self, use_parameters: bool = False):
+    def get_transition_matrix(self, use_parameters: bool = False) -> Tuple[List[str], sp.Matrix]:
         """Computes a matrix where the off-diagonals describe the transition rates
         between states. This matrix is the Q matrix of the Markov Chain.
 
@@ -247,12 +247,11 @@ class MarkovChain():
         if use_parameters:
             if len(self.rate_expressions) == 0:
                 raise Exception()
-            else:
-                matrix = matrix.subs(self.rate_expressions)
+            matrix = matrix.subs(self.rate_expressions)
 
         return list(self.graph.nodes), matrix
 
-    def eval_transition_matrix(self, rates: dict):
+    def eval_transition_matrix(self, rates: dict) -> Tuple[List[str], sp.Matrix]:
         """
         Evaluate the transition matrix given values for each of the transition rates
 
@@ -265,7 +264,7 @@ class MarkovChain():
         Q_evaled = sp.lambdify(list(self.rates), Q)(*rates_list)
         return l, Q_evaled
 
-    def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None, use_parameters: bool = False):
+    def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None, use_parameters: bool = False) -> Tuple[sp.Matrix, sp.Matrix]:
         """eliminate_state_from_transition_matrix
 
         Because the state occupancy probabilities must add up to zero, the
@@ -287,6 +286,9 @@ class MarkovChain():
         Returns a pair of symbolic matrices, A & B, defining a system of ODEs of the format dX/dt = AX + B.
         """
 
+        if labels is None:
+            labels = list(self.graph.nodes)[:-1]
+
         for label in labels:
             if label not in self.graph.nodes():
                 raise Exception()
@@ -295,9 +297,6 @@ class MarkovChain():
         matrix = matrix.T
         shape = sp.shape(matrix)
         assert shape[0] == shape[1]
-
-        if labels is None:
-            labels = list(self.graph.nodes)[:-1]
 
         # List describing the mapping from self.graph.nodes to labels.
         # permutation[i] = j corresponds to a mapping which takes
@@ -330,7 +329,7 @@ class MarkovChain():
 
         return matrix[0:-1, 0:-1], vec[0:-1, :]
 
-    def get_embedded_chain(self, rate_values: dict):
+    def get_embedded_chain(self, rate_values: dict) -> Tuple[List[str], np.ndarray, np.ndarray]:
         """Compute the embedded DTMC and associated waiting times
         given values for each of the transition rates
 
@@ -369,7 +368,7 @@ class MarkovChain():
         return labs, mean_waiting_times, embedded_markov_chain
 
     def sample_trajectories(self, no_trajectories: int, rate_values: dict, time_range: list = [0, 1],
-                            starting_distribution: Optional[list] = None):
+                            starting_distribution: Optional[list] = None) -> pd.DataFrame:
         """Samples trajectories of the Markov chain using a Gillespie algorithm.
 
         @params no_trajectories: The number of simulations to run (number of
@@ -387,7 +386,7 @@ class MarkovChain():
         """
 
         no_nodes = len(self.graph.nodes)
-        logging.debug('There are {} nodes'.format(no_nodes))
+        logging.debug(f"There are {no_nodes} nodes")
 
         if starting_distribution is None:
             starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
@@ -398,12 +397,9 @@ class MarkovChain():
         labels, mean_waiting_times, e_chain = self.get_embedded_chain(rate_values)
 
         data = [(time_range[0], *distribution)]
-        culm_rows = np.zeros(e_chain.shape)
-        for i in range(e_chain.shape[0]):
-            sum = 0
-            for j in range(e_chain.shape[1]):
-                culm_rows[i, j] = e_chain[i, j] + sum
-                sum += e_chain[i, j]
+
+        cumul_rows = np.array(list(map(np.cumsum, e_chain)))
+
         t = 0
         while True:
             waiting_times = np.zeros(mean_waiting_times.shape)
@@ -425,7 +421,7 @@ class MarkovChain():
 
             # Find what state we will jump to
             rand = self.rng.uniform()
-            jump_to = next(i for i, x in enumerate(culm_rows[state_to_jump, :]) if rand < x)
+            jump_to = next(i for i, x in enumerate(cumul_rows[state_to_jump, :]) if rand < x)
 
             distribution[state_to_jump] -= 1
             distribution[jump_to] += 1
@@ -449,7 +445,7 @@ class MarkovChain():
 
         """
         A, B = self.eliminate_state_from_transition_matrix()
-        labels = self.graph
+        labels = self.graph.nodes()
         ss = -np.array(A.LUsolve(B).subs(rates)).astype(np.float64)
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
@@ -616,7 +612,7 @@ class MarkovChain():
 
         return sorted(rates)
 
-    def get_myokit_model(self, name: str = "", voltage: str = 'V'):
+    def get_myokit_model(self, name: str = "", voltage: str = 'V') -> myokit.Model:
 
         if name == "":
             name = self.name

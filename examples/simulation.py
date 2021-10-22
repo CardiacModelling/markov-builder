@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import markov_builder.example_models as example_models
+from markov_builder import example_models
 
 
 def main():
