@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pyvis
 import sympy as sp
+import myokit
 from numpy.random import default_rng
 
 
@@ -28,6 +29,7 @@ class MarkovChain():
         # seed can be specified.
         self.rng = default_rng(seed)
         self.name = name
+        self.shared_rate_variables = []
 
     def mirror_model(self, prefix: str, new_rates: bool = False):
         """
@@ -89,7 +91,15 @@ class MarkovChain():
         compute the current flowing through the channel
 
         """
-        self.graph.add_node(label, open=open)
+        label = sp.sympify(label)
+
+        if not isinstance(label, sp.core.expr.Expr):
+            raise Exception(f'{label} is not a valid sympy expression')
+
+        if len(label.free_symbols) == 1:
+            self.graph.add_node(str(label), open=open)
+        else:
+            raise Exception(f'{label} is not a valid state label.')
 
     def add_states(self, states: list):
         """
@@ -277,6 +287,10 @@ class MarkovChain():
         Returns a pair of symbolic matrices, A & B, defining a system of ODEs of the format dX/dt = AX + B.
         """
 
+        for l in labels:
+            if l not in self.graph.nodes():
+                raise Exception()
+
         _, matrix = self.get_transition_matrix()
         matrix = matrix.T
         shape = sp.shape(matrix)
@@ -289,6 +303,7 @@ class MarkovChain():
         # permutation[i] = j corresponds to a mapping which takes
         # graph.nodes[i] to graph.nodes[j]. Map the row to be eliminated to the
         # end.
+
         permutation = [labels.index(n) if n in labels else shape[0] - 1 for n in self.graph.nodes]
 
         matrix = matrix[permutation, permutation]
@@ -571,24 +586,23 @@ class MarkovChain():
             if r not in self.rates:
                 raise Exception()
 
-        if len(rate_dict) != len(self.rates):
-            raise Exception()
-
         rate_expressions = dict()
         param_counter = 0
-        for r in rate_dict:
-            expression, dummy_variables = rate_dict[r]
-            expression = sp.sympify(expression)
-            for symbol in expression.free_symbols:
-                variables = list(dummy_variables) + list(shared_variables)
-                if str(symbol) not in variables:
-                    raise Exception(
-                        f"Symbol, {symbol} was not found in dummy variables or shared_variables, {variables}.")
-            subs_dict = dict([(u, f"p_{i + param_counter}") for i, u in enumerate(dummy_variables)])
-            param_counter += len(dummy_variables)
-            rate_expressions[r] = sp.sympify(expression).subs(subs_dict)
+        for r in self.rates:
+            if r in rate_dict:
+                expression, dummy_variables = rate_dict[r]
+                expression = sp.sympify(expression)
+                for symbol in expression.free_symbols:
+                    variables = list(dummy_variables) + list(shared_variables)
+                    if str(symbol) not in variables:
+                        raise Exception(
+                            f"Symbol, {symbol} was not found in dummy variables or shared_variables, {variables}.")
+                subs_dict = {u: f"p_{i + param_counter}" for i, u in enumerate(dummy_variables)}
+                param_counter += len(dummy_variables)
+                rate_expressions[r] = sp.sympify(expression).subs(subs_dict)
 
         self.rate_expressions = rate_expressions
+        self.shared_rate_variables = shared_variables
 
     def get_parameter_list(self) -> Set[str]:
         """
@@ -602,3 +616,36 @@ class MarkovChain():
                 rates.add(str(symbol))
 
         return sorted(rates)
+
+    def get_myokit_model(self, name: str = ""):
+
+        if name == "":
+            name = self.name
+
+        model = myokit.Model(name)
+
+        model.add_component('markov_chain')
+        comp = model['markov_chain']
+
+        states, Q = self.get_transition_matrix()
+        d_equations = dict(zip(states, sp.Matrix(states).T * Q))
+
+        # Add parameters to the model
+        for parameter in self.get_parameter_list():
+            comp.add_variable(parameter)
+
+        for rate in self.rates:
+            comp.add_variable(rate)
+            if rate in self.rate_expressions:
+                expr = self.rate_expressions[rate]
+                comp[rate].set_rhs(str(expr))
+
+        for state in self.graph.nodes():
+            comp.add_variable(state)
+            var = comp[state]
+            var.promote()
+
+        for state in self.graph.nodes():
+            comp[state].set_rhs(str(d_equations[state]))
+
+        return model
