@@ -223,6 +223,7 @@ class TestMarkovChain(unittest.TestCase):
         # Check reversibility still holds for good measure
         self.assertTrue(mc.is_reversible())
 
+
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     unittest.main()
