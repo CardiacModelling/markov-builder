@@ -599,7 +599,7 @@ class MarkovChain():
         self.rate_expressions = rate_expressions
         self.shared_rate_variables = shared_variables
 
-    def get_parameter_list(self) -> Set[str]:
+    def get_parameter_list(self) -> List[str]:
         """
         Returns a list of strings corresponding the symbols in self.rate_expressions.
         """
@@ -612,7 +612,28 @@ class MarkovChain():
 
         return sorted(rates)
 
-    def get_myokit_model(self, name: str = "", voltage: str = 'V') -> myokit.Model:
+    def get_myokit_model(self, name: str = "", membrane_potential: str = 'V') -> myokit.Model:
+        """Generate a myokit Model instance. This can be used to simulate the model.
+
+        Build a myokit model from this Markov chain using the parameterisation
+        defined by self.rate_expressions. If a rate does not have an entry in
+        self.rate_expressions, it is treated as a constant.
+
+        All initial conditions and parameter values should be set before the
+        model is run.
+
+        @params
+
+        name: A name to give to the model. By default we use self.name.
+
+        membrane_voltage: A label defining which variable should be treated as the
+        membrane potential and bound to Myokit's protocols.
+
+        @return
+
+        Returns a myokit model built using self
+
+        """
 
         if name == "":
             name = self.name
@@ -638,12 +659,12 @@ class MarkovChain():
 
         # Add parameters to the model
         for parameter in self.get_parameter_list():
-            if parameter == voltage:
+            if parameter == membrane_potential:
                 model.add_component('membrane')
                 model['membrane'].add_variable('V')
                 model['membrane']['V'].set_rhs('engine.pace')
                 model['membrane']['V'].set_rhs(0)
-                comp.add_alias(voltage, model['membrane']['V'])
+                comp.add_alias(membrane_potential, model['membrane']['V'])
             else:
                 comp.add_variable(parameter)
 
