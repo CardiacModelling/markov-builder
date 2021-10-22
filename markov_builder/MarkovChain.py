@@ -287,14 +287,14 @@ class MarkovChain():
         Returns a pair of symbolic matrices, A & B, defining a system of ODEs of the format dX/dt = AX + B.
         """
 
-        for l in labels:
-            if l not in self.graph.nodes():
+        for label in labels:
+            if label not in self.graph.nodes():
                 raise Exception()
 
         _, matrix = self.get_transition_matrix()
         matrix = matrix.T
         shape = sp.shape(matrix)
-        assert(shape[0] == shape[1])
+        assert shape[0] == shape[1]
 
         if labels is None:
             labels = list(self.graph.nodes)[:-1]
@@ -326,8 +326,7 @@ class MarkovChain():
         if use_parameters:
             if len(self.rate_expressions) == 0:
                 raise Exception()
-            else:
-                matrix = matrix.subs(self.rate_expressions)
+            matrix = matrix.subs(self.rate_expressions)
 
         return matrix[0:-1, 0:-1], vec[0:-1, :]
 
@@ -388,7 +387,7 @@ class MarkovChain():
         """
 
         no_nodes = len(self.graph.nodes)
-        logging.debug("There are {} nodes".format(no_nodes))
+        logging.debug('There are {} nodes'.format(no_nodes))
 
         if starting_distribution is None:
             starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
@@ -515,7 +514,7 @@ class MarkovChain():
         show_parameters: Whether or not we should show the parameterised version of each transition rate
 
         """
-        for frm, to, data in self.graph.edges(data=True):
+        for _, _, data in self.graph.edges(data=True):
             if 'label' not in data or show_rates:
                 data['label'] = data['rate']
             elif show_parameters:
