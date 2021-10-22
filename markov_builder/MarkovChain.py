@@ -1,6 +1,11 @@
 import itertools
 import logging
-from typing import Optional, Union, Tuple, List
+from typing import (
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import myokit
 import networkx as nx
