@@ -1,5 +1,6 @@
 import itertools
 import logging
+from dataclasses import asdict, dataclass, is_dataclass
 from typing import (
     List,
     Optional,
@@ -16,8 +17,16 @@ import sympy as sp
 from numpy.random import default_rng
 
 
+@dataclass
+class MarkovStateAttributes:
+    """A dataclass defining what attributes each state in a MarkovChain should
+    have, and their default values"""
+    open_state: bool = False
+    inactive: bool = False
+
+
 class MarkovChain():
-    def __init__(self, states: Optional[list] = None, seed: Optional[int] = None, name: Optional[str] = None):
+    def __init__(self, states: Optional[list] = None, state_attributes_class: Optional[MarkovStateAttributes] = None, seed: Optional[int] = None, name: Optional[str] = None):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
@@ -36,6 +45,14 @@ class MarkovChain():
         self.name = name
         self.shared_rate_variables = []
 
+        if state_attributes_class is None:
+            state_attributes_class = MarkovStateAttributes
+
+        self.state_attributes_class = state_attributes_class
+
+        if not is_dataclass(self.state_attributes_class):
+            raise Exception("state_attirbutes_class must be a dataclass")
+
     def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
         """
 
@@ -51,7 +68,7 @@ class MarkovChain():
         """
 
         trapped_graph = nx.relabel_nodes(self.graph, dict([(n, "{}{}".format(prefix, n)) for n in self.graph.nodes]))
-        nx.set_node_attributes(trapped_graph, False, 'open')
+        nx.set_node_attributes(trapped_graph, False, 'open_state')
 
         if new_rates:
             for frm, to, attr in trapped_graph.edges(data=True):
@@ -67,7 +84,7 @@ class MarkovChain():
 
         new_graph = nx.compose(trapped_graph, self.graph)
         # Get open state name
-        open_nodes = [n for n, d in new_graph.nodes(data=True) if d['open']]
+        open_nodes = [n for n, d in new_graph.nodes(data=True) if d['open_state']]
         assert(len(open_nodes) == 1)
 
         self.graph = new_graph
@@ -81,10 +98,10 @@ class MarkovChain():
         """
         self.mirror_model(prefix, new_rates)
         self.add_rates(("drug_on", "drug_off"))
-        open_nodes = [n for n, d in self.graph.nodes(data=True) if d['open']]
+        open_nodes = [n for n, d in self.graph.nodes(data=True) if d['open_state']]
         self.add_both_transitions(open_nodes[0], "d_{}".format(open_nodes[0]), 'drug_on', 'drug_off')
 
-    def add_state(self, label, open: bool = False) -> None:
+    def add_state(self, label, **kwargs) -> None:
         """
 
         Add a new state to the model
@@ -98,32 +115,32 @@ class MarkovChain():
         """
         label = sp.sympify(label)
 
+        attributes = asdict(self.state_attributes_class(**kwargs))
+
         if not isinstance(label, sp.core.expr.Expr):
             raise Exception(f'{label} is not a valid sympy expression')
 
         if len(label.free_symbols) == 1:
-            self.graph.add_node(str(label), open=open)
+            self.graph.add_node(str(label), **attributes)
         else:
             raise Exception(f'{label} is not a valid state label.')
 
     def add_states(self, states: list) -> None:
-        """
-
-        Adds a list of states to the model.
+        """Adds a list of states to the model.
 
         @params
 
         states: A list where each element is either a string specifying the
-        name of the new label or a pair of values -- the new label and a flag
-        determining the `open` attribute. If the `open` flag is omitted, the
-        new node will have `open=False`
-
+        name of the new label or a pair of values -- the new label and a
+        dictionary of attributes to be added to the new node.
         """
         for state in states:
             if isinstance(state, str):
-                self.add_state(state)
+                attr = {}
             else:
-                self.add_state(*state)
+                attr = state[-1]
+                state = state[0]
+            self.add_state(state, **attr)
 
     def add_rate(self, rate: str) -> None:
         """
