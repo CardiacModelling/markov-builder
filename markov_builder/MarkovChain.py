@@ -39,18 +39,23 @@ class MarkovChain():
             self.graph.add_nodes_from(states)
         self.rates = set()
 
-        self.rate_expressions = dict()
-
         # Initialise a random number generator for simulation. Optionally, a
         # seed can be specified.
         self.rng = default_rng(seed)
         self.name = name
-        self.shared_rate_variables = []
+        self.shared_rate_variables = set()
+
+        self.rate_expressions = {}
+        self.default_values = {}
+
+        self.auxiliary_expression = None
 
         if state_attributes_class is None:
             state_attributes_class = MarkovStateAttributes
 
         self.state_attributes_class = state_attributes_class
+        self.reserved_names = []
+        self.auxiliary_variable = 'auxiliary_expression'
 
         if not is_dataclass(self.state_attributes_class):
             raise Exception("state_attirbutes_class must be a dataclass")
@@ -119,6 +124,9 @@ class MarkovChain():
 
         attributes = asdict(self.state_attributes_class(**kwargs))
 
+        if label in self.reserved_names:
+            raise Exception("label %s is reserved", label)
+
         if not isinstance(label, sp.core.expr.Expr):
             raise Exception(f'{label} is not a valid sympy expression')
 
@@ -157,6 +165,9 @@ class MarkovChain():
 
         # Check that the new rate isn't some complicated sympy expression
         # TODO test this and add nice exception
+
+        if rate in self.reserved_names:
+            raise Exception('Name %s is reserved', rate)
 
         symrate = sp.sympify(rate)
         if len(symrate.atoms()) != 1:
@@ -583,10 +594,10 @@ class MarkovChain():
         exp(a + b*V) or k = exp(a - b*V) where a and b are dummy variables and
         V is the membrane voltage (a variable shared between transition rates).
 
-        @params
-        rate_dict: A dictionary containing a key for each rate in self.rates
-        with corresponding tuples defining an expression for the rate and a
-        list of relevant dummy variables e.g {k: ('exp(e + bV)', (a,b))}.
+        @params rate_dict: A dictionary containing a key for each rate in
+        self.rates with corresponding tuples defining an expression for the
+        rate, a list of relevant dummy variables, and optional default values
+        for each variable e.g {k: ('exp(e + bV)', (a,b), 1e-8)}.
 
         shared_variables: A list of variables that may be shared between
         transition rates (such as the membrane voltage). All free symbols in
@@ -601,16 +612,25 @@ class MarkovChain():
         if isinstance(shared_variables, str):
             raise TypeError("shared_variables is a string but must be a list")
 
+        for v in shared_variables:
+            if v in self.reserved_names:
+                raise Exception('name %s is reserved', v)
+
         # Validate rate dictionary
         for r in rate_dict:
             if r not in self.rates:
                 raise Exception()
 
-        rate_expressions = dict()
+        rate_expressions = {}
+        default_values_dict = {}
         param_counter = 0
         for r in self.rates:
             if r in rate_dict:
-                expression, dummy_variables = rate_dict[r]
+                if len(rate_dict[r]) == 2:
+                    expression, dummy_variables = rate_dict[r]
+                    default_values = []
+                else:
+                    expression, dummy_variables, default_values = rate_dict[r]
                 expression = sp.sympify(expression)
                 for symbol in expression.free_symbols:
                     variables = list(dummy_variables) + list(shared_variables)
@@ -618,11 +638,16 @@ class MarkovChain():
                         raise Exception(
                             f"Symbol, {symbol} was not found in dummy variables or shared_variables, {variables}.")
                 subs_dict = {u: f"p_{i + param_counter}" for i, u in enumerate(dummy_variables)}
-                param_counter += len(dummy_variables)
                 rate_expressions[r] = sp.sympify(expression).subs(subs_dict)
+                # Add default values to dictionary
+                for i, v in enumerate(default_values):
+                    default_values_dict[f"p_{i + param_counter}"] = v
+                param_counter += len(dummy_variables)
 
-        self.rate_expressions = rate_expressions
-        self.shared_rate_variables = shared_variables
+        self.rate_expressions = {**self.rate_expressions, **rate_expressions}
+        self.default_values = {**self.default_values, **default_values_dict}
+
+        self.shared_rate_variables = self.shared_rate_variables.union(shared_variables)
 
     def get_parameter_list(self) -> List[str]:
         """
@@ -634,6 +659,8 @@ class MarkovChain():
         for r in self.rate_expressions:
             for symbol in self.rate_expressions[r].free_symbols:
                 rates.add(str(symbol))
+
+        rates = rates.union([str(sym) for sym in self.shared_rate_variables])
 
         return sorted(rates)
 
@@ -674,13 +701,9 @@ class MarkovChain():
         # Add required time and pace variables
         model.add_component('engine')
         model['engine'].add_variable('time')
-        model['engine'].add_variable('pace')
 
         model['engine']['time'].set_binding('time')
         model['engine']['time'].set_rhs(0)
-
-        model['engine']['pace'].set_binding('pace')
-        model['engine']['pace'].set_rhs(0)
 
         drug_concentration = 'D' if drug_binding else None
 
@@ -689,8 +712,8 @@ class MarkovChain():
             if parameter == membrane_potential:
                 model.add_component('membrane')
                 model['membrane'].add_variable('V')
-                model['membrane']['V'].set_rhs('engine.pace')
                 model['membrane']['V'].set_rhs(0)
+                model['membrane']['V'].set_binding('pace')
                 comp.add_alias(membrane_potential, model['membrane']['V'])
             elif drug_binding and parameter == drug_concentration:
                 model.add_component('drug')
@@ -699,6 +722,8 @@ class MarkovChain():
                 comp.add_alias(drug_concentration, model['drug']['D'])
             else:
                 comp.add_variable(parameter)
+                if parameter in self.default_values:
+                    comp[parameter].set_rhs(self.default_values[parameter])
 
         for rate in self.rates:
             comp.add_variable(rate)
@@ -714,4 +739,45 @@ class MarkovChain():
         for state in self.graph.nodes():
             comp[state].set_rhs(str(d_equations[state]))
 
+        if self.auxiliary_expression is not None:
+            comp.add_variable(self.auxiliary_variable)
+            comp[self.auxiliary_variable].set_rhs(str(self.auxiliary_expression))
         return model
+
+    def define_auxiliary_expression(self, expression: sp.Expr, label: str = None, default_values: dict = {}) -> None:
+        """Define an auxiliary output variable for the model. Usually this should be
+        the current through the ion channel of interest
+
+        @params
+
+        expression: A sympy expression defining the auxiliary variable
+        label: A str naming the variable e.g IKr default_values: A dictionary
+        of the default values of any parameter used in the auxiliary expression
+
+        """
+        if label in self.graph.nodes() or label in self.reserved_names:
+            raise Exception('Name %s not available', label)
+        else:
+            self.reserved_names = self.reserved_names + [label]
+
+        self.auxiliary_variable = label
+
+        if not isinstance(expression, sp.Expr):
+            raise Exception()
+
+        for symbol in expression.free_symbols:
+            if str(symbol) not in self.graph.nodes():
+                if self.shared_rate_variables is None:
+                    self.shared_rate_variables = set(str(symbol))
+                else:
+                    self.shared_rate_variables.add(str(symbol))
+
+        for symbol in default_values:
+            symbol = sp.sympify(symbol)
+            if symbol not in expression.free_symbols:
+                raise Exception()
+            if symbol in self.default_values:
+                raise Exception()
+
+        self.default_values = {**self.default_values, **default_values}
+        self.auxiliary_expression = expression

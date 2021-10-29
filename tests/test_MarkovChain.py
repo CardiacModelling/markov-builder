@@ -5,6 +5,7 @@ import os
 import sys
 import unittest
 
+import myokit
 import networkx as nx
 import sympy as sp
 
@@ -107,33 +108,38 @@ class TestMarkovChain(unittest.TestCase):
         # voltage) is shared across expressions and so it should only appear
         # once in the parameter list.
 
-        positive_rate_expr = ('exp(a+b*V)', ('a', 'b'))
-        negative_rate_expr = ('exp(a-b*V)', ('a', 'b'))
+        positive_rate_expr = ('a*exp(b*V)', ('a', 'b'))
+        negative_rate_expr = ('a*exp(-b*V)', ('a', 'b'))
 
-        rate_dictionary = dict(zip(['k1', 'k3', 'k2', 'k4'], [positive_rate_expr] * 2 + [negative_rate_expr] * 2))
+        # Model and parameters taken from https://doi.org/10.1113/JP275733
+        rate_dictionary = {'k1': positive_rate_expr + ((2.26E-4, 6.99E-2),),
+                           'k2': negative_rate_expr + ((3.44E-5, 5.460E-2),),
+                           'k3': positive_rate_expr + ((0.0873, 8.91E-3),),
+                           'k4': negative_rate_expr + ((5.15E-3, 0.003158),)}
 
-        mc.parameterise_rates(rate_dictionary, ['V'])
+        auxiliary_expression = sp.sympify('g_kr * s_O * (V + 88)')
+        mc.define_auxiliary_expression(auxiliary_expression, 'I_kr', {'g_kr': 0.1524})
+        mc.parameterise_rates(rate_dictionary, shared_variables=['V'])
+
         mc.draw_graph("test_parameterise_rates_%s.html" % mc.name, show_parameters=True)
 
         # Output system of equations
-        logging.debug("ODE system is %s" % str(mc.get_transition_matrix(use_parameters=True)))
+        logging.debug("ODE system is %s", str(mc.get_transition_matrix(use_parameters=True)))
 
         # Output reduced system of equations
-        logging.debug("Reduced ODE system is :%s" %
+        logging.debug("Reduced ODE system is :%s",
                       str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-2],
                                                                     use_parameters=True)))
 
         # Output list of parameters
         param_list = mc.get_parameter_list()
-        logging.debug("parameters are %s" % mc.get_parameter_list())
+        logging.debug("parameters are %s", mc.get_parameter_list())
 
         self.assertEqual(param_list.count('V'), 1)
 
         # Generate myokit code
-        myokitmodel = mc.get_myokit_model()
-
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-        logging.info(myokitmodel.code())
+        myokit_model = mc.get_myokit_model()
+        myokit.save(os.path.join(self.output_dir, 'beattie_model.mmt'), myokit_model)
 
     def test_construct_open_trapping_model(self):
         """
