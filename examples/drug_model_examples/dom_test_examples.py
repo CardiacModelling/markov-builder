@@ -1,7 +1,6 @@
 import os
 
 import myokit
-import networkx as nx
 
 import markov_builder.example_models as example_models
 
@@ -57,7 +56,8 @@ def nontrapped_open_state_blocker(output_dir, save_model=False):
     myokitmodel = mc.get_myokit_model(drug_binding=True)
 
     if save_model:
-        myokit.save(filename=os.path.join(output_dir, "%s_nontrapped_open_state_blocker.mmt" % mc.name), model=myokitmodel)
+        myokit.save(filename=os.path.join(output_dir,
+                                          "%s_nontrapped_open_state_blocker.mmt" % mc.name), model=myokitmodel)
 
 
 def trapped_open_inactivated_state_blocker(output_dir, save_model=False):
