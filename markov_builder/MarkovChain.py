@@ -26,7 +26,9 @@ class MarkovStateAttributes:
 
 
 class MarkovChain():
-    def __init__(self, states: Optional[list] = None, state_attributes_class: Optional[MarkovStateAttributes] = None, seed: Optional[int] = None, name: Optional[str] = None):
+    def __init__(self, states: Optional[list] = None, state_attributes_class:
+                 Optional[MarkovStateAttributes] = None, seed: Optional[int] = None, name:
+                 Optional[str] = None):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
