@@ -635,7 +635,7 @@ class MarkovChain():
 
         return sorted(rates)
 
-    def get_myokit_model(self, name: str = "", membrane_potential: str = 'V', drug_binding = False) -> myokit.Model:
+    def get_myokit_model(self, name: str = "", membrane_potential: str = 'V', drug_binding=False) -> myokit.Model:
         """Generate a myokit Model instance. This can be used to simulate the model.
 
         Build a myokit model from this Markov chain using the parameterisation
@@ -680,8 +680,7 @@ class MarkovChain():
         model['engine']['pace'].set_binding('pace')
         model['engine']['pace'].set_rhs(0)
 
-        if drug_binding:
-            drug_concentration = 'D'
+        drug_concentration = 'D' if drug_binding else None
 
         # Add parameters to the model
         for parameter in self.get_parameter_list():
@@ -691,10 +690,10 @@ class MarkovChain():
                 model['membrane']['V'].set_rhs('engine.pace')
                 model['membrane']['V'].set_rhs(0)
                 comp.add_alias(membrane_potential, model['membrane']['V'])
-            elif parameter == drug_concentration:
+            elif drug_binding and parameter == drug_concentration:
                 model.add_component('drug')
                 model['drug'].add_variable('D')
-                model['drug']['D'].set_rhs(0)    
+                model['drug']['D'].set_rhs(0)
                 comp.add_alias(drug_concentration, model['drug']['D'])
             else:
                 comp.add_variable(parameter)
