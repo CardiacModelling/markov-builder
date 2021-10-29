@@ -21,7 +21,8 @@ def nontrapped_open_inactivated_state_blocker(output_dir, save_model=False):
     koff_rate_expr = ('l', ('l'))
 
     rate_dictionary = dict(zip(['k1', 'k3', 'k2', 'k4', 'drug_on', 'drug_off'],
-                               [positive_rate_expr] * 2 + [negative_rate_expr] * 2 + [kon_rate_expr] + [koff_rate_expr]))
+                               [positive_rate_expr] * 2 + [negative_rate_expr]
+                               * 2 + [kon_rate_expr] + [koff_rate_expr]))
 
     mc.parameterise_rates(rate_dictionary, ['V', 'D'])
     mc.draw_graph(os.path.join(output_dir, "%s_nontrapped_open_inactivated_state_blocker.html" % mc.name))
@@ -47,7 +48,8 @@ def nontrapped_open_state_blocker(output_dir, save_model=False):
     koff_rate_expr = ('l', ('l'))
 
     rate_dictionary = dict(zip(['k1', 'k3', 'k2', 'k4', 'drug_on', 'drug_off'],
-                               [positive_rate_expr] * 2 + [negative_rate_expr] * 2 + [kon_rate_expr] + [koff_rate_expr]))
+                               [positive_rate_expr] * 2 + [negative_rate_expr]
+                               * 2 + [kon_rate_expr] + [koff_rate_expr]))
 
     mc.parameterise_rates(rate_dictionary, ['V', 'D'])
     mc.draw_graph(os.path.join(output_dir, "%s_nontrapped_open_state_blocker.html" % mc.name))
@@ -73,7 +75,8 @@ def trapped_open_inactivated_state_blocker(output_dir, save_model=False):
     koff_rate_expr = ('l', ('l'))
 
     rate_dictionary = dict(zip(['k1', 'k3', 'k2', 'k4', 'drug_on', 'drug_off'],
-                               [positive_rate_expr] * 2 + [negative_rate_expr] * 2 + [kon_rate_expr] + [koff_rate_expr]))
+                               [positive_rate_expr] * 2 + [negative_rate_expr]
+                               * 2 + [kon_rate_expr] + [koff_rate_expr]))
 
     mc.parameterise_rates(rate_dictionary, ['V', 'D'])
     mc.draw_graph(os.path.join(output_dir, "%s_trapped_open_inactivated_state_blocker.html" % mc.name))
@@ -100,7 +103,8 @@ def trapped_inactivated_state_blocker(output_dir, save_model=False):
     koff_rate_expr = ('l', ('l'))
 
     rate_dictionary = dict(zip(['k1', 'k3', 'k2', 'k4', 'drug_on', 'drug_off'],
-                               [positive_rate_expr] * 2 + [negative_rate_expr] * 2 + [kon_rate_expr] + [koff_rate_expr]))
+                               [positive_rate_expr] * 2 + [negative_rate_expr]
+                               * 2 + [kon_rate_expr] + [koff_rate_expr]))
 
     mc.parameterise_rates(rate_dictionary, ['V', 'D'])
     mc.draw_graph(os.path.join(output_dir, "%s_trapped_inactivated_state_blocker.html" % mc.name), show_parameters=True)
