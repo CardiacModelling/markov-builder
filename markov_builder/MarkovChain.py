@@ -631,18 +631,22 @@ class MarkovChain():
                     default_values = []
                 else:
                     expression, dummy_variables, default_values = rate_dict[r]
+                if len(dummy_variables) != len(default_values):
+                    raise ValueError("dummy variables list and default values list have mismatching lengths.\
+                    Lengths {} and {}".format(len(dummy_variables), len(default_values)))
+
                 expression = sp.sympify(expression)
                 for symbol in expression.free_symbols:
                     variables = list(dummy_variables) + list(shared_variables)
                     if str(symbol) not in variables:
                         raise Exception(
                             f"Symbol, {symbol} was not found in dummy variables or shared_variables, {variables}.")
-                subs_dict = {u: f"p_{i + param_counter}" for i, u in enumerate(dummy_variables)}
+                subs_dict = {u: f"{r}_{u}" for i, u in enumerate(dummy_variables)}
                 rate_expressions[r] = sp.sympify(expression).subs(subs_dict)
+
                 # Add default values to dictionary
-                for i, v in enumerate(default_values):
-                    default_values_dict[f"p_{i + param_counter}"] = v
-                param_counter += len(dummy_variables)
+                for u, v in zip(dummy_variables, default_values):
+                    default_values_dict[f"{r}_{u}"] = v
 
         self.rate_expressions = {**self.rate_expressions, **rate_expressions}
         self.default_values = {**self.default_values, **default_values_dict}
