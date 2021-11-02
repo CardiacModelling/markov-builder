@@ -686,7 +686,7 @@ class MarkovChain():
 
         @return
 
-        Returns a myokit.Model built using self
+        A myokit.Model built using self
 
         """
 
