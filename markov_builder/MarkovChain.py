@@ -623,7 +623,6 @@ class MarkovChain():
 
         rate_expressions = {}
         default_values_dict = {}
-        param_counter = 0
         for r in self.rates:
             if r in rate_dict:
                 if len(rate_dict[r]) == 2:
@@ -687,7 +686,7 @@ class MarkovChain():
 
         @return
 
-        Returns a myokit model built using self
+        Returns a myokit.Model built using self
 
         """
 
