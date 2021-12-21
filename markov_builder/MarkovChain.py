@@ -120,20 +120,20 @@ class MarkovChain():
         compute the current flowing through the channel
 
         """
-        label = sp.sympify(label)
+        label_symbol = sp.sympify(label)
 
         attributes = asdict(self.state_attributes_class(**kwargs))
 
         if label in self.reserved_names:
             raise Exception("label %s is reserved", label)
 
-        if not isinstance(label, sp.core.expr.Expr):
+        if not isinstance(label_symbol, sp.core.expr.Expr):
             raise Exception(f'{label} is not a valid sympy expression')
 
-        if len(label.free_symbols) == 1:
-            self.graph.add_node(str(label), **attributes)
-        else:
+        if not len(label_symbol.free_symbols) == 1:
             raise Exception(f'{label} is not a valid state label.')
+
+        self.graph.add_node(str(label), **attributes)
 
     def add_states(self, states: list) -> None:
         """Adds a list of states to the model.
@@ -784,3 +784,57 @@ class MarkovChain():
 
         self.default_values = {**self.default_values, **default_values}
         self.auxiliary_expression = expression
+
+    def as_latex(self, state_to_remove: str = None, include_auxiliary_expression: bool = False):
+        """Creates a LaTeX expression describing the Markov chain, its parameters and
+        optionally, the auxiliary equation
+
+        :param state_to_remove: The name of the state (if any) to eliminate from the system.
+        This must be an element of self.graph.nodes()
+
+        :param include_auxiliary_expression: Whether or not to include the auxiliary expression in the output
+
+        :returns: A python string containing the relevant LaTeX code.
+
+        """
+
+        if state_to_remove is None:
+            # Get Q matrix
+            labels, Q = self.get_transition_matrix()
+            Q_matrix_str = str(sp.latex(Q))
+            eqn = "\\begin{equation}\\dfrac{dX}{dt} = " + Q_matrix_str + "X \\end{equation}"
+
+            X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(self.graph.nodes()))\
+                + "\\end{equation}"
+
+        else:
+            if state_to_remove not in map(str, self.graph.nodes()):
+                raise Exception("%s not in model", state_to_remove)
+            labels = [label for label in self.graph.nodes()
+                      if str(label) != str(state_to_remove)]
+            print(labels)
+
+            if len(labels) != len(self.graph.nodes()) - 1:
+                raise Exception("model has duplicated states %s",
+                                self.graph.nodes())
+
+            A, B = self.eliminate_state_from_transition_matrix(labels)
+
+            eqn = "\\begin{equation}\\dfrac{dX}{dt} = " + sp.latex(A) + "X"\
+                + " + " + sp.latex(B) + "\\end{equation}"
+            X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(labels)) \
+                + "\\end{equation}\n"
+
+        eqns = ",\\\\ \n".join([f"{sp.latex(rate)} &= {sp.latex(expr)}" for rate, expr
+                                in self.rate_expressions.items()])
+        eqns += ','
+        rate_definitions = "\\begin{align}" + eqns + "\\end{align} \n\n"
+
+        return_str = f"{eqn}\n where {rate_definitions} and {X_defn}"
+
+        if include_auxiliary_expression:
+            if self.auxiliary_expression is None:
+                raise Exception("No auxiliary expression present in the MarkovChain")
+            return_str = "\\begin{equation}" + sp.latex(self.auxiliary_expression) + \
+                "\\end{equation}" + "\n where" + return_str
+        return return_str

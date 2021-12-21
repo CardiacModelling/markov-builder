@@ -2,7 +2,6 @@
 
 import logging
 import os
-import sys
 import unittest
 
 import myokit
@@ -28,6 +27,10 @@ class TestMarkovChain(unittest.TestCase):
             os.makedirs(test_output_dir)
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
+
+        self.models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
+                       example_models.construct_non_reversible_chain(), example_models.construct_mazhari_chain(),
+                       example_models.construct_wang_chain()]
 
     def test_construct_chain(self):
         """Construct various examples of Markov models.
@@ -57,9 +60,10 @@ class TestMarkovChain(unittest.TestCase):
 
         system = mc.eliminate_state_from_transition_matrix(['C', 's_O', 's_I'])
 
-        pen_and_paper_A = sp.Matrix([['-k1 - k3 - k4', 'k2 - k4', '-k4'],
-                                     ['k1', '-k2 - k3', 'k4'], ['-k1', 'k3 - k1', '-k2 - k4 - k1']])
-        pen_and_paper_B = sp.Matrix(['k4', 0, 'k1'])
+        pen_and_paper_A = sp.Matrix([['-k_1 - k_3 - k_4', 'k_2 - k_4', '-k_4'],
+                                     ['k_1', '-k_2 - k_3', 'k_4'],
+                                     ['-k_1', 'k_3 - k_1', '-k_2 - k_4 - k_1']])
+        pen_and_paper_B = sp.Matrix(['k_4', 0, 'k_1'])
 
         self.assertEqual(pen_and_paper_A, system[0])
         self.assertEqual(pen_and_paper_B, system[1])
@@ -108,21 +112,6 @@ class TestMarkovChain(unittest.TestCase):
         # voltage) is shared across expressions and so it should only appear
         # once in the parameter list.
 
-        positive_rate_expr = ('a*exp(b*V)', ('a', 'b'))
-        negative_rate_expr = ('a*exp(-b*V)', ('a', 'b'))
-
-        # Model and parameters taken from https://doi.org/10.1113/JP275733
-        rate_dictionary = {'k1': positive_rate_expr + ((2.26E-4, 6.99E-2),),
-                           'k2': negative_rate_expr + ((3.44E-5, 5.460E-2),),
-                           'k3': positive_rate_expr + ((0.0873, 8.91E-3),),
-                           'k4': negative_rate_expr + ((5.15E-3, 0.003158),)}
-
-        auxiliary_expression = sp.sympify('g_kr * s_O * (V + 88)')
-        mc.define_auxiliary_expression(auxiliary_expression, 'I_kr', {'g_kr': 0.1524})
-        mc.parameterise_rates(rate_dictionary, shared_variables=['V'])
-
-        mc.draw_graph("test_parameterise_rates_%s.html" % mc.name, show_parameters=True)
-
         # Output system of equations
         logging.debug("ODE system is %s", str(mc.get_transition_matrix(use_parameters=True)))
 
@@ -149,11 +138,7 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
-        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
-                  example_models.construct_non_reversible_chain(), example_models.construct_mazhari_chain(),
-                  example_models.construct_wang_chain()]
-
-        for mc in models:
+        for mc in self.models:
             mc.add_open_trapping(prefix="d_", new_rates=True)
 
             # Save dotfile
@@ -174,10 +159,12 @@ class TestMarkovChain(unittest.TestCase):
 
         """
 
-        models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
-                  example_models.construct_mazhari_chain()]
+        # Test function on models that we know are reversible
+        reversible_models = [example_models.construct_four_state_chain(),
+                             example_models.construct_M10_chain(),
+                             example_models.construct_mazhari_chain()]
 
-        for mc in models:
+        for mc in reversible_models:
             logging.info("Checking reversibility")
             assert(mc.is_reversible())
             logging.info("Checking reversibility with open trapping")
@@ -204,7 +191,7 @@ class TestMarkovChain(unittest.TestCase):
         TODO: add more test cases
         """
         mc = example_models.construct_four_state_chain()
-        rates_dict = {'k1': 'k2*k4'}
+        rates_dict = {'k_1': 'k_2*k_4'}
         mc.substitute_rates(rates_dict)
         mc.draw_graph(os.path.join(self.output_dir, '%s_rates_substitution.html' % mc.name), show_rates=True)
         label_found = False
@@ -224,15 +211,25 @@ class TestMarkovChain(unittest.TestCase):
         transition_rates = [d['rate'] for _, _, d in mc.graph.edges(data=True)]
 
         # Check that new mirrored rates have been handled correctly
-        self.assertIn('d_k2*d_k4', transition_rates)
-        self.assertIn('d_k2', mc.rates)
-        self.assertIn('d_k4', mc.rates)
+        self.assertIn('d_k_2*d_k_4', transition_rates)
+        self.assertIn('d_k_2', mc.rates)
+        self.assertIn('d_k_4', mc.rates)
 
         # Check reversibility still holds for good measure
         self.assertTrue(mc.is_reversible())
 
+    def test_latex_printing(self):
+        """ Test that we can generate LaTeX expressions for the four state model
+
+        TODO: Add more cases
+        """
+        mc = example_models.construct_four_state_chain()
+        logging.debug(mc.as_latex())
+        logging.debug(mc.as_latex(state_to_remove='s_O'))
+        logging.debug(mc.as_latex(include_auxiliary_expression=True))
+        logging.debug(mc.as_latex('s_O', True))
+
 
 if __name__ == "__main__":
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG)
     unittest.main()
