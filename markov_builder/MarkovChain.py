@@ -786,7 +786,7 @@ class MarkovChain():
             X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(labels)) \
                 + "\\end{equation}\n"
 
-        eqns = ",\\\\ \n".join([f"{sp.latex(rate)} &= {sp.latex(expr)}" for rate, expr
+        eqns = ",\\\\ \n".join([f"{sp.latex(sp.sympify(rate))} &= {sp.latex(expr)}" for rate, expr
                                 in self.rate_expressions.items()])
         eqns += ','
         rate_definitions = "\\begin{align}" + eqns + "\\end{align} \n\n"
