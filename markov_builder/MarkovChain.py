@@ -218,9 +218,10 @@ class MarkovChain():
 
         This is a convenient way to connect new states to the model.
 
-        :param frm, to: the states to be connect.
-        :param fwd_rate: The transition rate from `frm` to `to`
-        :param bwd_rate: The transition rate from `to` to `frm`
+        :param frm: Either of the two states to be connected.
+        :param to: Either of the two states to be connected.
+        :param fwd_rate: The transition rate from `frm` to `to`.
+        :param bwd_rate: The transition rate from `to` to `frm`.
         """
 
         self.add_transition(frm, to, fwd_rate)
@@ -361,7 +362,7 @@ class MarkovChain():
         return labs, mean_waiting_times, embedded_markov_chain
 
     def sample_trajectories(self, no_trajectories: int, rate_values: dict, time_range: list = [0, 1],
-                            starting_distribution: Optional[list] = None) -> pd.DataFrame:
+                            starting_distribution: list = None) -> pd.DataFrame:
         """Samples trajectories of the Markov chain using a Gillespie algorithm.
 
         :param no_trajectories: The number of simulations to run (number of channels)
@@ -418,7 +419,7 @@ class MarkovChain():
         df = pd.DataFrame(data, columns=['time', *self.graph.nodes])
         return df
 
-    def get_equilibrium_distribution(self, rates: dict):
+    def get_equilibrium_distribution(self, rates: dict) -> Tuple[List[str], np.array]:
         """Compute the equilibrium distribution of the CTMC for the specified transition rate values
 
         :param rates: A dictionary specifying the values of each transition rate
@@ -432,7 +433,7 @@ class MarkovChain():
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
 
-    def is_reversible(self):
+    def is_reversible(self) -> bool:
         """Checks symbolically whether or not the Markov chain is reversible for any set of non-zero transition rate values.
 
         We assume that all transition rates are always non-zero and follow
@@ -472,7 +473,7 @@ class MarkovChain():
                 return False
         return True
 
-    def draw_graph(self, filepath: Optional[str] = None, show_options: bool =
+    def draw_graph(self, filepath: str = None, show_options: bool =
                    False, show_rates: bool = False, show_parameters: bool = False):
         """Visualise the graph as a webpage using pyvis.
 
@@ -719,7 +720,7 @@ class MarkovChain():
         self.default_values = {**self.default_values, **default_values}
         self.auxiliary_expression = expression
 
-    def as_latex(self, state_to_remove: str = None, include_auxiliary_expression: bool = False):
+    def as_latex(self, state_to_remove: str = None, include_auxiliary_expression: bool = False) -> str:
         """Creates a LaTeX expression describing the Markov chain, its parameters and
         optionally, the auxiliary equation
 
