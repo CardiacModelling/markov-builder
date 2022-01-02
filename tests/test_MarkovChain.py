@@ -239,7 +239,7 @@ class TestMarkovChain(unittest.TestCase):
         TODO add more models
         """
         mc = example_models.construct_four_state_chain()
-        df = mc.sample_trajectories(1000, (0, 1000), {'V': 0})
+        df = mc.sample_trajectories(1000, (0, 100), {'V': 0})
         df = df.set_index('time')
         print(df)
         df.plot()
