@@ -4,6 +4,7 @@ import logging
 import os
 import unittest
 
+import matplotlib.pyplot as plt
 import myokit
 import networkx as nx
 import sympy as sp
@@ -231,6 +232,19 @@ class TestMarkovChain(unittest.TestCase):
         logging.debug(mc.as_latex(state_to_remove='s_O'))
         logging.debug(mc.as_latex(include_auxiliary_expression=True))
         logging.debug(mc.as_latex('s_O', True))
+
+    def test_sample_trajectories(self):
+        """Simulate the 4-state Beattie Model using the Gillespie method
+
+        TODO add more models
+        """
+        mc = example_models.construct_four_state_chain()
+        df = mc.sample_trajectories(1000, (0, 1000), {'V': 0})
+        df = df.set_index('time')
+        print(df)
+        df.plot()
+        plt.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'))
+        logging.debug
 
 
 if __name__ == "__main__":

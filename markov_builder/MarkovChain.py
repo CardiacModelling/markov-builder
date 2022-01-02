@@ -262,15 +262,14 @@ class MarkovChain():
 
         return list(self.graph.nodes), matrix
 
-    def eval_transition_matrix(self, rates: dict) -> Tuple[List[str], sp.Matrix]:
+    def eval_transition_matrix(self, rates_dict: dict) -> Tuple[List[str], sp.Matrix]:
         """
         Evaluate the transition matrix given values for each of the transition rates.
 
         :param rates: A dictionary defining the value of each transition rate e.g rates['K1'] = 1.
         """
-        l, Q = self.get_transition_matrix()
-        rates_list = [rates[rate] for rate in self.rates]
-        Q_evaled = sp.lambdify(list(self.rates), Q)(*rates_list)
+        l, Q = self.get_transition_matrix(use_parameters=True)
+        Q_evaled = np.array(Q.evalf(subs=rates_dict))
         return l, Q_evaled
 
     def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None,
@@ -361,13 +360,14 @@ class MarkovChain():
 
         return labs, mean_waiting_times, embedded_markov_chain
 
-    def sample_trajectories(self, no_trajectories: int, rate_values: dict, time_range: list = [0, 1],
+    def sample_trajectories(self, no_trajectories: int, time_range: list = [0, 1],
+                            param_dict: dict = None,
                             starting_distribution: list = None) -> pd.DataFrame:
         """Samples trajectories of the Markov chain using a Gillespie algorithm.
 
         :param no_trajectories: The number of simulations to run (number of channels)
-        :param rate_values: A dictionary defining the (constant) value of each transition rate
         :param time_range: A range of times durig which to simulate the model
+        :param param_dict: A dictionary defining the (constant) value of each transition rate
         :param starting_distribution: The number of samples starting in each state. Defaults to an even distribution.
         :return: A pandas dataframe describing the number of channels in each state for the times in time_range
 
@@ -376,13 +376,21 @@ class MarkovChain():
         no_nodes = len(self.graph.nodes)
         logging.debug(f"There are {no_nodes} nodes")
 
+        if param_dict is not None:
+            param_list = self.get_parameter_list()
+            # default missing values to those in self.default_values
+            param_dict = {param: param_dict[param]
+                          if param in param_dict
+                          else self.default_values[param]
+                          for param in param_list}
+
         if starting_distribution is None:
             starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
             starting_distribution[0] += no_trajectories - starting_distribution.sum()
 
         distribution = starting_distribution
 
-        labels, mean_waiting_times, e_chain = self.get_embedded_chain(rate_values)
+        labels, mean_waiting_times, e_chain = self.get_embedded_chain(param_dict)
 
         data = [(time_range[0], *distribution)]
 
