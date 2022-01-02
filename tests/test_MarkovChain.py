@@ -236,16 +236,27 @@ class TestMarkovChain(unittest.TestCase):
     def test_sample_trajectories(self):
         """Simulate the 4-state Beattie Model using the Gillespie method
 
+        Also, compare these results against the equilibrium distribution
+
         TODO add more models
         """
+        n_samples = 1000
+
         mc = example_models.construct_four_state_chain()
-        df = mc.sample_trajectories(1000, (0, 100), {'V': 0})
+        labels, eqm_dist = mc.get_equilibrium_distribution(param_dict={'V': 0})
+        starting_distribution = [int(val) for val in n_samples * eqm_dist]
+
+        df = mc.sample_trajectories(n_samples, (0, 250), {'V': 0}, starting_distribution=starting_distribution)
         df = df.set_index('time')
         print(df)
         df.plot()
+
+        for label, val in zip(labels, eqm_dist):
+            plt.axhline(val*n_samples, ls='--', alpha=0.5, label=label)
+        plt.legend()
+
         plt.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'))
         logging.debug
-
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)

@@ -326,11 +326,13 @@ class MarkovChain():
         if use_parameters:
             if len(self.rate_expressions) == 0:
                 raise Exception()
-            matrix = matrix.subs(self.rate_expressions)
+            else:
+                matrix = matrix.subs(self.rate_expressions)
+                vec = vec.subs(self.rate_expressions)
 
         return matrix[0:-1, 0:-1], vec[0:-1, :]
 
-    def get_embedded_chain(self, rate_values: dict) -> Tuple[List[str], np.ndarray, np.ndarray]:
+    def get_embedded_chain(self, param_dict: dict = None) -> Tuple[List[str], np.ndarray, np.ndarray]:
         """Compute the embedded DTMC and associated waiting times given values for each of the transition rates
 
         :param rates: A dictionary defining the value of each transition rate e.g rates['K1'] = 1.
@@ -339,8 +341,11 @@ class MarkovChain():
 
         """
 
+        if param_dict is None:
+            param_dict = self.default_values
+
         labs, Q = self.get_transition_matrix()
-        _, Q_evaled = self.eval_transition_matrix(rate_values)
+        _, Q_evaled = self.eval_transition_matrix(param_dict)
 
         logging.debug("Q is {}".format(Q_evaled))
 
@@ -383,6 +388,8 @@ class MarkovChain():
                           if param in param_dict
                           else self.default_values[param]
                           for param in param_list}
+        else:
+            param_dict = self.default_values
 
         if starting_distribution is None:
             starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
@@ -427,17 +434,30 @@ class MarkovChain():
         df = pd.DataFrame(data, columns=['time', *self.graph.nodes])
         return df
 
-    def get_equilibrium_distribution(self, rates: dict) -> Tuple[List[str], np.array]:
+    def get_equilibrium_distribution(self, param_dict: dict = None) -> Tuple[List[str], np.array]:
         """Compute the equilibrium distribution of the CTMC for the specified transition rate values
 
-        :param rates: A dictionary specifying the values of each transition rate
+        :param param_dict: A dictionary specifying the values of each transition rate
 
         :return: A 2-tuple describing equilibrium distribution and labels defines which entry relates to which state
 
         """
-        A, B = self.eliminate_state_from_transition_matrix()
+
+        if param_dict is not None:
+            param_list = self.get_parameter_list()
+            # default missing values to those in self.default_values
+            param_dict = {param: param_dict[param]
+                          if param in param_dict
+                          else self.default_values[param]
+                          for param in param_list}
+        else:
+            param_dict = self.default_values
+
+        A, B = self.eliminate_state_from_transition_matrix(use_parameters=True)
+
         labels = self.graph.nodes()
-        ss = -np.array(A.LUsolve(B).subs(rates)).astype(np.float64)
+        ss = -np.array(A.LUsolve(B).evalf(subs=param_dict))
+        logging.debug("ss is %s", ss)
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
 
