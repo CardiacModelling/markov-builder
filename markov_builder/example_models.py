@@ -34,8 +34,6 @@ def construct_non_reversible_chain():
 
 def construct_four_state_chain():
     mc = MarkovChain(name='Beattie_model')
-    rates = ['k{}'.format(i) for i in [1, 2, 3, 4]]
-    mc.add_rates(rates)
     states = [('s_O', {'open_state': True}), ('C'), ('s_I'), ('IC')]
     mc.add_states(states)
 
@@ -59,7 +57,8 @@ def construct_four_state_chain():
     auxiliary_expression = sp.sympify('g_Kr * s_O * (V + E_Kr)')
 
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
-                                   {'g_Kr': 0.1524})
+                                   {'g_Kr': 0.1524,
+                                    'E_Kr': -88})
 
     return mc
 

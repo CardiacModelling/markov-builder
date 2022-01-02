@@ -4,6 +4,10 @@ Main module for markov_builder
 import inspect
 import os
 
+from .MarkovChain import MarkovChain
+
+
+__all__ = ['MarkovChain']
 
 try:
     frame = inspect.currentframe()

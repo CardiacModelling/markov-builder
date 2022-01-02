@@ -127,8 +127,11 @@ class TestMarkovChain(unittest.TestCase):
         self.assertEqual(param_list.count('V'), 1)
 
         # Generate myokit code
-        myokit_model = mc.get_myokit_model()
+        myokit_model = mc.generate_myokit_model()
         myokit.save(os.path.join(self.output_dir, 'beattie_model.mmt'), myokit_model)
+
+        myokit_model = mc.generate_myokit_model(eliminate_state='IC')
+        myokit.save(os.path.join(self.output_dir, 'beattie_model_reduced.mmt'), myokit_model)
 
     def test_construct_open_trapping_model(self):
         """
