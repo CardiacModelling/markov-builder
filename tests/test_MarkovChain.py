@@ -258,6 +258,7 @@ class TestMarkovChain(unittest.TestCase):
         plt.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'))
         logging.debug
 
+
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
     unittest.main()
