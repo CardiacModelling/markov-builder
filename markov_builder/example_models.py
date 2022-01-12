@@ -83,11 +83,35 @@ def construct_mazhari_chain():
 def construct_wang_chain():
     mc = MarkovChain(name='Wang_model')
 
-    mc.add_states(('C0', 'C1', 'C2', 's_I'))
+    mc.add_states(('C1', 'C2', 'C3', 's_I'))
     mc.add_state('s_O', open_state=True)
 
-    rates = [('C0', 'C1', 'aa0', 'ba0'), ('C1', 'C2', 'kf', 'kb'), ('C2', 's_O', 'aa1', 'ba1'),
-             ('s_O', 's_I', 'ai', 'bi')]
+    rates = [('C1', 'C2', 'a', 'b'), ('C2', 'C3', 'c', 'd'), ('C3', 's_O', 'e', 'f'),
+             ('s_O', 's_I', 'g', 'h')]
+
+    for r in rates:
+        mc.add_both_transitions(*r)
+
+    positive_rate_expr = ('a*exp(b*V)', ('a', 'b'))
+    negative_rate_expr = ('a*exp(-b*V)', ('a', 'b'))
+    constant_rate_expr = ('a', ('a',))
+
+    rate_dictionary = {'a': positive_rate_expr,
+                       'b': negative_rate_expr,
+                       'c': constant_rate_expr,
+                       'd': constant_rate_expr,
+                       'e': positive_rate_expr,
+                       'f': negative_rate_expr,
+                       'g': positive_rate_expr,
+                       'h': negative_rate_expr
+                       }
+
+    mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+
+    auxiliary_expression = sp.sympify('g_Kr * s_O * (V + E_Kr)')
+    mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
+                                   {'g_Kr': 0.1524,
+                                    'E_Kr': -88})
 
     for r in rates:
         mc.add_both_transitions(*r)

@@ -573,7 +573,7 @@ class MarkovChain():
         # Validate rate dictionary
         for r in rate_dict:
             if r not in self.rates:
-                raise Exception()
+                raise Exception(f"Tried to parameterise rate {r} but it was not present in the model")
 
         rate_expressions = {}
         default_values_dict = {}
@@ -584,11 +584,12 @@ class MarkovChain():
                     default_values = []
                 else:
                     expression, dummy_variables, default_values = rate_dict[r]
-                if len(dummy_variables) != len(default_values):
+                if len(dummy_variables) < len(default_values):
                     raise ValueError("dummy variables list and default values list have mismatching lengths.\
                     Lengths {} and {}".format(len(dummy_variables), len(default_values)))
 
                 expression = sp.sympify(expression)
+
                 for symbol in expression.free_symbols:
                     variables = list(dummy_variables) + list(shared_variables)
                     if str(symbol) not in variables:
@@ -599,7 +600,10 @@ class MarkovChain():
 
                 # Add default values to dictionary
                 for u, v in zip(dummy_variables, default_values):
-                    default_values_dict[f"{r}_{u}"] = v
+                    new_var_name = f"{r}_{u}"
+                    if new_var_name in default_values_dict:
+                        raise Exception(f"A parameter with label {new_var_name} is already present in the model.")
+                    default_values_dict[new_var_name] = v
 
         self.rate_expressions = {**self.rate_expressions, **rate_expressions}
         self.default_values = {**self.default_values, **default_values_dict}
@@ -786,12 +790,16 @@ class MarkovChain():
             X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(labels)) \
                 + "\\end{equation}\n"
 
-        eqns = ",\\\\ \n".join([f"{sp.latex(sp.sympify(rate))} &= {sp.latex(expr)}" for rate, expr
-                                in self.rate_expressions.items()])
-        eqns += ','
-        rate_definitions = "\\begin{align}" + eqns + "\\end{align} \n\n"
+        if len(self.rate_expressions) > 0:
+            eqns = ",\\\\ \n".join([f"{sp.latex(sp.sympify(rate))} &= {sp.latex(expr)}" for rate, expr
+                                    in self.rate_expressions.items()])
+            eqns += ','
 
-        return_str = f"{eqn}\n where {rate_definitions} and {X_defn}"
+            rate_definitions = "\\begin{align}" + eqns + "\\end{align} \n\n"
+
+            return_str = f"{eqn}\n where {rate_definitions} and {X_defn}"
+        else:
+            return_str = f"{eqn} where {X_defn}"
 
         if include_auxiliary_expression:
             if self.auxiliary_expression is None:

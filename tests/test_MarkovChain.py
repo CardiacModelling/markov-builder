@@ -223,15 +223,18 @@ class TestMarkovChain(unittest.TestCase):
         self.assertTrue(mc.is_reversible())
 
     def test_latex_printing(self):
-        """ Test that we can generate LaTeX expressions for the four state model
+        """ Test that we can generate LaTeX expressions for a model
 
         TODO: Add more cases
         """
-        mc = example_models.construct_four_state_chain()
-        logging.debug(mc.as_latex())
-        logging.debug(mc.as_latex(state_to_remove='s_O'))
-        logging.debug(mc.as_latex(include_auxiliary_expression=True))
-        logging.debug(mc.as_latex('s_O', True))
+
+        models = [example_models.construct_four_state_chain(), example_models.construct_wang_chain()]
+        for mc in models:
+            logging.debug(f"Printing latex for {mc.name}")
+            logging.debug(mc.as_latex())
+            logging.debug(mc.as_latex(state_to_remove='s_O'))
+            logging.debug(mc.as_latex(include_auxiliary_expression=True))
+            logging.debug(mc.as_latex('s_O', True))
 
     def test_sample_trajectories(self):
         """Simulate the 4-state Beattie Model using the Gillespie method
@@ -240,7 +243,7 @@ class TestMarkovChain(unittest.TestCase):
 
         TODO add more models
         """
-        n_samples = 1000
+        n_samples = 25
 
         mc = example_models.construct_four_state_chain()
         labels, eqm_dist = mc.get_equilibrium_distribution(param_dict={'V': 0})
@@ -248,7 +251,7 @@ class TestMarkovChain(unittest.TestCase):
 
         df = mc.sample_trajectories(n_samples, (0, 250), {'V': 0}, starting_distribution=starting_distribution)
         df = df.set_index('time')
-        print(df)
+        logging.debug(f"sample trajectories results: {df}")
         df.plot()
 
         for label, val in zip(labels, eqm_dist):
