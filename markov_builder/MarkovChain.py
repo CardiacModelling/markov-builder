@@ -1,12 +1,7 @@
 import itertools
 import logging
 from dataclasses import asdict, dataclass, is_dataclass
-from typing import (
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import List, Optional, Tuple
 
 import myokit
 import networkx as nx
