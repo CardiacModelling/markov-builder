@@ -1,4 +1,5 @@
 import sympy as sp
+import numpy as np
 
 from .MarkovChain import MarkovChain
 
@@ -116,4 +117,53 @@ def construct_wang_chain():
     for r in rates:
         mc.add_both_transitions(*r)
 
+    return mc
+
+
+def construct_HH_model(n: int, m: int, name: str = None):
+    """ Construct a Markov model equivalent to a Hodgkin-Huxley conductance models
+
+    :param n: The number of activation gates in the model
+    :param m: The number of inactivation gates in the model
+
+    :return: A MarkovChain with n x m states
+
+    """
+
+    if n < 2 or m < 2:
+        raise Exception()
+
+    if name is None:
+        name = f"HH_{n}_{m}"
+
+    labels = []
+    for i in range(n):
+        for j in range(m):
+            if i == 0:
+                if j == 0:
+                    label = 's_O'
+                else:
+                    label = f"C{j}"
+            elif j == 0:
+                label = f"I{i}"
+            else:
+                label = f"I{i}C{j}"
+            labels.append(label)
+
+    mc = MarkovChain(name=name)
+
+    for label in labels:
+        mc.add_state(label)
+
+    labels = np.array(labels, dtype=object).reshape((n, m))
+
+    # Add inactivation transitions
+    for i in range(n):
+        for j in range(m):
+            if i < n - 1:
+                mc.add_both_transitions(labels[i, j], labels[i+1, j], sp.sympify(f"{n-i-1} * b_o"),
+                                        sp.sympify(f"{i+1}*a_o"))
+            if j < m - 1:
+                mc.add_both_transitions(labels[i, j], labels[i, j+1], sp.sympify(f"{m-j-1} * b_i"),
+                                        sp.sympify(f"{j+1}*a_i"))
     return mc

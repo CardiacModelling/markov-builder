@@ -261,6 +261,11 @@ class TestMarkovChain(unittest.TestCase):
         plt.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'))
         logging.debug
 
+    def test_HH_models(self):
+        for i, j in [(2, 3), (4, 5), (3, 4), (2, 8)]:
+            mc = example_models.construct_HH_model(i, j)
+            mc.draw_graph(os.path.join(self.output_dir, mc.name + ".html"))
+
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.DEBUG)
