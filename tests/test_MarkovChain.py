@@ -170,10 +170,10 @@ class TestMarkovChain(unittest.TestCase):
 
         for mc in reversible_models:
             logging.info("Checking reversibility")
-            assert(mc.is_reversible())
+            self.assertTrue(mc.is_reversible())
             logging.info("Checking reversibility with open trapping")
             mc.add_open_trapping(new_rates=True)
-            assert(mc.is_reversible())
+            self.assertTrue(mc.is_reversible())
 
         # Test is_reversible on a model we know is not reversible. This example
         # is a simple three state model with 6 independent transition rates

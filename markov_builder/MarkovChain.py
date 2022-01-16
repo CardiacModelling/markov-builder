@@ -184,12 +184,13 @@ class MarkovChain():
             self.add_rate(rate)
 
     def add_transition(self, from_node: str, to_node: str, transition_rate: Optional[str],
-                       label: Optional[str] = None) -> None:
+                       label: Optional[str] = None, update=False) -> None:
         """Adds an edge describing the transition rate between `from_node` and `to_node`.
 
         :param from_node: The state that the transition rate is incident from
         :param to_node: The state that the transition rate is incident to
         :param transition rate: A string identifying this transition with a rate from self.rates.
+        :param update: If false and exception will be thrown if an edge between from_node and to_node already exists
         """
 
         if from_node not in self.graph.nodes or to_node not in self.graph.nodes:
@@ -209,10 +210,13 @@ class MarkovChain():
 
         if label is None:
             label = transition_rate
-        self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
+        if (from_node, to_node) not in self.graph.edges() and update is False:
+            self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
+        else:
+            raise Exception(f"An edge already exists between {from_node} and {to_node}. Edges are {self.graph.edges()}")
 
-    def add_both_transitions(self, frm: str, to: str, fwd_rate: Union[str, sp.Expr, None],
-                             bwd_rate: Optional[str]) -> None:
+    def add_both_transitions(self, frm: str, to: str, fwd_rate: str = None,
+                             bwd_rate: str = None, update=True) -> None:
         """A helper function to add forwards and backwards rates between two
         states.
 
@@ -222,6 +226,7 @@ class MarkovChain():
         :param to: Either of the two states to be connected.
         :param fwd_rate: The transition rate from `frm` to `to`.
         :param bwd_rate: The transition rate from `to` to `frm`.
+        :param update: If false and exception will be thrown if an edge between from_node and to_node already exists
         """
 
         self.add_transition(frm, to, fwd_rate)
@@ -530,7 +535,7 @@ class MarkovChain():
             nt.show('Markov_builder_graph.html')
 
     def substitute_rates(self, rates_dict: dict):
-        """Substitute expressions for into the transition rates.
+        """Substitute expressions into the transition rates.
 
         This function modifies the `rate` attribute of edges in self.graph
 
