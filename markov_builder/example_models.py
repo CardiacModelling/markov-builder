@@ -1,8 +1,8 @@
 import numpy as np
 import sympy as sp
 
-from . import rate_expressions
 from .MarkovChain import MarkovChain
+from .rate_expressions import negative_rate_expr, positive_rate_expr
 
 
 def construct_M10_chain():
@@ -46,10 +46,10 @@ def construct_four_state_chain():
         mc.add_both_transitions(*r)
 
     # Model and parameters taken from https://doi.org/10.1113/JP275733
-    rate_dictionary = {'k_1': rate_expressions.positive_rate_expr + ((2.26E-4, 6.99E-2),),
-                       'k_2': rate_expressions.negative_rate_expr + ((3.44E-5, 5.460E-2),),
-                       'k_3': rate_expressions.positive_rate_expr + ((0.0873, 8.91E-3),),
-                       'k_4': rate_expressions.negative_rate_expr + ((5.15E-3, 0.003158),)}
+    rate_dictionary = {'k_1': positive_rate_expr + ((2.26E-4, 6.99E-2),),
+                       'k_2': negative_rate_expr + ((3.44E-5, 5.460E-2),),
+                       'k_3': positive_rate_expr + ((0.0873, 8.91E-3),),
+                       'k_4': negative_rate_expr + ((5.15E-3, 0.003158),)}
 
     mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
 
