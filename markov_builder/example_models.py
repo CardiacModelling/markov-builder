@@ -1,8 +1,8 @@
 import numpy as np
 import sympy as sp
 
-from . import rate_expressions
 from .MarkovChain import MarkovChain
+from . import rate_expressions as rate_expressions
 
 
 def construct_M10_chain():
