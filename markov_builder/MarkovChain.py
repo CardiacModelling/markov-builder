@@ -663,7 +663,7 @@ class MarkovChain():
 
         if eliminate_state is not None:
             states = [state for state in self.graph.nodes()
-                      if state is not eliminate_state]
+                      if state != eliminate_state]
 
             A, B = self.eliminate_state_from_transition_matrix(states)
             d_equations = dict(zip(states, A @ sp.Matrix(states) + B))
@@ -707,14 +707,21 @@ class MarkovChain():
 
         for state in self.graph.nodes():
             comp.add_variable(state)
-            var = comp[state]
-            var.promote()
 
         for state in states:
-            comp[state].set_rhs(str(d_equations[state]))
+            var = comp[state]
+            var.promote()
+            var.set_rhs(str(d_equations[state]))
+            var.set_state_value(0)
+
+        comp[states[-1]].set_state_value(1)
 
         if eliminate_state is not None:
-            comp[eliminate_state].set_rhs(str(1 - sum(d_equations.values())))
+            rhs_str = "1 "
+            for state in states:
+                rhs_str += f"-{state}"
+
+            comp[eliminate_state].set_rhs(rhs_str)
 
         if self.auxiliary_expression is not None:
             comp.add_variable(self.auxiliary_variable)
