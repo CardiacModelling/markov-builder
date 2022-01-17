@@ -6,6 +6,7 @@ import os
 
 from .MarkovChain import MarkovChain
 
+
 __all__ = ['MarkovChain']
 
 try:

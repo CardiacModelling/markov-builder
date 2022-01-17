@@ -1,8 +1,8 @@
 import numpy as np
 import sympy as sp
 
-from .rate_expressions import positive_rate_expr, negative_rate_expr
 from .MarkovChain import MarkovChain
+from .rate_expressions import negative_rate_expr, positive_rate_expr
 
 
 def construct_M10_chain():
