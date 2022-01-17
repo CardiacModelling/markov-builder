@@ -5,9 +5,10 @@ import inspect
 import os
 
 from .MarkovChain import MarkovChain
+from . import rate_expressions
 
 
-__all__ = ['MarkovChain']
+__all__ = ['MarkovChain', 'rate_expressions']
 
 try:
     frame = inspect.currentframe()
