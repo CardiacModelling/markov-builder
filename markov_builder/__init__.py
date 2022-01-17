@@ -4,8 +4,8 @@ Main module for markov_builder
 import inspect
 import os
 
-from .MarkovChain import MarkovChain
 from . import rate_expressions
+from .MarkovChain import MarkovChain
 
 
 __all__ = ['MarkovChain', 'rate_expressions']
