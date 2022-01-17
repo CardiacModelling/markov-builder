@@ -1,7 +1,7 @@
 import numpy as np
 import sympy as sp
 
-from . import rate_expressions as rate_expressions
+from . import rate_expressions
 from .MarkovChain import MarkovChain
 
 
