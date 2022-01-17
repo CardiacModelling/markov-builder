@@ -265,6 +265,8 @@ class TestMarkovChain(unittest.TestCase):
         for i, j in [(2, 3), (4, 5), (3, 4), (2, 8)]:
             mc = example_models.construct_HH_model(i, j)
             mc.draw_graph(os.path.join(self.output_dir, mc.name + ".html"))
+            # update one rate
+            mc.add_both_transitions('s_O', 'C1', 'new_rate', 'new_rate2', update=True)
 
 
 if __name__ == "__main__":

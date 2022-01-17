@@ -205,10 +205,14 @@ class MarkovChain():
 
         if label is None:
             label = transition_rate
-        if (from_node, to_node) not in self.graph.edges() and update is False:
-            self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
+        if (from_node, to_node) in self.graph.edges():
+            if update:
+                self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
+            else:
+                raise Exception(f"An edge already exists between {from_node} and {to_node}. \
+                Edges are {self.graph.edges()}")
         else:
-            raise Exception(f"An edge already exists between {from_node} and {to_node}. Edges are {self.graph.edges()}")
+            self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
 
     def add_both_transitions(self, frm: str, to: str, fwd_rate: str = None,
                              bwd_rate: str = None, update=True) -> None:
@@ -224,8 +228,8 @@ class MarkovChain():
         :param update: If false and exception will be thrown if an edge between from_node and to_node already exists
         """
 
-        self.add_transition(frm, to, fwd_rate)
-        self.add_transition(to, frm, bwd_rate)
+        self.add_transition(frm, to, fwd_rate, update=update)
+        self.add_transition(to, frm, bwd_rate, update=update)
 
     def get_transition_matrix(self, use_parameters: bool = False) -> Tuple[List[str], sp.Matrix]:
         """Compute the Q Matrix of the Markov chain. Q[i,j] is the transition rate between states i and j.
