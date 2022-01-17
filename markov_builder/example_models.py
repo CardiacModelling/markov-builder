@@ -53,7 +53,7 @@ def construct_four_state_chain():
 
     mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
 
-    auxiliary_expression = sp.sympify('g_Kr * s_O * (V + E_Kr)')
+    auxiliary_expression = sp.sympify('g_Kr * s_O * (V - E_Kr)')
 
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
                                    {'g_Kr': 0.1524,
