@@ -114,19 +114,21 @@ class MarkovChain():
         :param kwargs: Keyword arguments to use with graph.add_node specifying additional attributes for the new node.
 
         """
-        label_symbol = sp.sympify(label)
+        # Prepend with '_' to ensure that the symbol isn't reserved by sympy
+        state_symbol = sp.sympify("state_" + label)
 
         attributes = asdict(self.state_attributes_class(**kwargs))
 
         if label in self.reserved_names:
             raise Exception("label %s is reserved", label)
 
-        if not isinstance(label_symbol, sp.core.expr.Expr):
-            raise Exception(f'{label} is not a valid sympy expression')
+        if not isinstance(state_symbol, sp.core.expr.Expr):
+            raise Exception(f'{state_symbol} is not a valid sympy expression')
 
-        if not len(label_symbol.free_symbols) == 1:
-            raise Exception(f'{label} is not a valid state label.')
+        if not len(state_symbol.free_symbols) == 1:
+            raise Exception(f'{state_symbol} is not a valid state label.')
 
+        # Store as string
         self.graph.add_node(str(label), **attributes)
 
     def add_states(self, states: list) -> None:
@@ -231,7 +233,8 @@ class MarkovChain():
         self.add_transition(frm, to, fwd_rate, update=update)
         self.add_transition(to, frm, bwd_rate, update=update)
 
-    def get_transition_matrix(self, use_parameters: bool = False) -> Tuple[List[str], sp.Matrix]:
+    def get_transition_matrix(self, use_parameters: bool = False,
+                              label_order: list = None) -> Tuple[List[str], sp.Matrix]:
         """Compute the Q Matrix of the Markov chain. Q[i,j] is the transition rate between states i and j.
 
         :param use_parameters: If true substitute in parameters of the transition rates
@@ -263,8 +266,15 @@ class MarkovChain():
             if len(self.rate_expressions) == 0:
                 raise Exception()
             matrix = matrix.subs(self.rate_expressions)
+        if label_order is None:
+            return list(self.graph.nodes), matrix
+        else:
+            if len(label_order) != self.graph.nodes():
+                raise Exception("Not all states accounted for in label order")
 
-        return list(self.graph.nodes), matrix
+            permutation = [label_order.index(n) for n in self.graph.nodes]
+            matrix_reordered = matrix[permutation, permutation]
+            return label_order, matrix_reordered
 
     def eval_transition_matrix(self, rates_dict: dict) -> Tuple[List[str], sp.Matrix]:
         """
@@ -309,7 +319,6 @@ class MarkovChain():
         # end.
 
         permutation = [labels.index(n) if n in labels else shape[0] - 1 for n in self.graph.nodes]
-
         matrix = matrix[permutation, permutation]
 
         M = sp.eye(shape[0])
@@ -664,12 +673,14 @@ class MarkovChain():
         if eliminate_state is not None:
             states = [state for state in self.graph.nodes()
                       if state != eliminate_state]
-
             A, B = self.eliminate_state_from_transition_matrix(states)
+
+            states = [self.get_state_symbol(state) for state in states]
             d_equations = dict(zip(states, A @ sp.Matrix(states) + B))
 
         else:
             states, Q = self.get_transition_matrix()
+            states = [self.get_state_symbol(state) for state in states]
             d_equations = dict(zip(states, sp.Matrix(states).T @ Q))
 
         # Add required time and pace variables
@@ -705,24 +716,35 @@ class MarkovChain():
                 expr = self.rate_expressions[rate]
                 comp[rate].set_rhs(str(expr))
 
+        # Add a variable for each state in the graph
         for state in self.graph.nodes():
+            state = self.get_state_symbol(state)
             comp.add_variable(state)
 
+        # Write down differential equations for the states (unless we chose to
+        # eliminate it from the ODE system)
         for state in states:
             var = comp[state]
             var.promote()
             var.set_rhs(str(d_equations[state]))
             var.set_state_value(0)
 
+        # All but one states start with 0 occupancy. If they were all 0 nothing
+        # would happen!
         comp[states[-1]].set_state_value(1)
 
+        # Write equation for eliminated state using the fact that the state
+        # occupancies/probabilities must sum to 1.
         if eliminate_state is not None:
+            # Construct code for the RHS expression of the eliminated state
             rhs_str = "1 "
             for state in states:
                 rhs_str += f"-{state}"
 
-            comp[eliminate_state].set_rhs(rhs_str)
+            # Set RHS
+            comp[self.get_state_symbol(eliminate_state)].set_rhs(rhs_str)
 
+        # Add auxiliary equation if required
         if self.auxiliary_expression is not None:
             comp.add_variable(self.auxiliary_variable)
             comp[self.auxiliary_variable].set_rhs(str(self.auxiliary_expression))
@@ -746,8 +768,9 @@ class MarkovChain():
         if not isinstance(expression, sp.Expr):
             raise Exception()
 
+        state_symbols = [self.get_state_symbol(state) for state in self.graph.nodes()]
         for symbol in expression.free_symbols:
-            if str(symbol) not in self.graph.nodes():
+            if str(symbol) not in state_symbols:
                 if self.shared_rate_variables is None:
                     self.shared_rate_variables = set(str(symbol))
                 else:
@@ -763,43 +786,72 @@ class MarkovChain():
         self.default_values = {**self.default_values, **default_values}
         self.auxiliary_expression = expression
 
-    def as_latex(self, state_to_remove: str = None, include_auxiliary_expression: bool = False) -> str:
+    def as_latex(self, state_to_remove: str = None, include_auxiliary_expression: bool = False,
+                 column_vector=True, label_order: list = None) -> str:
         """Creates a LaTeX expression describing the Markov chain, its parameters and
         optionally, the auxiliary equation
 
         :param state_to_remove: The name of the state (if any) to eliminate from the system.
 
         :param include_auxiliary_expression: Whether or not to include the auxiliary expression in the output
+        :param column_vector: If False, write the system using row vectors instead of column vectors. Defaults to True
 
         :returns: A python string containing the relevant LaTeX code.
 
         """
 
+        if label_order is not None:
+            if state_to_remove is None:
+                if len(label_order) != len(self.graph.nodes()):
+                    raise Exception("Not all states listed in label order parameter, or state_to_eliminate")
+            else:
+                if len(label_order) + 1 != len(self.graph.nodes()):
+                    raise Exception("Not all states listed in label order parameter, or state_to_eliminate")
+
+        elif state_to_remove is not None:
+            label_order = [lab for lab in self.graph.nodes() if str(lab) != state_to_remove]
+        else:
+            label_order = self.graph.nodes()
+
         if state_to_remove is None:
             # Get Q matrix
-            labels, Q = self.get_transition_matrix()
-            Q_matrix_str = str(sp.latex(Q))
-            eqn = "\\begin{equation}\\dfrac{dX}{dt} = " + Q_matrix_str + "X \\end{equation}"
-
-            X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(self.graph.nodes()))\
-                + "\\end{equation}"
+            _, Q = self.get_transition_matrix(label_order)
+            if column_vector:
+                matrix_str = str(sp.latex(Q.T))
+                eqn = "\\begin{equation}\\dfrac{dX}{dt} = " + matrix_str + "X \\end{equation}"
+                X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(label_order))\
+                    + "\\end{equation}"
+            else:
+                matrix_str = str(sp.latex(Q))
+                eqn = "\\begin{equation}\\dfrac{dX}{dt} = "  "X " + matrix_str + " \\end{equation}"
+                X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(label_order).T)\
+                    + "\\end{equation}"
 
         else:
             if state_to_remove not in map(str, self.graph.nodes()):
                 raise Exception("%s not in model", state_to_remove)
-            labels = [label for label in self.graph.nodes()
-                      if str(label) != str(state_to_remove)]
+            labels = [label for label in label_order]
 
             if len(labels) != len(self.graph.nodes()) - 1:
                 raise Exception("model has duplicated states %s",
-                                self.graph.nodes())
+                                state_to_remove, labels)
 
             A, B = self.eliminate_state_from_transition_matrix(labels)
 
-            eqn = "\\begin{equation}\\dfrac{dX}{dt} = " + sp.latex(A) + "X"\
-                + " + " + sp.latex(B) + "\\end{equation}"
-            X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(labels)) \
-                + "\\end{equation}\n"
+            state_latex_expressions = [f"S_{label}" for label in labels]
+
+            if column_vector:
+                eqn = "\\begin{equation}\\dfrac{dX}{dt} = " + sp.latex(A) + "X"\
+                    + " + " + sp.latex(B) + "\\end{equation}"
+            else:
+                eqn = "\\begin{equation}\\dfrac{dX}{dt} = X" + sp.latex(A.T) + \
+                    + " + " + sp.latex(B.T) + "\\end{equation}"
+            if column_vector:
+                X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(state_latex_expressions)) \
+                    + "\\end{equation}\n"
+            else:
+                X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(state_latex_expressions).T) \
+                    + "\\end{equation}\n"
 
         if len(self.rate_expressions) > 0:
             eqns = ",\\\\ \n".join([f"{sp.latex(sp.sympify(rate))} &= {sp.latex(expr)}" for rate, expr
@@ -818,3 +870,9 @@ class MarkovChain():
             return_str = "\\begin{equation}" + sp.latex(self.auxiliary_expression) + \
                 "\\end{equation}" + "\n where" + return_str
         return return_str
+
+    def get_state_symbol(self, state):
+        if state in self.graph.nodes():
+            return "state_" + state
+        else:
+            raise Exception("State not present in model")

@@ -9,9 +9,9 @@ def construct_M10_chain():
     mc = MarkovChain(name='M10')
 
     mc.add_states(('IC1', 'IC2', 'IO', 'C1', 'C2'))
-    mc.add_state('s_O', open_state=True)
+    mc.add_state('O', open_state=True)
     rates = [('IC2', 'IC1', 'a1', 'b1'), ('IC1', 'IO', 'a2', 'b2'),
-             ('IO', 's_O', 'ah', 'bh'), ('s_O', 'C1', 'b2', 'a2'),
+             ('IO', 'O', 'ah', 'bh'), ('O', 'C1', 'b2', 'a2'),
              ('C1', 'C2', 'b1', 'a1'), ('C2', 'IC2', 'bh', 'ah'),
              ('C1', 'IC1', 'bh', 'ah')]
 
@@ -36,11 +36,11 @@ def construct_non_reversible_chain():
 
 def construct_four_state_chain():
     mc = MarkovChain(name='Beattie_model')
-    states = [('s_O', {'open_state': True}), ('C'), ('s_I'), ('IC')]
+    states = [('O', {'open_state': True}), ('C'), ('I'), ('IC')]
     mc.add_states(states)
 
-    rates = [('s_O', 'C', 'k_2', 'k_1'), ('s_I', 'IC', 'k_2', 'k_1'),
-             ('s_O', 's_I', 'k_3', 'k_4'), ('C', 'IC', 'k_3', 'k_4')]
+    rates = [('O', 'C', 'k_2', 'k_1'), ('I', 'IC', 'k_2', 'k_1'),
+             ('O', 'I', 'k_3', 'k_4'), ('C', 'IC', 'k_3', 'k_4')]
 
     for r in rates:
         mc.add_both_transitions(*r)
@@ -53,7 +53,8 @@ def construct_four_state_chain():
 
     mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
 
-    auxiliary_expression = sp.sympify('g_Kr * s_O * (V - E_Kr)')
+    open_state = mc.get_state_symbol('O')
+    auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V - E_Kr)")
 
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
                                    {'g_Kr': 0.1524,
@@ -65,11 +66,11 @@ def construct_four_state_chain():
 def construct_mazhari_chain():
     mc = MarkovChain(name='Mazhari_model')
 
-    mc.add_states(('C1', 'C2', 'C3', 's_I'))
-    mc.add_state('s_O', open_state=True)
+    mc.add_states(('C1', 'C2', 'C3', 'I'))
+    mc.add_state('O', open_state=True)
 
-    rates = [('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 's_O', 'a1', 'b1'),
-             ('s_O', 's_I', 'ai', 'bi'), ('s_I', 'C3', 'psi', 'ai3')]
+    rates = [('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 'O', 'a1', 'b1'),
+             ('O', 'I', 'ai', 'bi'), ('I', 'C3', 'psi', 'ai3')]
 
     for r in rates:
         mc.add_both_transitions(*r)
@@ -82,11 +83,11 @@ def construct_mazhari_chain():
 def construct_wang_chain():
     mc = MarkovChain(name='Wang_model')
 
-    mc.add_states(('C1', 'C2', 'C3', 's_I'))
-    mc.add_state('s_O', open_state=True)
+    mc.add_states(('C1', 'C2', 'C3', 'I'))
+    mc.add_state('O', open_state=True)
 
-    rates = [('C1', 'C2', 'a', 'b'), ('C2', 'C3', 'c', 'd'), ('C3', 's_O', 'e', 'f'),
-             ('s_O', 's_I', 'g', 'h')]
+    rates = [('C1', 'C2', 'a_a0', 'b_a0'), ('C2', 'C3', 'k_f', 'k_b'), ('C3', 'O', 'a_a1', 'b_a1'),
+             ('O', 'I', 'a_1', 'b_1')]
 
     for r in rates:
         mc.add_both_transitions(*r)
@@ -95,19 +96,21 @@ def construct_wang_chain():
     negative_rate_expr = ('a*exp(-b*V)', ('a', 'b'))
     constant_rate_expr = ('a', ('a',))
 
-    rate_dictionary = {'a': positive_rate_expr,
-                       'b': negative_rate_expr,
-                       'c': constant_rate_expr,
-                       'd': constant_rate_expr,
-                       'e': positive_rate_expr,
-                       'f': negative_rate_expr,
-                       'g': positive_rate_expr,
-                       'h': negative_rate_expr
+    rate_dictionary = {'a_a0': positive_rate_expr,
+                       'b_a0': negative_rate_expr,
+                       'k_f': constant_rate_expr,
+                       'k_b': constant_rate_expr,
+                       'a_a1': positive_rate_expr,
+                       'b_a1': negative_rate_expr,
+                       'a_1': positive_rate_expr,
+                       'b_1': negative_rate_expr
                        }
 
     mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
 
-    auxiliary_expression = sp.sympify('g_Kr * s_O * (V + E_Kr)')
+    open_state = mc.get_state_symbol('O')
+
+    auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
                                    {'g_Kr': 0.1524,
                                     'E_Kr': -88})
@@ -135,7 +138,7 @@ def construct_HH_model(n: int, m: int, name: str = None):
         for j in range(m):
             if i == 0:
                 if j == 0:
-                    label = 's_O'
+                    label = 'O'
                 else:
                     label = f"C{j}"
             elif j == 0:

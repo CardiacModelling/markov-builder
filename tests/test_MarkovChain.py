@@ -59,7 +59,7 @@ class TestMarkovChain(unittest.TestCase):
         labels, Q = mc.get_transition_matrix()
         logging.debug("Q^T matrix is {}, labels are {}".format(Q.T, labels))
 
-        system = mc.eliminate_state_from_transition_matrix(['C', 's_O', 's_I'])
+        system = mc.eliminate_state_from_transition_matrix(['C', 'O', 'I'])
 
         pen_and_paper_A = sp.Matrix([['-k_1 - k_3 - k_4', 'k_2 - k_4', '-k_4'],
                                      ['k_1', '-k_2 - k_3', 'k_4'],
@@ -232,9 +232,9 @@ class TestMarkovChain(unittest.TestCase):
         for mc in models:
             logging.debug(f"Printing latex for {mc.name}")
             logging.debug(mc.as_latex())
-            logging.debug(mc.as_latex(state_to_remove='s_O'))
+            logging.debug(mc.as_latex(state_to_remove='O'))
             logging.debug(mc.as_latex(include_auxiliary_expression=True))
-            logging.debug(mc.as_latex('s_O', True))
+            logging.debug(mc.as_latex('O', True))
 
     def test_sample_trajectories(self):
         """Simulate the 4-state Beattie Model using the Gillespie method
@@ -266,7 +266,7 @@ class TestMarkovChain(unittest.TestCase):
             mc = example_models.construct_HH_model(i, j)
             mc.draw_graph(os.path.join(self.output_dir, mc.name + ".html"))
             # update one rate
-            mc.add_both_transitions('s_O', 'C1', 'new_rate', 'new_rate2', update=True)
+            mc.add_both_transitions('O', 'C1', 'new_rate', 'new_rate2', update=True)
 
 
 if __name__ == "__main__":
