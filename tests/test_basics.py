@@ -2,7 +2,7 @@
 # Tests the basics of markov_builder
 #
 
- 
+
 def test_module_import():
     import markov_builder  # noqa
 
