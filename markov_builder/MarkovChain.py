@@ -1,7 +1,7 @@
 import itertools
 import logging
-from dataclasses import asdict, dataclass, is_dataclass
-from typing import List, Optional, Tuple
+from typing import List, Tuple
+from dataclasses import asdict, is_dataclass
 
 import myokit
 import networkx as nx
@@ -10,13 +10,7 @@ import pandas as pd
 import pyvis
 import sympy as sp
 from numpy.random import default_rng
-
-
-@dataclass
-class MarkovStateAttributes:
-    """A dataclass defining what attributes each state in a MarkovChain should have, and their default values"""
-    open_state: bool = False
-    inactive: bool = False
+from .MarkovStateAttributes import MarkovStateAttributes
 
 
 class MarkovChain():
@@ -26,16 +20,16 @@ class MarkovChain():
     Markov chains and to test whether the model has certain properties.
     """
 
-    def __init__(self, states: Optional[list] = None, state_attributes_class:
-                 Optional[MarkovStateAttributes] = None, seed: Optional[int] = None, name:
-                 Optional[str] = None):
+    def __init__(self, states: list = [], state_attributes_class:
+                 MarkovStateAttributes = None, seed: int = None,
+                 name: str = None):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
         # between the two nodes
 
         self.graph = nx.DiGraph()
-        if states is not None:
+        if states:
             self.graph.add_nodes_from(states)
         self.rates = set()
 
@@ -57,7 +51,7 @@ class MarkovChain():
         self.reserved_names = []
         self.auxiliary_variable = 'auxiliary_expression'
 
-        if not is_dataclass(self.state_attributes_class):
+        if not issubclass(self.state_attributes_class, MarkovStateAttributes):
             raise Exception("state_attirbutes_class must be a dataclass")
 
     def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
@@ -111,9 +105,23 @@ class MarkovChain():
 
         :param label: The label to attach to the new state open.
 
-        :param kwargs: Keyword arguments to use with graph.add_node specifying additional attributes for the new node.
+        :param kwargs: Keyword arguments to use with graph.add_node specifying attributes for the new node
+
+        Optional arguments must correspond to the fields defined in
+        self.state_attributes_class. By default this is just the Boolean
+        attribute `open_state`.
 
         """
+
+        # Check that the label isn't already in use
+        labels_in_use = list(self.graph.nodes())
+
+        # Check that all of the labels are strings
+        for existing_label in labels_in_use:
+            assert isinstance(existing_label, str), "All state labels must be strings"
+
+        assert label not in labels_in_use, f"label: {label} is already in use"
+
         # Prepend with '_' to ensure that the symbol isn't reserved by sympy
         state_symbol = sp.sympify("state_" + label)
 
@@ -130,19 +138,6 @@ class MarkovChain():
 
         # Store as string
         self.graph.add_node(str(label), **attributes)
-
-    def add_states(self, states: list) -> None:
-        """Adds a list of states to the model.
-
-        :param states: A list specifying the name of the new label and a dictionary of attributes for new node.
-        """
-        for state in states:
-            if isinstance(state, str):
-                attr = {}
-            else:
-                attr = state[-1]
-                state = state[0]
-            self.add_state(state, **attr)
 
     def add_rate(self, rate: str) -> None:
         """
@@ -180,8 +175,8 @@ class MarkovChain():
         for rate in rates:
             self.add_rate(rate)
 
-    def add_transition(self, from_node: str, to_node: str, transition_rate: Optional[str],
-                       label: Optional[str] = None, update=False) -> None:
+    def add_transition(self, from_node: str, to_node: str, transition_rate: str,
+                       label: str = None, update=False) -> None:
         """Adds an edge describing the transition rate between `from_node` and `to_node`.
 
         :param from_node: The state that the transition rate is incident from
@@ -282,11 +277,16 @@ class MarkovChain():
 
         :param rates: A dictionary defining the value of each transition rate e.g rates['K1'] = 1.
         """
+
+        if rates_dict is None:
+            assert len(rates_dict) > 0
+            rates_dict = self.rate_expressions
+
         l, Q = self.get_transition_matrix(use_parameters=True)
-        Q_evaled = np.array(Q.evalf(subs=rates_dict))
+        Q_evaled = np.array(Q.evalf(subs=rates_dict)).astype(np.float64)
         return l, Q_evaled
 
-    def eliminate_state_from_transition_matrix(self, labels: Optional[list] = None,
+    def eliminate_state_from_transition_matrix(self, labels: list = None,
                                                use_parameters: bool = False) -> Tuple[sp.Matrix, sp.Matrix]:
         """Returns a matrix, A, and vector, B, corresponding to a linear ODE system describing the state probabilities.
 
@@ -306,9 +306,16 @@ class MarkovChain():
 
         for label in labels:
             if label not in self.graph.nodes():
-                raise Exception()
+                raise Exception(f"Provided label, {label} is not present in the graph")
 
         _, matrix = self.get_transition_matrix()
+
+        eliminated_states = [state for state in self.graph.nodes() if state not in labels]
+        assert len(eliminated_states) == 1
+        eliminated_state = eliminated_states[0]
+
+        eliminated_state_symbol = self.get_state_symbol(eliminated_state)
+
         matrix = matrix.T
         shape = sp.shape(matrix)
         assert shape[0] == shape[1]
@@ -318,32 +325,28 @@ class MarkovChain():
         # graph.nodes[i] to graph.nodes[j]. Map the row to be eliminated to the
         # end.
 
-        permutation = [labels.index(n) if n in labels else shape[0] - 1 for n in self.graph.nodes]
+        permutation = [list(self.graph.nodes()).index(n) for n in labels + [eliminated_state]]
+
+        assert len(np.unique(permutation)) == shape[0]
         matrix = matrix[permutation, permutation]
 
         M = sp.eye(shape[0])
-        replacement_row = np.array([-1 for i in range(shape[0])])[None, :]
+        replacement_row = np.full(shape[0], -1)
 
-        M[-1, :] = replacement_row
+        M[-1, :] = replacement_row[None, :]
 
-        matrix = M @ matrix
+        A_matrix = matrix @ M
 
-        # Construct vector
-        vec = sp.Matrix([0 for i in range(shape[0])])
-        for j, el in enumerate(matrix[:, -1]):
-            if el != 0:
-                vec[j, 0] = el
-                for i in range(shape[0]):
-                    matrix[j, i] -= el
+        B_vec = matrix @ sp.Matrix([[0] * (shape[0] - 1) + [1]]).T
 
         if use_parameters:
             if len(self.rate_expressions) == 0:
                 raise Exception()
             else:
-                matrix = matrix.subs(self.rate_expressions)
-                vec = vec.subs(self.rate_expressions)
+                A_matrix = A_matrix.subs(self.rate_expressions)
+                B_vec = B_vec.subs(self.rate_expressions)
 
-        return matrix[0:-1, 0:-1], vec[0:-1, :]
+        return A_matrix[0:-1, 0:-1], B_vec[0:-1, :]
 
     def get_embedded_chain(self, param_dict: dict = None) -> Tuple[List[str], np.ndarray, np.ndarray]:
         """Compute the embedded DTMC and associated waiting times given values for each of the transition rates
@@ -444,7 +447,7 @@ class MarkovChain():
 
             data.append((t + time_range[0], *distribution))
 
-        df = pd.DataFrame(data, columns=['time', *self.graph.nodes])
+        df = pd.DataFrame(data, columns=['time', *self.graph.nodes], dtype=np.float64)
         return df
 
     def get_equilibrium_distribution(self, param_dict: dict = None) -> Tuple[List[str], np.array]:
@@ -455,21 +458,10 @@ class MarkovChain():
         :return: A 2-tuple describing equilibrium distribution and labels defines which entry relates to which state
 
         """
-
-        if param_dict is not None:
-            param_list = self.get_parameter_list()
-            # default missing values to those in self.default_values
-            param_dict = {param: param_dict[param]
-                          if param in param_dict
-                          else self.default_values[param]
-                          for param in param_list}
-        else:
-            param_dict = self.default_values
-
         A, B = self.eliminate_state_from_transition_matrix(use_parameters=True)
 
         labels = self.graph.nodes()
-        ss = -np.array(A.LUsolve(B).evalf(subs=param_dict))
+        ss = -np.array(A.LUsolve(B).evalf(subs=param_dict)).astype(np.float64)
         logging.debug("ss is %s", ss)
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
@@ -818,14 +810,13 @@ class MarkovChain():
             _, Q = self.get_transition_matrix(label_order)
             if column_vector:
                 matrix_str = str(sp.latex(Q.T))
-                eqn = "\\begin{equation}\\dfrac{dX}{dt} = " + matrix_str + "X \\end{equation}"
-                X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(label_order))\
-                    + "\\end{equation}"
+                eqn = r'\begin{equation}\dfrac{dX}{dt} =  %s X \\end{equation}' % matrix_str
+                X_defn = r'\begin{equation} %s \end{equation}' % sp.latex(sp.Matrix(label_order))
+
             else:
                 matrix_str = str(sp.latex(Q))
-                eqn = "\\begin{equation}\\dfrac{dX}{dt} = "  "X " + matrix_str + " \\end{equation}"
-                X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(label_order).T)\
-                    + "\\end{equation}"
+                eqn = r'\\begin{equation}\\dfrac{dX}{dt} = X %s \\end{equation}' % matrix_str
+                X_defn = r'\begin{equation} \dfrac{dX}{dt} = X %s \end{equation}'
 
         else:
             if state_to_remove not in map(str, self.graph.nodes()):
@@ -841,24 +832,24 @@ class MarkovChain():
             state_latex_expressions = [f"S_{label}" for label in labels]
 
             if column_vector:
-                eqn = "\\begin{equation}\\dfrac{dX}{dt} = " + sp.latex(A) + "X"\
-                    + " + " + sp.latex(B) + "\\end{equation}"
+                eqn = r'\begin{equation}\dfrac{dX}{dt} = ' + sp.latex(A) + "X"\
+                    + " + " + sp.latex(B) + r'\end{equation}'
             else:
-                eqn = "\\begin{equation}\\dfrac{dX}{dt} = X" + sp.latex(A.T) + \
-                    + " + " + sp.latex(B.T) + "\\end{equation}"
+                eqn = r'\begin{equation}\dfrac{dX}{dt} = X' + sp.latex(A.T) + \
+                    + " + " + sp.latex(B.T) + r'\end{equation}'
             if column_vector:
-                X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(state_latex_expressions)) \
-                    + "\\end{equation}\n"
+                X_defn = r'\begin{equation}' + sp.latex(sp.Matrix(state_latex_expressions)) \
+                    + r'\end{equation}\n'
             else:
-                X_defn = "\\begin{equation}" + sp.latex(sp.Matrix(state_latex_expressions).T) \
-                    + "\\end{equation}\n"
+                X_defn = r'\begin{equation}' + sp.latex(sp.Matrix(state_latex_expressions).T) \
+                    + r'\end{equation}\n'
 
         if len(self.rate_expressions) > 0:
-            eqns = ",\\\\ \n".join([f"{sp.latex(sp.sympify(rate))} &= {sp.latex(expr)}" for rate, expr
-                                    in self.rate_expressions.items()])
+            eqns = r',\\ \n'.join([f"{sp.latex(sp.sympify(rate))} &= {sp.latex(expr)}" for rate, expr
+                                   in self.rate_expressions.items()])
             eqns += ','
 
-            rate_definitions = "\\begin{align}" + eqns + "\\end{align} \n\n"
+            rate_definitions = r'\begin{align}' + eqns + r'\end{align} \n\n'
 
             return_str = f"{eqn}\n where {rate_definitions} and {X_defn}"
         else:
@@ -867,8 +858,8 @@ class MarkovChain():
         if include_auxiliary_expression:
             if self.auxiliary_expression is None:
                 raise Exception("No auxiliary expression present in the MarkovChain")
-            return_str = "\\begin{equation}" + sp.latex(self.auxiliary_expression) + \
-                "\\end{equation}" + "\n where" + return_str
+            return_str = r'\begin{equation}' + sp.latex(self.auxiliary_expression) + \
+                r'\end{equation}' + "\n where" + return_str
         return return_str
 
     def get_state_symbol(self, state):
