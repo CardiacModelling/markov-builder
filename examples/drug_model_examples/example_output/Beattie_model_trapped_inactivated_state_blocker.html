@@ -1,0 +1,108 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        #mynetwork {
+            width: 500px;
+            height: 500px;
+            background-color: #ffffff;
+            border: 1px solid lightgray;
+            position: relative;
+            float: left;
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network; 
+    var container;
+    var options, data;
+
+    
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+        
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"id": "d_C", "label": "d_C", "open_state": false, "shape": "dot", "size": 10}, {"id": "d_O", "label": "d_O", "open_state": false, "shape": "dot", "size": 10}, {"id": "d_IC", "label": "d_IC", "open_state": false, "shape": "dot", "size": 10}, {"id": "d_I", "label": "d_I", "open_state": false, "shape": "dot", "size": 10}, {"id": "I", "label": "I", "open_state": false, "shape": "dot", "size": 10}, {"id": "C", "label": "C", "open_state": false, "shape": "dot", "size": 10}, {"id": "O", "label": "O", "open_state": true, "shape": "dot", "size": 10}, {"id": "IC", "label": "IC", "open_state": false, "shape": "dot", "size": 10}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": "d_C", "label": "k_1_a*exp(V*k_1_b)", "rate": "k_1", "to": "d_O", "weight": 1}, {"arrows": "to", "from": "d_C", "label": "k_3_a*exp(V*k_3_b)", "rate": "k_3", "to": "d_IC", "weight": 1}, {"arrows": "to", "from": "d_I", "label": "k_2_a*exp(-V*k_2_b)", "rate": "k_2", "to": "d_IC", "weight": 1}, {"arrows": "to", "from": "d_I", "label": "k_4_a*exp(-V*k_4_b)", "rate": "k_4", "to": "d_O", "weight": 1}, {"arrows": "to", "from": "d_I", "label": "drug_off_l", "rate": "drug_off", "to": "I", "weight": 1}, {"arrows": "to", "from": "d_IC", "label": "k_1_a*exp(V*k_1_b)", "rate": "k_1", "to": "d_I", "weight": 1}, {"arrows": "to", "from": "d_IC", "label": "k_4_a*exp(-V*k_4_b)", "rate": "k_4", "to": "d_C", "weight": 1}, {"arrows": "to", "from": "d_O", "label": "k_2_a*exp(-V*k_2_b)", "rate": "k_2", "to": "d_C", "weight": 1}, {"arrows": "to", "from": "d_O", "label": "k_3_a*exp(V*k_3_b)", "rate": "k_3", "to": "d_I", "weight": 1}, {"arrows": "to", "from": "C", "label": "k_1_a*exp(V*k_1_b)", "rate": "k_1", "to": "O", "weight": 1}, {"arrows": "to", "from": "C", "label": "k_3_a*exp(V*k_3_b)", "rate": "k_3", "to": "IC", "weight": 1}, {"arrows": "to", "from": "I", "label": "k_2_a*exp(-V*k_2_b)", "rate": "k_2", "to": "IC", "weight": 1}, {"arrows": "to", "from": "I", "label": "k_4_a*exp(-V*k_4_b)", "rate": "k_4", "to": "O", "weight": 1}, {"arrows": "to", "from": "I", "label": "D*drug_on_k", "rate": "drug_on", "to": "d_I", "weight": 1}, {"arrows": "to", "from": "IC", "label": "k_1_a*exp(V*k_1_b)", "rate": "k_1", "to": "I", "weight": 1}, {"arrows": "to", "from": "IC", "label": "k_4_a*exp(-V*k_4_b)", "rate": "k_4", "to": "C", "weight": 1}, {"arrows": "to", "from": "O", "label": "k_2_a*exp(-V*k_2_b)", "rate": "k_2", "to": "C", "weight": 1}, {"arrows": "to", "from": "O", "label": "k_3_a*exp(V*k_3_b)", "rate": "k_3", "to": "I", "weight": 1}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+        
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+	 
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>

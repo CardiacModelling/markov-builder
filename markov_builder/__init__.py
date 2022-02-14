@@ -4,6 +4,11 @@ Main module for markov_builder
 import inspect
 import os
 
+from . import rate_expressions
+from .MarkovChain import MarkovChain
+
+
+__all__ = ['MarkovChain', 'rate_expressions']
 
 try:
     frame = inspect.currentframe()
