@@ -1,7 +1,7 @@
 import itertools
 import logging
+from dataclasses import asdict
 from typing import List, Tuple
-from dataclasses import asdict, is_dataclass
 
 import myokit
 import networkx as nx
@@ -10,6 +10,7 @@ import pandas as pd
 import pyvis
 import sympy as sp
 from numpy.random import default_rng
+
 from .MarkovStateAttributes import MarkovStateAttributes
 
 
@@ -313,8 +314,6 @@ class MarkovChain():
         eliminated_states = [state for state in self.graph.nodes() if state not in labels]
         assert len(eliminated_states) == 1
         eliminated_state = eliminated_states[0]
-
-        eliminated_state_symbol = self.get_state_symbol(eliminated_state)
 
         matrix = matrix.T
         shape = sp.shape(matrix)
