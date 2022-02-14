@@ -83,9 +83,6 @@ class MarkovChain():
                 attr['rate'] = str(new_rate)
 
         new_graph = nx.compose(trapped_graph, self.graph)
-        # Get open state name
-        open_nodes = [n for n, d in new_graph.nodes(data=True) if d['open_state']]
-        assert(len(open_nodes) == 1)
 
         self.graph = new_graph
 
@@ -99,6 +96,10 @@ class MarkovChain():
         self.mirror_model(prefix, new_rates)
         self.add_rates(("drug_on", "drug_off"))
         open_nodes = [n for n, d in self.graph.nodes(data=True) if d['open_state']]
+
+        assert len(open_nodes) == 1, "There is more than one open node.\
+        The open trapping scheme is not defined in this case"
+
         self.add_both_transitions(open_nodes[0], "d_{}".format(open_nodes[0]), 'drug_on', 'drug_off')
 
     def add_state(self, label, **kwargs) -> None:
