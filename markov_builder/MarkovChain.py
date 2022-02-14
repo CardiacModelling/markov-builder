@@ -113,6 +113,8 @@ class MarkovChain():
         self.state_attributes_class. By default this is just the Boolean
         attribute `open_state`.
 
+        Example: ``add_state('O', open_state=True)``
+
         """
 
         # Check that the label isn't already in use
