@@ -8,8 +8,13 @@ from .rate_expressions import negative_rate_expr, positive_rate_expr
 def construct_M10_chain():
     mc = MarkovChain(name='M10')
 
-    mc.add_states(('IC1', 'IC2', 'IO', 'C1', 'C2'))
+    # First add states
+    for state in ('IC1', 'IC2', 'IO', 'C1', 'C2'):
+        mc.add_state(state)
+
     mc.add_state('O', open_state=True)
+
+    # Now add rates
     rates = [('IC2', 'IC1', 'a1', 'b1'), ('IC1', 'IO', 'a2', 'b2'),
              ('IO', 'O', 'ah', 'bh'), ('O', 'C1', 'b2', 'a2'),
              ('C1', 'C2', 'b1', 'a1'), ('C2', 'IC2', 'bh', 'ah'),
@@ -24,8 +29,11 @@ def construct_M10_chain():
 def construct_non_reversible_chain():
     mc = MarkovChain(name='non_reversible_example')
 
-    mc.add_states(('A', 'D'))
+    mc.add_state('A')
+    mc.add_state('D')
     mc.add_state('B', open_state=True)
+
+    # Add rates
     rates = [('B', 'A', 'k1', 'k2'), ('A', 'D', 'k3', 'k4'), ('B', 'D', 'k5', 'k6')]
 
     for r in rates:
@@ -36,8 +44,12 @@ def construct_non_reversible_chain():
 
 def construct_four_state_chain():
     mc = MarkovChain(name='Beattie_model')
-    states = [('O', {'open_state': True}), ('C'), ('I'), ('IC')]
-    mc.add_states(states)
+    states = ['C', 'I', 'IC']
+
+    for state in states:
+        mc.add_state(state)
+
+    mc.add_state('O', open_state=True)
 
     rates = [('O', 'C', 'k_2', 'k_1'), ('I', 'IC', 'k_2', 'k_1'),
              ('O', 'I', 'k_3', 'k_4'), ('C', 'IC', 'k_3', 'k_4')]
@@ -66,7 +78,9 @@ def construct_four_state_chain():
 def construct_mazhari_chain():
     mc = MarkovChain(name='Mazhari_model')
 
-    mc.add_states(('C1', 'C2', 'C3', 'I'))
+    for state in ('C1', 'C2', 'C3', 'I'):
+        mc.add_state(state)
+
     mc.add_state('O', open_state=True)
 
     rates = [('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 'O', 'a1', 'b1'),
@@ -83,7 +97,9 @@ def construct_mazhari_chain():
 def construct_wang_chain():
     mc = MarkovChain(name='Wang_model')
 
-    mc.add_states(('C1', 'C2', 'C3', 'I'))
+    for state in ('C1', 'C2', 'C3', 'I'):
+        mc.add_state(state)
+
     mc.add_state('O', open_state=True)
 
     rates = [('C1', 'C2', 'a_a0', 'b_a0'), ('C2', 'C3', 'k_f', 'k_b'), ('C3', 'O', 'a_a1', 'b_a1'),
@@ -150,7 +166,10 @@ def construct_HH_model(n: int, m: int, name: str = None):
     mc = MarkovChain(name=name)
 
     for label in labels:
-        mc.add_state(label)
+        if label == 'O':
+            mc.add_state(label, open_state=True)
+        else:
+            mc.add_state(label)
 
     labels = np.array(labels, dtype=object).reshape((n, m))
 
@@ -158,9 +177,9 @@ def construct_HH_model(n: int, m: int, name: str = None):
     for i in range(n):
         for j in range(m):
             if i < n - 1:
-                mc.add_both_transitions(labels[i, j], labels[i+1, j], sp.sympify(f"{n-i-1} * b_o"),
+                mc.add_both_transitions(labels[i, j], labels[i + 1, j], sp.sympify(f"{n-i-1} * b_o"),
                                         sp.sympify(f"{i+1}*a_o"))
             if j < m - 1:
-                mc.add_both_transitions(labels[i, j], labels[i, j+1], sp.sympify(f"{m-j-1} * b_i"),
+                mc.add_both_transitions(labels[i, j], labels[i, j + 1], sp.sympify(f"{m-j-1} * b_i"),
                                         sp.sympify(f"{j+1}*a_i"))
     return mc
