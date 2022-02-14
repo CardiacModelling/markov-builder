@@ -118,7 +118,7 @@ class TestMarkovChain(unittest.TestCase):
 
         # Output reduced system of equations
         logging.debug("Reduced ODE system is :%s",
-                      str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-2],
+                      str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-1],
                                                                     use_parameters=True)))
 
         # Output list of parameters
@@ -243,19 +243,24 @@ class TestMarkovChain(unittest.TestCase):
 
         TODO add more models
         """
-        n_samples = 25
+        n_samples = 5
 
         mc = example_models.construct_four_state_chain()
-        labels, eqm_dist = mc.get_equilibrium_distribution(param_dict={'V': 0})
+
+        param_dict = mc.default_values
+        param_dict['V'] = 0
+
+        labels, eqm_dist = mc.get_equilibrium_distribution(param_dict=param_dict)
         starting_distribution = [int(val) for val in n_samples * eqm_dist]
 
-        df = mc.sample_trajectories(n_samples, (0, 250), {'V': 0}, starting_distribution=starting_distribution)
+        df = mc.sample_trajectories(n_samples, (0, 250), param_dict=param_dict,
+                                    starting_distribution=starting_distribution)
         df = df.set_index('time')
         logging.debug(f"sample trajectories results: {df}")
         df.plot()
 
         for label, val in zip(labels, eqm_dist):
-            plt.axhline(val*n_samples, ls='--', alpha=0.5, label=label)
+            plt.axhline(val * n_samples, ls='--', alpha=0.5, label=label)
         plt.legend()
 
         plt.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'))
