@@ -183,3 +183,58 @@ def construct_HH_model(n: int, m: int, name: str = None):
                 mc.add_both_transitions(labels[i, j], labels[i, j + 1], sp.sympify(f"{m-j-1} * b_i"),
                                         sp.sympify(f"{j+1}*a_i"))
     return mc
+
+
+def construct_kemp_model():
+    """
+    Construct and parameterise the model describe in https://doi.org/10.1085/jgp.202112923 setting the WT parameters to be the defaults
+    """
+    mc = MarkovChain(name='Kemp_model')
+
+    # First add the non-conducting states
+    for state in ('IO', 'C1', 'IC1', 'C2', 'IC2'):
+        mc.add_state(state)
+
+    # Now the conducting state
+    mc.add_state('O', open_state=True)
+
+    rates = [
+        ('O', 'IO', 'b_h', 'a_h'), ('C1', 'IC1', 'b_h', 'a_h'), ('C2', 'IC2', 'b_h', 'a_h'),
+        ('O', 'C1', 'b_2', 'a_2'), ('C1', 'C2', 'b_1', 'a_1'),
+        ('IO', 'IC1', 'b_2', 'a_2'), ('IC1', 'IC2', 'b_1', 'a_1')
+    ]
+
+    for r in rates:
+        mc.add_both_transitions(*r)
+
+    positive_rate_expr = ('a*exp(b*V)', ('a', 'b'))
+    negative_rate_expr = ('a*exp(-b*V)', ('a', 'b'))
+
+    rate_dictionary = {
+        # Activation rates
+        'a_1': positive_rate_expr + ((8.53e-03, 8.32e-02),),
+        'a_2': positive_rate_expr + ((1.49e-01, 2.43e-02),),
+
+        # Deactivation rates
+        'b_1': negative_rate_expr + ((1.26e-02, 2.71e-04),),
+        'b_2': negative_rate_expr + ((5.58e-04, 2.10e0),),
+
+        # Recovery rate
+        'a_h': negative_rate_expr + ((7.67e-02, 2.25e-02),),
+
+        #Inactivation rate
+        'b_h': positive_rate_expr + ((2.70e-01, 1.58e-02),),
+    }
+
+    mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+
+    open_state = mc.get_state_symbol('O')
+
+    auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
+    mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
+                                   {
+                                   # Use conductance from Cell 2
+                                       'g_Kr': 7.05e-02,
+                                   # -88mV chosen arbitrarily
+                                       'E_Kr': -88})
+    return mc
