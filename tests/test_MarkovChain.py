@@ -31,9 +31,9 @@ class TestMarkovChain(unittest.TestCase):
 
         self.models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
                        example_models.construct_non_reversible_chain(), example_models.construct_mazhari_chain(),
-                       example_models.construct_wang_chain()]
+                       example_models.construct_wang_chain(), example_models.construct_kemp_model()]
 
-    def test_construct_chain(self):
+    def test_transition_matrix(self):
         """Construct various examples of Markov models.
         Output dot files of these graphs in the test output directory.
 
@@ -69,70 +69,45 @@ class TestMarkovChain(unittest.TestCase):
         self.assertEqual(pen_and_paper_A, system[0])
         self.assertEqual(pen_and_paper_B, system[1])
 
-        # Construct M10 model
-        logging.info("Constructing six-state M10 model")
+    def test_construct_examples(self):
+        """ Output the example models as pyvis files and DOT files """
+        for mc in self.models:
+            name = mc.name
+            mc.draw_graph(os.path.join(self.output_dir, "%s_graph.html" % name))
+            nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
 
-        m10 = example_models.construct_M10_chain()
-
-        # Save DOTfile
-        nx.drawing.nx_agraph.write_dot(m10.graph, "M10_dotfile.dot")
-
-        # Save html visualisation using pyvis
-        m10.draw_graph(os.path.join(self.output_dir, "M10.html"))
-
-        # Construct Mazhari model
-        logging.info("Constructing five-state Mazhari model")
-
-        mazhari = example_models.construct_mazhari_chain()
-
-        # Save DOTfile
-        nx.drawing.nx_agraph.write_dot(mazhari.graph, "Mazhari_dotfile.dot")
-
-        # Save html visualisation using pyvis
-        mazhari.draw_graph(os.path.join(self.output_dir, "Mazhari.html"))
-
-        # Construct Wang model
-        logging.info("Constructing five-state Wang model")
-
-        wang = example_models.construct_wang_chain()
-
-        # Save DOTfile
-        nx.drawing.nx_agraph.write_dot(wang.graph, "Wang_dotfile.dot")
-
-        # Save html visualisation using pyvis
-        wang.draw_graph(os.path.join(self.output_dir, "Wang.html"))
 
     def test_parameterise_rates(self):
         """
         Test the MarkovChain.parameterise_rates function.
         """
 
-        mc = example_models.construct_four_state_chain()
+        for mc in (example_models.construct_four_state_chain(), example_models.construct_kemp_model()):
+            # Expressions to be used for the rates. The variable V (membrane
+            # voltage) is shared across expressions and so it should only appear
+            # once in the parameter list.
 
-        # Expressions to be used for the rates. The variable V (membrane
-        # voltage) is shared across expressions and so it should only appear
-        # once in the parameter list.
+            # Output system of equations
+            logging.debug("ODE system is %s", str(mc.get_transition_matrix(use_parameters=True)))
 
-        # Output system of equations
-        logging.debug("ODE system is %s", str(mc.get_transition_matrix(use_parameters=True)))
+            # Output reduced system of equations
+            logging.debug("Reduced ODE system is :%s",
+                          str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-1],
+                                                                        use_parameters=True)))
 
-        # Output reduced system of equations
-        logging.debug("Reduced ODE system is :%s",
-                      str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-1],
-                                                                    use_parameters=True)))
+            # Output list of parameters
+            param_list = mc.get_parameter_list()
+            logging.debug("parameters are %s", mc.get_parameter_list())
 
-        # Output list of parameters
-        param_list = mc.get_parameter_list()
-        logging.debug("parameters are %s", mc.get_parameter_list())
+            self.assertEqual(param_list.count('V'), 1)
 
-        self.assertEqual(param_list.count('V'), 1)
+            # Generate myokit code
+            myokit_model = mc.generate_myokit_model()
+            myokit.save(os.path.join(self.output_dir, 'beattie_model.mmt'), myokit_model)
 
-        # Generate myokit code
-        myokit_model = mc.generate_myokit_model()
-        myokit.save(os.path.join(self.output_dir, 'beattie_model.mmt'), myokit_model)
-
-        myokit_model = mc.generate_myokit_model(eliminate_state='IC')
-        myokit.save(os.path.join(self.output_dir, 'beattie_model_reduced.mmt'), myokit_model)
+            # Eliminate last node
+            myokit_model = mc.generate_myokit_model(list(mc.graph)[-1])
+            myokit.save(os.path.join(self.output_dir, 'beattie_model_reduced.mmt'), myokit_model)
 
     def test_construct_open_trapping_model(self):
         """
@@ -166,7 +141,8 @@ class TestMarkovChain(unittest.TestCase):
         # Test function on models that we know are reversible
         reversible_models = [example_models.construct_four_state_chain(),
                              example_models.construct_M10_chain(),
-                             example_models.construct_mazhari_chain()]
+                             example_models.construct_mazhari_chain(),
+                             example_models.construct_kemp_model()]
 
         for mc in reversible_models:
             logging.info("Checking reversibility")
