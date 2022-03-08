@@ -186,17 +186,16 @@ def construct_HH_model(n: int, m: int, name: str = None):
 
 
 def construct_kemp_model():
-    """
-    Construct and parameterise the model describe in https://doi.org/10.1085/jgp.202112923 setting the WT parameters to be the defaults
+    """Construct and parameterise the model describe in https://doi.org/10.1085/jgp.202112923
     """
     mc = MarkovChain(name='Kemp_model')
+
+    # Now the conducting state
+    mc.add_state('O', open_state=True)
 
     # First add the non-conducting states
     for state in ('IO', 'C1', 'IC1', 'C2', 'IC2'):
         mc.add_state(state)
-
-    # Now the conducting state
-    mc.add_state('O', open_state=True)
 
     rates = [
         ('O', 'IO', 'b_h', 'a_h'), ('C1', 'IC1', 'b_h', 'a_h'), ('C2', 'IC2', 'b_h', 'a_h'),
@@ -207,22 +206,19 @@ def construct_kemp_model():
     for r in rates:
         mc.add_both_transitions(*r)
 
-    positive_rate_expr = ('a*exp(b*V)', ('a', 'b'))
-    negative_rate_expr = ('a*exp(-b*V)', ('a', 'b'))
-
     rate_dictionary = {
         # Activation rates
         'a_1': positive_rate_expr + ((8.53e-03, 8.32e-02),),
         'a_2': positive_rate_expr + ((1.49e-01, 2.43e-02),),
 
         # Deactivation rates
-        'b_1': negative_rate_expr + ((1.26e-02, 2.71e-04),),
-        'b_2': negative_rate_expr + ((5.58e-04, 2.10e0),),
+        'b_1': negative_rate_expr + ((1.26e-02, 1.04e-04),),
+        'b_2': negative_rate_expr + ((5.58e-04, 4.07e-02),),
 
         # Recovery rate
         'a_h': negative_rate_expr + ((7.67e-02, 2.25e-02),),
 
-        #Inactivation rate
+        # Inactivation rate
         'b_h': positive_rate_expr + ((2.70e-01, 1.58e-02),),
     }
 
