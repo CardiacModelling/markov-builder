@@ -74,6 +74,12 @@ class TestMarkovChain(unittest.TestCase):
         for mc in self.models:
             name = mc.name
             mc.draw_graph(os.path.join(self.output_dir, "%s_graph.html" % name))
+
+            if len(mc.rate_expressions) > 0:
+                mc.draw_graph(os.path.join(self.output_dir, "%s_graph_parameters.html" %
+                                           name), show_parameters=True)
+
+            nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
             nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
 
 
