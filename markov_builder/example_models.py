@@ -108,18 +108,18 @@ def construct_wang_chain():
     for r in rates:
         mc.add_both_transitions(*r)
 
-    positive_rate_expr = ('a*exp(b*V)', ('a', 'b'))
-    negative_rate_expr = ('a*exp(-b*V)', ('a', 'b'))
     constant_rate_expr = ('a', ('a',))
 
-    rate_dictionary = {'a_a0': positive_rate_expr,
-                       'b_a0': negative_rate_expr,
-                       'k_f': constant_rate_expr,
-                       'k_b': constant_rate_expr,
-                       'a_a1': positive_rate_expr,
-                       'b_a1': negative_rate_expr,
-                       'a_1': positive_rate_expr,
-                       'b_1': negative_rate_expr
+    rate_dictionary = {'a_a0': positive_rate_expr + ((0.022348, 0.01176),),
+                       'b_a0': negative_rate_expr + ((0.047002, 0.0631),),
+                       'k_f': constant_rate_expr + ((0.023761,),),
+                       'k_b': constant_rate_expr + ((0.036778,),),
+                       'a_a1': positive_rate_expr + ((0.013733, 0.038198),),
+                       'b_a1': negative_rate_expr + ((0.0000689, 0.04178),),
+
+                       # Using 2mmol KCl values
+                       'a_1': positive_rate_expr + ((0.090821, 0.023391),),
+                       'b_1': negative_rate_expr + ((0.006497, 0.03268),)
                        }
 
     mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
