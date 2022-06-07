@@ -97,10 +97,10 @@ def construct_mazhari_chain():
 def construct_wang_chain():
     mc = MarkovChain(name='Wang_model')
 
+    mc.add_state('O', open_state=True)
+
     for state in ('C1', 'C2', 'C3', 'I'):
         mc.add_state(state)
-
-    mc.add_state('O', open_state=True)
 
     rates = [('C1', 'C2', 'a_a0', 'b_a0'), ('C2', 'C3', 'k_f', 'k_b'), ('C3', 'O', 'a_a1', 'b_a1'),
              ('O', 'I', 'a_1', 'b_1')]
@@ -229,8 +229,7 @@ def construct_kemp_model():
     auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
                                    {
-                                   # Use conductance from Cell 2
-                                       'g_Kr': 7.05e-02,
-                                   # -88mV chosen arbitrarily
-                                       'E_Kr': -88})
+                                       'g_Kr': 7.05e-02,  # Use conductance from Cell 2
+                                       'E_Kr': -88,  # -88mV chosen arbitrarily
+                                   })
     return mc
