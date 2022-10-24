@@ -63,7 +63,7 @@ def construct_four_state_chain():
                        'k_3': positive_rate_expr + ((0.0873, 8.91E-3),),
                        'k_4': negative_rate_expr + ((5.15E-3, 0.003158),)}
 
-    mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+    mc.parameterise_rates(rate_dictionary)
 
     open_state = mc.get_state_symbol('O')
     auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V - E_Kr)")
@@ -122,7 +122,7 @@ def construct_wang_chain():
                        'b_1': negative_rate_expr + ((0.006497, 0.03268),)
                        }
 
-    mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+    mc.parameterise_rates(rate_dictionary)
 
     open_state = mc.get_state_symbol('O')
 
@@ -222,7 +222,7 @@ def construct_kemp_model():
         'b_h': positive_rate_expr + ((2.70e-01, 1.58e-02),),
     }
 
-    mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+    mc.parameterise_rates(rate_dictionary)
 
     open_state = mc.get_state_symbol('O')
 

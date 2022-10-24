@@ -22,24 +22,24 @@ class MarkovChain():
     """
 
     def __init__(self, states: list = [], state_attributes_class:
-                 MarkovStateAttributes = None, seed: int = None,
-                 name: str = None):
+                 MarkovStateAttributes = None, seed: int = None, name: str =
+                 None, open_state: str = None, rates: list = None,
+                 rate_dictionary: dict = None, auxiliary_expression: str =
+                 None, auxiliary_symbol: str = None, shared_variables_dict: dict
+                 = None, auxiliary_params_dict: dict = None):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
         # between the two nodes
 
         self.graph = nx.DiGraph()
-        if states:
-            self.graph.add_nodes_from(states)
         self.rates = set()
 
         # Initialise a random number generator for simulation. Optionally, a
         # seed can be specified.
         self.rng = default_rng(seed)
         self.name = name
-        self.shared_rate_variables = set()
-
+        self.shared_variables = {}
         self.rate_expressions = {}
         self.default_values = {}
 
@@ -53,7 +53,24 @@ class MarkovChain():
         self.auxiliary_variable = 'auxiliary_expression'
 
         if not issubclass(self.state_attributes_class, MarkovStateAttributes):
-            raise Exception("state_attirbutes_class must be a dataclass")
+            raise Exception("state_attributes_class must be a subclass of MarkovStateAttributes")
+
+        if states:
+            for state in states:
+                self.add_state(state)
+
+        if rates:
+            for r in rates:
+                self.add_both_transitions(*r)
+            if shared_variables_dict:
+                self.parameterise_rates(rate_dictionary, shared_variables_dict)
+
+        if states and open_state and rates and rate_dictionary and auxiliary_expression and\
+           auxiliary_symbol and shared_variables_dict and auxiliary_params_dict:
+            open_state = self.get_state_symbol(open_state)
+            self.define_auxiliary_expression(sp.sympify(auxiliary_expression.format(open_state)),
+                                             auxiliary_symbol,
+                                             auxiliary_params_dict)
 
     def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
         """ Duplicate all states and rates in the model such that there are two identical components.
@@ -404,14 +421,14 @@ class MarkovChain():
             # default missing values to those in self.default_values
             param_dict = {param: param_dict[param]
                           if param in param_dict
-                          else self.default_values[param]
+                          else {**self.default_values, **self.shared_variables}[param]
                           for param in param_list}
         else:
             param_dict = self.default_values
 
-        if starting_distribution is None:
-            starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
-            starting_distribution[0] += no_trajectories - starting_distribution.sum()
+            if starting_distribution is None:
+                starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
+                starting_distribution[0] += no_trajectories - starting_distribution.sum()
 
         distribution = starting_distribution
 
@@ -554,7 +571,7 @@ class MarkovChain():
                     d['label'] = d['rate']
                 d['rate'] = str(sp.sympify(d['rate']).subs(rates_dict))
 
-    def parameterise_rates(self, rate_dict: dict, shared_variables: list = []) -> None:
+    def parameterise_rates(self, rate_dict: dict, shared_variables: dict = {}) -> None:
         """Define a set of parameters for the transition rates.
 
         Parameters declared as
@@ -569,14 +586,6 @@ class MarkovChain():
 
         """
 
-        # Check that shared_variables is a list (and not a string!)
-        if isinstance(shared_variables, str):
-            raise TypeError("shared_variables is a string but must be a list")
-
-        for v in shared_variables:
-            if v in self.reserved_names:
-                raise Exception('name %s is reserved', v)
-
         # Validate rate dictionary
         for r in rate_dict:
             if r not in self.rates:
@@ -584,13 +593,21 @@ class MarkovChain():
 
         rate_expressions = {}
         default_values_dict = {}
+
         for r in self.rates:
             if r in rate_dict:
-                if len(rate_dict[r]) == 2:
+                default_values = []
+                dummy_variables = []
+                if len(rate_dict[r]) == 1:
+                    expression = rate_dict[r][0]
+                elif len(rate_dict[r]) == 2:
                     expression, dummy_variables = rate_dict[r]
-                    default_values = []
-                else:
+                elif len(rate_dict[r]) == 3:
                     expression, dummy_variables, default_values = rate_dict[r]
+                else:
+                    raise ValueError(f"Rate dictionary was malformed. \
+                    Entry with key {r} ({rate_dict[r]}) should be a tuple/list of length 1-3")
+
                 if len(dummy_variables) < len(default_values):
                     raise ValueError("dummy variables list and default values list have mismatching lengths.\
                     Lengths {} and {}".format(len(dummy_variables), len(default_values)))
@@ -598,10 +615,11 @@ class MarkovChain():
                 expression = sp.sympify(expression)
 
                 for symbol in expression.free_symbols:
-                    variables = list(dummy_variables) + list(shared_variables)
-                    if str(symbol) not in variables:
-                        raise Exception(
-                            f"Symbol, {symbol} was not found in dummy variables or shared_variables, {variables}.")
+                    symbol = str(symbol)
+                    variables = list(dummy_variables) + list(shared_variables.keys())
+                    if symbol not in variables:
+                        # Add symbol to shared variables dictionary
+                        shared_variables[symbol] = None
                 subs_dict = {u: f"{r}_{u}" for i, u in enumerate(dummy_variables)}
                 rate_expressions[r] = sp.sympify(expression).subs(subs_dict)
 
@@ -609,13 +627,14 @@ class MarkovChain():
                 for u, v in zip(dummy_variables, default_values):
                     new_var_name = f"{r}_{u}"
                     if new_var_name in default_values_dict:
-                        raise Exception(f"A parameter with label {new_var_name} is already present in the model.")
+                        raise ValueError(f"A parameter with label {new_var_name} is already present in the model.")
                     default_values_dict[new_var_name] = v
 
         self.rate_expressions = {**self.rate_expressions, **rate_expressions}
-        self.default_values = {**self.default_values, **default_values_dict}
+        self.default_values = default_values_dict
 
-        self.shared_rate_variables = self.shared_rate_variables.union(shared_variables)
+        for key in shared_variables.keys():
+            self.default_values[key] = shared_variables[key]
 
     def get_parameter_list(self) -> List[str]:
         """
@@ -630,7 +649,7 @@ class MarkovChain():
             for symbol in self.rate_expressions[r].free_symbols:
                 rates.add(str(symbol))
 
-        rates = rates.union([str(sym) for sym in self.shared_rate_variables])
+        rates = rates.union([str(sym) for sym in self.shared_variables])
 
         return sorted(rates)
 
@@ -703,9 +722,18 @@ class MarkovChain():
                 comp.add_variable(parameter)
                 if parameter in self.default_values:
                     comp[parameter].set_rhs(self.default_values[parameter])
+                elif parameter in self.auxiliary_variables:
+                    comp[parameter].set_rhs(self.auxiliary_variables[parameter])
+                elif parameter in self.shared_variables:
+                    comp[parameter].set_rhs(self.shared_variables[parameter])
 
         for rate in self.rates:
-            comp.add_variable(rate)
+            try:
+                comp.add_variable(rate)
+            except myokit.DuplicateName:
+                # Variable has already been added
+                pass
+
             if rate in self.rate_expressions:
                 expr = self.rate_expressions[rate]
                 comp[rate].set_rhs(str(expr))
@@ -724,7 +752,7 @@ class MarkovChain():
             var.set_state_value(0)
 
         # All but one states start with 0 occupancy. If they were all 0 nothing
-        # would happen!
+        # would happen.
         comp[states[-1]].set_state_value(1)
 
         # Write equation for eliminated state using the fact that the state
@@ -739,12 +767,14 @@ class MarkovChain():
             comp[self.get_state_symbol(eliminate_state)].set_rhs(rhs_str)
 
         # Add auxiliary equation if required
-        if self.auxiliary_expression is not None:
+        if self.auxiliary_expression is not None and self.auxiliary_variable:
             comp.add_variable(self.auxiliary_variable)
             comp[self.auxiliary_variable].set_rhs(str(self.auxiliary_expression))
+
         return model
 
-    def define_auxiliary_expression(self, expression: sp.Expr, label: str = None, default_values: dict = {}) -> None:
+    def define_auxiliary_expression(self, expression: sp.Expr, label: str =
+                                    None, default_values: dict = {}) -> None:
         """Define an auxiliary output variable for the model.
 
         :param expression: A sympy expression defining the auxiliary variable
@@ -763,12 +793,6 @@ class MarkovChain():
             raise Exception()
 
         state_symbols = [self.get_state_symbol(state) for state in self.graph.nodes()]
-        for symbol in expression.free_symbols:
-            if str(symbol) not in state_symbols:
-                if self.shared_rate_variables is None:
-                    self.shared_rate_variables = set(str(symbol))
-                else:
-                    self.shared_rate_variables.add(str(symbol))
 
         for symbol in default_values:
             symbol = sp.sympify(symbol)
@@ -777,8 +801,20 @@ class MarkovChain():
             if symbol in self.default_values:
                 raise Exception()
 
-        self.default_values = {**self.default_values, **default_values}
+        for symbol in expression.free_symbols:
+            if str(symbol) not in state_symbols:
+                symbol = str(symbol)
+                if symbol in default_values.keys():
+                    self.shared_variables[symbol] = default_values[symbol]
+                elif symbol in self.shared_variables:
+                    continue
+                else:
+                    self.shared_variables[symbol] = np.NaN
+
         self.auxiliary_expression = expression
+
+        # TODO check these variables are not elsewhere in the model
+        self.auxiliary_variables = default_values
 
     def as_latex(self, state_to_remove: str = None, include_auxiliary_expression: bool = False,
                  column_vector=True, label_order: list = None) -> str:
