@@ -80,7 +80,6 @@ class TestMarkovChain(unittest.TestCase):
                                            name), show_parameters=True)
 
             nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
-            nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
 
     def test_parameterise_rates(self):
         """
