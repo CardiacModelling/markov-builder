@@ -485,6 +485,18 @@ class MarkovChain():
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
 
+    def is_connected(self) -> bool:
+        """Checks if the graph is strongly connected that is, if each state can be
+        reached from every other state. This function returns true even if all
+        transition rates are 0.
+
+        :return: A bool which is true if the graph is strongly connected and
+        false otherwise
+
+        """
+
+        return nx.algorithms.components.is_strongly_connected(self.graph)
+
     def is_reversible(self) -> bool:
         """Checks symbolically whether or not the Markov chain is reversible for any set of non-zero transition rate values.
 
@@ -498,7 +510,7 @@ class MarkovChain():
         # Digraph must be strongly connected in order for the chain to be
         # reversible. In other words it must be possible to transition from any
         # state to any other state in some finite number of transitions
-        if not nx.algorithms.components.is_strongly_connected(self.graph):
+        if not self.is_connected():
             return False
 
         undirected_graph = self.graph.to_undirected(reciprocal=False, as_view=True)
@@ -511,6 +523,13 @@ class MarkovChain():
             iter = list(zip(cycle, itertools.islice(cycle, 1, None)))
             forward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for frm, to in iter]
             backward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for to, frm in iter]
+
+            logging.debug(self.rate_expressions)
+
+            # Substitute in expressions
+            forward_rate_list = [rate.subs(self.rate_expressions) for rate in forward_rate_list]
+            backward_rate_list = [rate.subs(self.rate_expressions) for rate in
+                                  backward_rate_list]
 
             logging.debug("Rates moving forwards around the cycle are: %s", forward_rate_list)
             logging.debug("Rates moving backwards around the cycle are: %s", backward_rate_list)
@@ -630,7 +649,10 @@ class MarkovChain():
                         raise ValueError(f"A parameter with label {new_var_name} is already present in the model.")
                     default_values_dict[new_var_name] = v
 
-        self.rate_expressions = {**self.rate_expressions, **rate_expressions}
+        rate_expressions = {rate: expr.subs(rate_expressions) for rate, expr in
+                            rate_expressions.items()}
+
+        self.rate_expressions = rate_expressions
         self.default_values = default_values_dict
 
         for key in shared_variables.keys():

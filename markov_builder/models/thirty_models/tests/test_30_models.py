@@ -12,6 +12,8 @@ from markov_builder.models.thirty_models import (
     model_01,
     model_02,
     model_03,
+    model_04,
+    model_05,
 )
 
 
@@ -32,7 +34,7 @@ class TestThirtyModels(unittest.TestCase):
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
 
-        self.models = [model_00, model_01, model_02, model_03]
+        self.models = [model_00, model_01, model_02, model_03, model_04, model_05]
 
     def test_generate_myokit(self):
         for model in self.models:
@@ -56,6 +58,22 @@ class TestThirtyModels(unittest.TestCase):
 
             nx.drawing.nx_agraph.write_dot(mc.graph, os.path.join(self.output_dir,
                                                                   "%s_dotfile.dot" % name))
+
+    def test_connected(self):
+        for model in self.models:
+            name = model.__name__
+            logging.debug(f"intiating {name}")
+
+            mc = model()
+            self.assertTrue(mc.is_connected())
+
+    def test_reversible(self):
+        for model in self.models:
+            name = model.__name__
+            logging.debug(f"intiating {name}")
+
+            mc = model()
+            self.assertTrue(mc.is_reversible())
 
 
 if __name__ == "__main__":
