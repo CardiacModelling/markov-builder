@@ -4,13 +4,11 @@ import logging
 import os
 import unittest
 
-import myokit
-import networkx as nx
-
-import myokit as mk
-import numpy as np
-
 import matplotlib.pyplot as plt
+import myokit
+import myokit as mk
+import networkx as nx
+import numpy as np
 
 from markov_builder.models.thirty_models import (
     model_00,
@@ -19,13 +17,16 @@ from markov_builder.models.thirty_models import (
     model_03,
     model_04,
     model_05,
+    model_06,
+    model_07,
+    model_08,
 )
 
 
 class TestThirtyModels(unittest.TestCase):
 
     def setUp(self):
-        """Run by unittest before the tests in this class are performed.
+        """This is run by unittest before the tests in this class are performed.
 
         Create an output directory (if it doesn't already exist). An
         alternative output path can be used by setting the
@@ -39,7 +40,8 @@ class TestThirtyModels(unittest.TestCase):
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
 
-        self.models = [model_00, model_01, model_02, model_03, model_04, model_05]
+        self.models = [model_00, model_01, model_02, model_03, model_04,
+                       model_05, model_06, model_07, model_08]
 
     def test_generate_myokit(self):
         for model in self.models:
@@ -95,8 +97,9 @@ class TestThirtyModels(unittest.TestCase):
             logging.debug(f"intiating {name}")
 
             mc = model()
-            mk_protocol = mk.load_protocol(os.path.join(mmt_dir,
-                                                         'simplified-staircase.mmt'))
+            mk_protocol_filename = os.path.join(mmt_dir,
+                                                'simplified-staircase.mmt')
+            mk_protocol = mk.load_protocol(mk_protocol_filename)
 
             mk_model = mk.load_model(os.path.join(mmt_dir,
                                                   f"model-{i}.mmt"))
