@@ -560,7 +560,7 @@ class MarkovChain():
                 if len(self.rate_expressions) == 0:
                     raise Exception()
                 else:
-                    data['label'] = str(self.rate_expressions[data['rate']])
+                    data['label'] = str(sp.sympify(data['rate']).subs(self.rate_expressions))
 
         nt = pyvis.network.Network(directed=True)
         nt.from_nx(self.graph)
@@ -750,11 +750,14 @@ class MarkovChain():
                     comp[parameter].set_rhs(self.shared_variables[parameter])
 
         for rate in self.rates:
-            try:
-                comp.add_variable(rate)
-            except myokit.DuplicateName:
-                # Variable has already been added
-                pass
+            free_symbols = sp.parse_expr(rate).free_symbols
+            for symb in free_symbols:
+                if symb not in comp.variables():
+                    try:
+                        comp.add_variable(str(symb))
+                    except myokit.DuplicateName:
+                        # Variable has already been added
+                        pass
 
             if rate in self.rate_expressions:
                 expr = self.rate_expressions[rate]

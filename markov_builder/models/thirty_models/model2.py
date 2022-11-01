@@ -7,15 +7,16 @@ from markov_builder.rate_expressions import negative_rate_expr, positive_rate_ex
 class model_02(MarkovChain):
     description = ""
     states = ('O', 'C', 'I')
-    rates = [('C', 'O', 'a_m', 'b_m'),
-             ('O', 'I', 'b', 'a')]
+    rates = [('O', 'C', 'bm', 'am'),
+             ('O', 'I', 'ah', 'bh')]
 
     open_state = 'O'
     shared_variables_dict = {'V': NaN}
-    rate_dictionary = {'a_m': positive_rate_expr + ((2.26E-4, 6.99E-2),),
-                       'b_m': negative_rate_expr + ((3.44E-5, 5.460E-2),),
-                       'b': positive_rate_expr + ((0.0873, 8.91E-3),),
-                       'a': negative_rate_expr + ((5.15E-3, 0.003158),)}
+    rate_dictionary = {'am': positive_rate_expr + ((2.26E-4, 6.99E-2),),
+                       'bm': negative_rate_expr + ((3.45E-5, 5.462E-2),),
+                       'ah': positive_rate_expr + ((0.08730, 8.91e-3),),
+                       'bh': negative_rate_expr + ((5.15e-3, 0.03158),),
+                       }
 
     auxiliary_expression = "g_Kr * {} * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'

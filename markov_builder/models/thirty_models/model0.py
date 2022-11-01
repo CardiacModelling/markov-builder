@@ -16,9 +16,9 @@ class model_00(MarkovChain):
     shared_variables_dict = {'V': np.NaN}
 
     rate_dictionary = {'k_1': positive_rate_expr + ((2.26E-4, 6.99E-2),),
-                       'k_2': negative_rate_expr + ((3.44E-5, 5.460E-2),),
+                       'k_2': negative_rate_expr + ((3.45E-5, 5.460E-2),),
                        'k_3': positive_rate_expr + ((0.0873, 8.91E-3),),
-                       'k_4': negative_rate_expr + ((5.15E-3, 0.003158),)}
+                       'k_4': negative_rate_expr + ((5.15E-3, 0.03158),)}
     auxiliary_expression = "g_Kr * {} * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
 

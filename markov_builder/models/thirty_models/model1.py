@@ -7,7 +7,7 @@ from markov_builder.rate_expressions import negative_rate_expr, positive_rate_ex
 class model_01(MarkovChain):
     description = ""
     states = ('O', 'C')
-    rates = [('O', 'C', 'k_12', 'k_21')]
+    rates = [('O', 'C', 'k_21', 'k_12')]
 
     open_state = 'O'
     shared_variables_dict = {'V': NaN}
