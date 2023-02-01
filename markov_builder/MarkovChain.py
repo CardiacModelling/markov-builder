@@ -469,7 +469,8 @@ class MarkovChain():
         return labels, ss
 
     def is_reversible(self) -> bool:
-        """Checks symbolically whether or not the Markov chain is reversible for any set of non-zero transition rate values.
+        """Checks symbolically whether or not the Markov chain is reversible for any
+        set of non-zero transition rate values.
 
         We assume that all transition rates are always non-zero and follow
         Colquhoun et al. (2004) https://doi.org/10.1529/biophysj.103.
@@ -504,7 +505,7 @@ class MarkovChain():
 
             forward_rate_product = sp.prod(forward_rate_list)
             backward_rate_product = sp.prod(backward_rate_list)
-            if(forward_rate_product - backward_rate_product).evalf() != 0:
+            if (forward_rate_product - backward_rate_product).evalf() != 0:
                 return False
         return True
 
