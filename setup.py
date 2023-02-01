@@ -56,6 +56,7 @@ setup(
         'symengine>=0.8',
         'sympy>=1.8',
         'pyvis>=0.1.9',
+        'pygraphviz>=1.10',
         'myokit>=1.33.0'
     ],
     extras_require={
