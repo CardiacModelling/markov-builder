@@ -1,6 +1,9 @@
 name: build
 on: [pull_request]
 
+env:
+  MARKOVBUILDER_TEST_OUTPUT: /tmp/
+
 jobs:
   build:
     runs-on: ubuntu-latest
