@@ -5,28 +5,10 @@ from .MarkovChain import MarkovChain
 from .rate_expressions import negative_rate_expr, positive_rate_expr
 
 
-def construct_M10_chain():
-    mc = MarkovChain(name='M10')
-
-    # First add states
-    for state in ('IC1', 'IC2', 'IO', 'C1', 'C2'):
-        mc.add_state(state)
-
-    mc.add_state('O', open_state=True)
-
-    # Now add rates
-    rates = [('IC2', 'IC1', 'a1', 'b1'), ('IC1', 'IO', 'a2', 'b2'),
-             ('IO', 'O', 'ah', 'bh'), ('O', 'C1', 'b2', 'a2'),
-             ('C1', 'C2', 'b1', 'a1'), ('C2', 'IC2', 'bh', 'ah'),
-             ('C1', 'IC1', 'bh', 'ah')]
-
-    for r in rates:
-        mc.add_both_transitions(*r)
-
-    return mc
-
-
 def construct_non_reversible_chain():
+    """Construct a model structure that is known to not satisfy microscopic
+    reversibiliy. This is used for testing.
+    """
     mc = MarkovChain(name='non_reversible_example')
 
     mc.add_state('A')
@@ -43,6 +25,10 @@ def construct_non_reversible_chain():
 
 
 def construct_four_state_chain():
+    """Construct and parameterise the model introduced by Beattie et al. in
+    https://doi.org/10.1101/100677
+    """
+
     mc = MarkovChain(name='Beattie_model')
     states = ['C', 'I', 'IC']
 
@@ -76,6 +62,10 @@ def construct_four_state_chain():
 
 
 def construct_mazhari_chain():
+    """Construct the Mazhari model structure for hERG as described in
+    https://doi.org/10.1161/hh1301.093633
+    """
+
     mc = MarkovChain(name='Mazhari_model')
 
     for state in ('C1', 'C2', 'C3', 'I'):
@@ -95,6 +85,9 @@ def construct_mazhari_chain():
 
 
 def construct_wang_chain():
+    """Construct the Wang model structure for hERG as described in
+    https://doi.org/10.1111/j.1469-7793.1997.045bl.x
+    """
     mc = MarkovChain(name='Wang_model')
 
     mc.add_state('O', open_state=True)
@@ -186,8 +179,10 @@ def construct_HH_model(n: int, m: int, name: str = None):
 
 
 def construct_kemp_model():
-    """Construct and parameterise the model describe in https://doi.org/10.1085/jgp.202112923
+    """Construct and parameterise the model introduced by Kemp et al. in
+    https://doi.org/10.1085/jgp.202112923
     """
+
     mc = MarkovChain(name='Kemp_model')
 
     # Now the conducting state

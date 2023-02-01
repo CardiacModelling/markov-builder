@@ -29,9 +29,11 @@ class TestMarkovChain(unittest.TestCase):
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
 
-        self.models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
-                       example_models.construct_non_reversible_chain(), example_models.construct_mazhari_chain(),
-                       example_models.construct_wang_chain(), example_models.construct_kemp_model()]
+        self.models = [example_models.construct_four_state_chain(),
+                       example_models.construct_non_reversible_chain(),
+                       example_models.construct_mazhari_chain(),
+                       example_models.construct_wang_chain(),
+                       example_models.construct_kemp_model()]
 
     def test_transition_matrix(self):
         """Construct various examples of Markov models.
@@ -145,7 +147,6 @@ class TestMarkovChain(unittest.TestCase):
 
         # Test function on models that we know are reversible
         reversible_models = [example_models.construct_four_state_chain(),
-                             example_models.construct_M10_chain(),
                              example_models.construct_mazhari_chain(),
                              example_models.construct_kemp_model()]
 
