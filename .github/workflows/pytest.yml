@@ -28,7 +28,7 @@ jobs:
     - name: Lint with flake8
       run: |
         python -m flake8
-    - name: Test sorting wioth isort
+    - name: Import sorting with isort
       run: |
         python -m isort --verbose --check-only --diff markov_builder tests setup.py
     - name: Test with pytest
