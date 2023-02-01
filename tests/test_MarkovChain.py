@@ -164,11 +164,11 @@ class TestMarkovChain(unittest.TestCase):
         mc = example_models.construct_non_reversible_chain()
         logging.debug("graph is %s", mc.graph)
 
-        assert(not mc.is_reversible())
+        self.assertFalse(mc.is_reversible())
         logging.info("Checking reversibility of non-reversible chain")
         mc.add_open_trapping()
         logging.debug("graph is %s", mc.graph)
-        assert(not mc.is_reversible())
+        self.assertFalse(mc.is_reversible())
 
     def test_equate_rates(self):
         """
