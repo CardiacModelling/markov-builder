@@ -2,7 +2,7 @@ name: build
 on: [pull_request]
 
 env:
-  MARKOVBUILDER_TEST_OUTPUT: /tmp/
+  MARKOVBUILDER_TEST_OUTPUT: tmp/
 
 jobs:
   build:
