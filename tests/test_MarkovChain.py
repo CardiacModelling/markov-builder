@@ -10,7 +10,6 @@ import networkx as nx
 import sympy as sp
 
 import markov_builder.example_models as example_models
-
 from markov_builder.rate_expressions import negative_rate_expr, positive_rate_expr
 
 
@@ -25,7 +24,8 @@ class TestMarkovChain(unittest.TestCase):
 
         """
         test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join(
-            os.path.dirname(__file__), self.__class__.__name__))
+            'test', os.path.dirname(os.path.abspath(__file__)), self.__class__.__name__))
+
         if not os.path.exists(test_output_dir):
             os.makedirs(test_output_dir)
         self.output_dir = test_output_dir
