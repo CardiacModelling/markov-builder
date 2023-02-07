@@ -24,7 +24,7 @@ class TestMarkovChain(unittest.TestCase):
 
         """
         test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join(
-            'test', os.path.dirname(os.path.abspath(__file__)), self.__class__.__name__))
+            'test_output', os.path.dirname(os.path.abspath(__file__)), self.__class__.__name__))
 
         if not os.path.exists(test_output_dir):
             os.makedirs(test_output_dir)
@@ -43,8 +43,6 @@ class TestMarkovChain(unittest.TestCase):
 
         Check that our transition rate matrix for the Beattie model is correct
         by comparing it against a reference solution.
-
-        TODO: Add a reference solution for the m10 model
 
         """
 
