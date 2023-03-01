@@ -16,7 +16,7 @@ try:
 finally:
     # Always manually delete frame
     # https://docs.python.org/2/library/inspect.html#the-interpreter-stack
-    del(frame)
+    del frame
 
 #
 # Version info
