@@ -267,9 +267,13 @@ class MarkovChain():
                 else:
                     edge = self.graph.get_edge_data(current_state, incident_state)
                     if edge is not None:
-                        row.append(edge["rate"])
+                        rate = edge["rate"]
+                        if isinstance(rate, str):
+                            row.append(edge["rate"])
+                        else:
+                            row.append(edge['rate'][0])
                     else:
-                        row.append(0)
+                        row.append(sp.sympify('0'))
             matrix.append(row)
 
         matrix = sp.Matrix(matrix)
@@ -285,7 +289,7 @@ class MarkovChain():
         if label_order is None:
             return list(self.graph.nodes), matrix
         else:
-            if len(label_order) != self.graph.nodes():
+            if len(label_order) != len(self.graph.nodes()):
                 raise Exception("Not all states accounted for in label order")
 
             permutation = [label_order.index(n) for n in self.graph.nodes]
@@ -498,7 +502,8 @@ class MarkovChain():
         return nx.algorithms.components.is_strongly_connected(self.graph)
 
     def is_reversible(self) -> bool:
-        """Checks symbolically whether or not the Markov chain is reversible for any set of non-zero transition rate values.
+        """Checks symbolically whether or not the Markov chain is reversible for any set of non-zero
+        transition rate values.
 
         We assume that all transition rates are always non-zero and follow
         Colquhoun et al. (2004) https://doi.org/10.1529/biophysj.103.
@@ -520,9 +525,9 @@ class MarkovChain():
             cycle.append(cycle[0])
             logging.debug("Checking cycle {}".format(cycle))
 
-            iter = list(zip(cycle, itertools.islice(cycle, 1, None)))
-            forward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for frm, to in iter]
-            backward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for to, frm in iter]
+            iterator = list(zip(cycle, itertools.islice(cycle, 1, None)))
+            forward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for frm, to in iterator]
+            backward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for to, frm in iterator]
 
             logging.debug(self.rate_expressions)
 
@@ -538,19 +543,21 @@ class MarkovChain():
                 logging.debug("Not all rates were specified.")
                 return False
 
-            forward_rate_product = sp.prod(forward_rate_list)
-            backward_rate_product = sp.prod(backward_rate_list)
-            if(forward_rate_product - backward_rate_product).evalf() != 0:
+            forward_rate_product = sp.prod(forward_rate_list).subs(self.rate_expressions)
+            backward_rate_product = sp.prod(backward_rate_list).subs(self.rate_expressions)
+            if (forward_rate_product - backward_rate_product).evalf() != 0:
                 return False
         return True
 
     def draw_graph(self, filepath: str = None, show_options: bool =
-                   False, show_rates: bool = False, show_parameters: bool = False):
+                   False, show_rates: bool = False, show_parameters: bool = False,
+                   show_html=False):
         """Visualise the graph as a webpage using pyvis.
 
         :param filepath: An optional filepath to save the file to. If this is None, will be opened as a webpage instead.
         :param show_options: Whether or not the options menu should be displayed on the webpage
         :param show_parameters: Whether or not we should display the transition rates instead of their labels
+        :param show_html: Whether or not to open the outputted html file in the browser
         """
 
         for _, _, data in self.graph.edges(data=True):
@@ -569,7 +576,7 @@ class MarkovChain():
             nt.show_buttons()
         if filepath is not None:
             nt.save_graph(filepath)
-        else:
+        if show_html:
             nt.show('Markov_builder_graph.html')
 
     def substitute_rates(self, rates_dict: dict):

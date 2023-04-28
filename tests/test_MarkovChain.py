@@ -23,7 +23,7 @@ class TestMarkovChain(unittest.TestCase):
 
         """
         test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), self.__class__.__name__))
+            'test_output', self.__class__.__name__))
         if not os.path.exists(test_output_dir):
             os.makedirs(test_output_dir)
         self.output_dir = test_output_dir
@@ -162,11 +162,11 @@ class TestMarkovChain(unittest.TestCase):
         mc = example_models.construct_non_reversible_chain()
         logging.debug("graph is %s", mc.graph)
 
-        assert(not mc.is_reversible())
+        self.assertFalse(mc.is_reversible())
         logging.info("Checking reversibility of non-reversible chain")
         mc.add_open_trapping()
         logging.debug("graph is %s", mc.graph)
-        assert(not mc.is_reversible())
+        self.assertFalse(mc.is_reversible())
 
     def test_equate_rates(self):
         """
