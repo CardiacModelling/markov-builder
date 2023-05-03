@@ -101,7 +101,7 @@ class TestMarkovChain(unittest.TestCase):
                            'k_4': negative_rate_expr,
                            }
 
-        mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+        mc.parameterise_rates(rate_dictionary, shared_variables={'V': 'V'})
 
     def test_myokit_output(self):
         """

@@ -618,7 +618,7 @@ class MarkovChain():
         V is the membrane voltage (a variable shared between transition rates).
 
         :param rate_dict: A dictionary with a 2-tuple containing an expression and dummy variables for each rate.
-        :param shared_variables: A list of variables that may be shared between transition rates
+        :param shared_variables: A dictionary of variables that may be shared between transition rates
 
         """
 
