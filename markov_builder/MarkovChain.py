@@ -513,7 +513,7 @@ class MarkovChain():
     def is_reversible(self) -> bool:
         """Checks symbolically if the Markov chain is reversible for any set of non-zero
         transition rate values.
-        
+
         We assume that all transition rates are always non-zero and follow
         Colquhoun et al. (2004) https://doi.org/10.1529/biophysj.103.
 

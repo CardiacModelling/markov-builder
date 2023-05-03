@@ -24,7 +24,7 @@ class TestMarkovChain(unittest.TestCase):
 
         """
         test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join('test_output',
-                                         os.path.dirname(os.path.abspath(__file__)), 
+                                         os.path.dirname(os.path.abspath(__file__)),
                                          self.__class__.__name__))
 
         if not os.path.exists(test_output_dir):
