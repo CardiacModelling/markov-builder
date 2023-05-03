@@ -1,0 +1,76 @@
+[[model]]
+name: model-25
+author: Sanmitra Ghosh
+desc: Check associated model definition document
+# Initial values
+ikr.C4 = 1
+ikr.C3 = 0
+ikr.C2 = 0
+ikr.C1 = 0
+ikr.O = 0
+
+#
+# Simulation engine variables
+#
+[engine]
+time = 0 bind time
+pace = 0 bind pace
+
+#
+# Membrane potential
+#
+[membrane]
+V = engine.pace
+    desc: membrane potential
+    in [mV]
+
+[nernst]
+EK = -85 [mV]
+
+#
+#
+[ikr]
+use membrane.V
+IKr = p21 * O * (V - nernst.EK)
+I = 1 - (O + C1 + C2 + C3 + C4)
+
+a1 = p1 * exp( p2 * V)
+b1 = p3 * exp(-p4 * V)
+a2 = p5 * exp( p6 * V)
+b2 = p7 * exp(-p8 * V)
+a3 = p9 * exp( p10 * V)
+b3 = p11 * exp(-p12 * V)
+a4 = p13 * exp( p14 * V)
+b4 = p15 * exp(-p16 * V)
+a5 = p17 * exp( p18 * V)
+b5 = p19 * exp(-p20 * V)
+
+dot(C4) = b1 * C3 - a1 * C4
+dot(C3) = b2 * C2 - a1 * C4 - C3*(a2 + b1)
+dot(C2) = b3 * C1 + a2 * C3 - C2*(a3 + b2)
+dot(C1) = b4 * O  + a3 * C2 - C1*(a4 + b3)
+dot(O) =  b5 * I  + a4 * C1 -  O*(a5 + b4)
+
+p1 = 2.26e-4 [1/ms]
+p2 = 0.06990 [1/mV]
+p3 = 3.45e-5 [1/ms]
+p4 = 0.05462 [1/mV]
+p5 = 0.08730 [1/ms]
+p6 = 8.91e-3 [1/mV]
+p7 = 5.15e-3 [1/ms]
+p8 = 0.03158 [1/mV]
+p9 = 2.26e-4 [1/ms]
+p10 = 0.06990 [1/mV]
+p11 = 3.45e-5 [1/ms]
+p12 = 0.05462 [1/mV]
+p13 = 0.08730 [1/ms]
+p14 = 8.91e-3 [1/mV]
+p15 = 5.15e-3 [1/ms]
+p16 = 0.03158 [1/mV]
+p17 = 5.15e-3 [1/ms]
+p18 = 0.03158 [1/mV]
+p19 = 5.15e-3 [1/ms]
+p20 = 0.03158 [1/mV]
+p21 = 0.15240 [mS/uF]
+
+n_params = 21

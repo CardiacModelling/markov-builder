@@ -1,0 +1,60 @@
+[[model]]
+name: model-5
+author: Sanmitra Ghosh
+desc: Check associated model definition document
+# Initial values
+ikr.C = 1
+ikr.O = 0
+ikr.I = 0
+
+#
+# Simulation engine variables
+#
+[engine]
+time = 0 bind time
+pace = 0 bind pace
+
+#
+# Membrane potential
+#
+[membrane]
+V = engine.pace
+    desc: membrane potential
+    in [mV]
+
+[nernst]
+EK = -85 [mV]
+
+#
+#
+[ikr]
+use membrane.V
+IKr = p11 * O * (V - nernst.EK)
+IC = 1 - (I + O + C)
+
+am = p1 * exp(p2*V)
+bm = p3 * exp(-p4*V)
+b1 = p5 * exp(p6*V)
+a1 = p7 * exp(-p8*V)
+b2 = p9 * exp(p10*V)
+a2 = (b2*a1)/b1
+
+dot(C) = bm*O + a2*IC - C*(am+b2)
+dot(O) = a1*I + am*C - O*(bm+b1)
+dot(I) = b1*O + am*IC -I*(a1 + bm)
+
+
+p1 = 2.26e-4 [1/ms]
+p2 = 0.06990 [1/mV]
+p3 = 3.45e-5 [1/ms]
+p4 = 0.05462 [1/mV]
+p5 = 0.08730 [1/ms]
+p6 = 8.91e-3 [1/mV]
+p7 = 5.15e-3 [1/ms]
+p8 = 0.03158 [1/mV]
+p9 = 5.15e-3 [1/ms]
+p10 = 0.03158 [1/mV]
+p11 = 0.15240 [mS/uF]
+
+n_params = 11
+
