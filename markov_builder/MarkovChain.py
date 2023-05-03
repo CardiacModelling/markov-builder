@@ -304,8 +304,7 @@ class MarkovChain():
         """
 
         if rates_dict is None:
-            assert len(rates_dict) > 0
-            rates_dict = self.rate_expressions
+            Exception('rate dictionary not provided')
 
         l, Q = self.get_transition_matrix(use_parameters=True)
         Q_evaled = np.array(Q.evalf(subs=rates_dict)).astype(np.float64)
@@ -449,7 +448,9 @@ class MarkovChain():
                 if s_i == 0:
                     waiting_times[state_index] = np.inf
                 else:
-                    waiting_times[state_index] = self.rng.exponential(mean_waiting_times[state_index] / (s_i))
+                    waiting_times[state_index] =\
+                        self.rng.exponential(mean_waiting_times[state_index] /
+                                             (s_i))
 
             if t + min(waiting_times) > time_range[1] - time_range[0]:
                 break
@@ -484,7 +485,15 @@ class MarkovChain():
         A, B = self.eliminate_state_from_transition_matrix(use_parameters=True)
 
         labels = self.graph.nodes()
-        ss = -np.array(A.LUsolve(B).evalf(subs=param_dict)).astype(np.float64)
+        try:
+            ss = -np.array(A.LUsolve(B).evalf(subs=param_dict)).astype(np.float64)
+
+        except TypeError as exc:
+            logging.warning("Couldn't evaluate equilibrium distribution as float."
+                            "Is every parameter defined?"
+                            "%s" % str(exc))
+            raise exc
+
         logging.debug("ss is %s", ss)
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
@@ -502,9 +511,9 @@ class MarkovChain():
         return nx.algorithms.components.is_strongly_connected(self.graph)
 
     def is_reversible(self) -> bool:
-        """Checks symbolically whether or not the Markov chain is reversible for any set of non-zero
+        """Checks symbolically if the Markov chain is reversible for any set of non-zero
         transition rate values.
-
+        
         We assume that all transition rates are always non-zero and follow
         Colquhoun et al. (2004) https://doi.org/10.1529/biophysj.103.
 
@@ -545,6 +554,7 @@ class MarkovChain():
 
             forward_rate_product = sp.prod(forward_rate_list).subs(self.rate_expressions)
             backward_rate_product = sp.prod(backward_rate_list).subs(self.rate_expressions)
+
             if (forward_rate_product - backward_rate_product).evalf() != 0:
                 return False
         return True
@@ -847,6 +857,9 @@ class MarkovChain():
 
         # TODO check these variables are not elsewhere in the model
         self.auxiliary_variables = default_values
+
+    def get_states(self):
+        return list(self.graph)
 
     def as_latex(self, state_to_remove: str = None, include_auxiliary_expression: bool = False,
                  column_vector=True, label_order: list = None) -> str:

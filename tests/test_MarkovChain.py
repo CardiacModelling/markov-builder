@@ -10,6 +10,7 @@ import networkx as nx
 import sympy as sp
 
 import markov_builder.example_models as example_models
+from markov_builder.rate_expressions import negative_rate_expr, positive_rate_expr
 
 
 class TestMarkovChain(unittest.TestCase):
@@ -22,16 +23,20 @@ class TestMarkovChain(unittest.TestCase):
         MARKOVBUILDER_TEST_OUTPUT environment variable
 
         """
-        test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join(
-            'test_output', self.__class__.__name__))
+        test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join('test_output',
+                                         os.path.dirname(os.path.abspath(__file__)), 
+                                         self.__class__.__name__))
+
         if not os.path.exists(test_output_dir):
             os.makedirs(test_output_dir)
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
 
-        self.models = [example_models.construct_four_state_chain(), example_models.construct_M10_chain(),
-                       example_models.construct_non_reversible_chain(), example_models.construct_mazhari_chain(),
-                       example_models.construct_wang_chain(), example_models.construct_kemp_model()]
+        self.models = [example_models.construct_four_state_chain(),
+                       example_models.construct_non_reversible_chain(),
+                       example_models.construct_mazhari_chain(),
+                       example_models.construct_wang_chain(),
+                       example_models.construct_kemp_model()]
 
     def test_transition_matrix(self):
         """Construct various examples of Markov models.
@@ -39,8 +44,6 @@ class TestMarkovChain(unittest.TestCase):
 
         Check that our transition rate matrix for the Beattie model is correct
         by comparing it against a reference solution.
-
-        TODO: Add a reference solution for the m10 model
 
         """
 
@@ -53,10 +56,13 @@ class TestMarkovChain(unittest.TestCase):
         nx.drawing.nx_agraph.write_dot(mc.graph, "Beattie_dotfile.dot")
 
         # Draw graph using pyvis
+        mc.draw_graph(os.path.join(self.output_dir, "BeattieModel.html"), show_options=True)
         mc.draw_graph(os.path.join(self.output_dir, "BeattieModel.html"))
         logging.debug(mc.graph)
 
+        labels, Q = mc.get_transition_matrix(use_parameters=True)
         labels, Q = mc.get_transition_matrix()
+
         logging.debug("Q^T matrix is {}, labels are {}".format(Q.T, labels))
 
         system = mc.eliminate_state_from_transition_matrix(['C', 'O', 'I'])
@@ -81,7 +87,23 @@ class TestMarkovChain(unittest.TestCase):
 
             nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
 
-    def test_parameterise_rates(self):
+    def test_parameterise_rates_no_default(self):
+        """Test parameterise rates using a dictionary with no default parameter values.
+
+        Using the Beattie model
+        """
+
+        mc = example_models.construct_four_state_chain()
+
+        rate_dictionary = {'k_1': positive_rate_expr,
+                           'k_2': negative_rate_expr,
+                           'k_3': positive_rate_expr,
+                           'k_4': negative_rate_expr,
+                           }
+
+        mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+
+    def test_myokit_output(self):
         """
         Test the MarkovChain.parameterise_rates function.
         """
@@ -106,7 +128,11 @@ class TestMarkovChain(unittest.TestCase):
             self.assertEqual(param_list.count('V'), 1)
 
             # Generate myokit code
+            myokit_model = mc.generate_myokit_model(eliminate_state='O')
             myokit_model = mc.generate_myokit_model()
+            myokit_model = mc.generate_myokit_model(drug_binding=True)
+            myokit_model = mc.generate_myokit_model(drug_binding=True, eliminate_state='O')
+
             myokit.save(os.path.join(self.output_dir, 'beattie_model.mmt'), myokit_model)
 
             # Eliminate last node
@@ -144,7 +170,6 @@ class TestMarkovChain(unittest.TestCase):
 
         # Test function on models that we know are reversible
         reversible_models = [example_models.construct_four_state_chain(),
-                             example_models.construct_M10_chain(),
                              example_models.construct_mazhari_chain(),
                              example_models.construct_kemp_model()]
 
@@ -212,6 +237,7 @@ class TestMarkovChain(unittest.TestCase):
         for mc in models:
             logging.debug(f"Printing latex for {mc.name}")
             logging.debug(mc.as_latex())
+            logging.debug(mc.as_latex(label_order=mc.get_states()))
             logging.debug(mc.as_latex(state_to_remove='O'))
             logging.debug(mc.as_latex(include_auxiliary_expression=True))
             logging.debug(mc.as_latex('O', True))
@@ -230,8 +256,12 @@ class TestMarkovChain(unittest.TestCase):
         param_dict = mc.default_values
         param_dict['V'] = 0
 
+        self.assertRaises(TypeError, mc.get_equilibrium_distribution)
+
         labels, eqm_dist = mc.get_equilibrium_distribution(param_dict=param_dict)
         starting_distribution = [int(val) for val in n_samples * eqm_dist]
+
+        df = mc.sample_trajectories(n_samples, (0, 10))
 
         df = mc.sample_trajectories(n_samples, (0, 250), param_dict=param_dict,
                                     starting_distribution=starting_distribution)
