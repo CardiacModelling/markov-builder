@@ -1,10 +1,14 @@
 [flake8]
 max_line_length = 120
 ignore =
-    W391  # allow empty line at end of file
-    W503  # break before binary operator - allow either style
-    W504  # break after binary operator - allow either style
-    E226  # missing whitespace around arithmetic operator
+# allow empty line at end of file
+    W391  
+# break before binary operator - allow either style
+    W503  
+# break after binary operator - allow either style
+    W504 
+# missing whitespace around arithmetic operator
+    E226  
 exclude=
     .git,
     venv,
