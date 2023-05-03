@@ -24,6 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        apt-get install libsundials-dev
         python -m pip install .[test]
     - name: Lint with flake8
       run: |
