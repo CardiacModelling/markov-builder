@@ -23,8 +23,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        sudo apt-get install libsundials-dev -y
         python -m pip install --upgrade pip
-        apt-get install libsundials-dev
         python -m pip install .[test]
     - name: Lint with flake8
       run: |
