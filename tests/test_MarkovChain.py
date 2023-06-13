@@ -3,7 +3,6 @@
 import logging
 import os
 import unittest
-from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import myokit
@@ -11,7 +10,6 @@ import networkx as nx
 import sympy as sp
 
 import markov_builder.example_models as example_models
-import markov_builder.MarkovChain as MarkovChain
 from markov_builder.rate_expressions import negative_rate_expr, positive_rate_expr
 
 
