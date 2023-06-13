@@ -3,6 +3,7 @@
 import logging
 import os
 import unittest
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import myokit
@@ -10,6 +11,7 @@ import networkx as nx
 import sympy as sp
 
 import markov_builder.example_models as example_models
+import markov_builder.MarkovChain as MarkovChain
 from markov_builder.rate_expressions import negative_rate_expr, positive_rate_expr
 
 
@@ -226,6 +228,15 @@ class TestMarkovChain(unittest.TestCase):
 
         # Check reversibility still holds for good measure
         self.assertTrue(mc.is_reversible())
+
+    def test_bad_dataclass_exception(self):
+
+        @dataclass
+        class SomeDataClass:
+            foo: str = 'bar'
+
+        self.assertRaises(Exception, MarkovChain,
+                          kws={'state_attributes_class': SomeDataClass})
 
     def test_latex_printing(self):
         """ Test that we can generate LaTeX expressions for a model
