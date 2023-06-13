@@ -52,9 +52,6 @@ class MarkovChain():
         self.reserved_names = []
         self.auxiliary_variable = 'auxiliary_expression'
 
-        if not issubclass(self.state_attributes_class, MarkovStateAttributes):
-            raise TypeError("state_attributes_class must be a subclass of MarkovStateAttributes")
-
         if states:
             for state in states:
                 self.add_state(state)

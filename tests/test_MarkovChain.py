@@ -229,14 +229,6 @@ class TestMarkovChain(unittest.TestCase):
         # Check reversibility still holds for good measure
         self.assertTrue(mc.is_reversible())
 
-    def test_bad_dataclass_exception(self):
-        @dataclass
-        class SomeDataClass:
-            foo: str = 'bar'
-
-        kws = {'state_attributes_class': SomeDataClass}
-        self.assertRaises(TypeError, lambda x: MarkovChain(**kws))
-
     def test_latex_printing(self):
         """ Test that we can generate LaTeX expressions for a model
 
