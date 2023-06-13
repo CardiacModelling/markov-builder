@@ -230,12 +230,11 @@ class TestMarkovChain(unittest.TestCase):
         self.assertTrue(mc.is_reversible())
 
     def test_bad_dataclass_exception(self):
-
         @dataclass
         class SomeDataClass:
             foo: str = 'bar'
 
-        self.assertRaises(Exception, MarkovChain,
+        self.assertRaises(TypeError, MarkovChain,
                           kws={'state_attributes_class': SomeDataClass})
 
     def test_latex_printing(self):

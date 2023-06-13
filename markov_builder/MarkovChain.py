@@ -53,7 +53,7 @@ class MarkovChain():
         self.auxiliary_variable = 'auxiliary_expression'
 
         if not issubclass(self.state_attributes_class, MarkovStateAttributes):
-            raise Exception("state_attributes_class must be a subclass of MarkovStateAttributes")
+            raise TypeError("state_attributes_class must be a subclass of MarkovStateAttributes")
 
         if states:
             for state in states:
