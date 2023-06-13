@@ -267,9 +267,9 @@ class MarkovChain():
                 else:
                     edge = self.graph.get_edge_data(current_state, incident_state)
                     if edge is not None:
-                        rate = edge["rate"]
+                        rate = edge['rate']
                         if isinstance(rate, str):
-                            row.append(edge["rate"])
+                            row.append(edge['rate'])
                         else:
                             row.append(edge['rate'][0])
                     else:
