@@ -429,11 +429,14 @@ class MarkovChain():
         else:
             param_dict = self.default_values
 
-            if starting_distribution is None:
-                starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
-                starting_distribution[0] += no_trajectories - starting_distribution.sum()
+        if starting_distribution is None:
+            # If there is no user specified starting_distribution, create one
+            starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
+            starting_distribution[0] += no_trajectories - starting_distribution.sum()
+        else:
+            starting_distribution = np.array(starting_distribution)
 
-        distribution = starting_distribution
+        distribution = np.around(starting_distribution * no_trajectories / starting_distribution.sum())
 
         labels, mean_waiting_times, e_chain = self.get_embedded_chain(param_dict)
 
