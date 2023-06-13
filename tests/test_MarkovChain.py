@@ -234,8 +234,8 @@ class TestMarkovChain(unittest.TestCase):
         class SomeDataClass:
             foo: str = 'bar'
 
-        self.assertRaises(TypeError, MarkovChain,
-                          kws={'state_attributes_class': SomeDataClass})
+        kws = {'state_attributes_class': SomeDataClass}
+        self.assertRaises(TypeError, lambda x: MarkovChain(**kws))
 
     def test_latex_printing(self):
         """ Test that we can generate LaTeX expressions for a model
