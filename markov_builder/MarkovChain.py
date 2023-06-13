@@ -492,8 +492,8 @@ class MarkovChain():
             ss = -np.array(A.LUsolve(B).evalf(subs=param_dict)).astype(np.float64)
 
         except TypeError as exc:
-            logging.warning("Couldn't evaluate equilibrium distribution as float."
-                            "Is every parameter defined?"
+            logging.warning("Error evaluating equilibrium distribution "
+                            f"A={A}\nB={B}\nparams={param_dict}\n"
                             "%s" % str(exc))
             raise exc
 
@@ -897,7 +897,9 @@ class MarkovChain():
             if column_vector:
                 matrix_str = str(sp.latex(Q.T))
                 eqn = r'\begin{equation}\dfrac{dX}{dt} =  %s X \\end{equation}' % matrix_str
-                X_defn = r'\begin{equation} %s \end{equation}' % sp.latex(sp.Matrix(label_order))
+
+                x_vars = [[sp.sympify(self.get_state_symbol(label))] for label in label_order]
+                X_defn = r'\begin{equation} %s \end{equation}' % sp.latex(sp.Matrix(x_vars))
 
             else:
                 matrix_str = str(sp.latex(Q))
