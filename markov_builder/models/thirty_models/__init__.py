@@ -8,8 +8,12 @@ from .model6 import model_06
 from .model7 import model_07
 from .model8 import model_08
 from .model11 import model_11
+from .model12 import model_12
+from .model13 import model_13
+from .model14 import model_14
 from .model30 import model_30
 
 
 __all__ = ['model_00', 'model_01', 'model_02', 'model_03', 'model_04',
-           'model_05', 'model_06', 'model_07', 'model_08', 'model_11', 'model_30']
+           'model_05', 'model_06', 'model_07', 'model_08', 'model_11',
+           'model_12', 'model_13', 'model_30']
