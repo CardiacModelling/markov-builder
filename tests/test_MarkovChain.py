@@ -23,8 +23,9 @@ class TestMarkovChain(unittest.TestCase):
         MARKOVBUILDER_TEST_OUTPUT environment variable
 
         """
-        test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join(
-            'test_output', os.path.dirname(os.path.abspath(__file__)), self.__class__.__name__))
+        test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join('test_output',
+                                         os.path.dirname(os.path.abspath(__file__)),
+                                         self.__class__.__name__))
 
         if not os.path.exists(test_output_dir):
             os.makedirs(test_output_dir)
@@ -85,7 +86,6 @@ class TestMarkovChain(unittest.TestCase):
                                            name), show_parameters=True)
 
             nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
-            nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
 
     def test_parameterise_rates_no_default(self):
         """Test parameterise rates using a dictionary with no default parameter values.
@@ -101,7 +101,7 @@ class TestMarkovChain(unittest.TestCase):
                            'k_4': negative_rate_expr,
                            }
 
-        mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+        mc.parameterise_rates(rate_dictionary, shared_variables={'V': 'V'})
 
     def test_myokit_output(self):
         """

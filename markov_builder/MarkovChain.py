@@ -4,6 +4,7 @@ from dataclasses import asdict
 from typing import List, Tuple
 
 import myokit
+import myokit.formats.sympy
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -22,24 +23,24 @@ class MarkovChain():
     """
 
     def __init__(self, states: list = [], state_attributes_class:
-                 MarkovStateAttributes = None, seed: int = None,
-                 name: str = None):
+                 MarkovStateAttributes = None, seed: int = None, name: str =
+                 None, open_state: str = None, rates: list = None,
+                 rate_dictionary: dict = None, auxiliary_expression: str =
+                 None, auxiliary_symbol: str = None, shared_variables_dict: dict
+                 = None, auxiliary_params_dict: dict = None):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
         # between the two nodes
 
         self.graph = nx.DiGraph()
-        if states:
-            self.graph.add_nodes_from(states)
         self.rates = set()
 
         # Initialise a random number generator for simulation. Optionally, a
         # seed can be specified.
         self.rng = default_rng(seed)
         self.name = name
-        self.shared_rate_variables = set()
-
+        self.shared_variables = {}
         self.rate_expressions = {}
         self.default_values = {}
 
@@ -52,8 +53,22 @@ class MarkovChain():
         self.reserved_names = []
         self.auxiliary_variable = 'auxiliary_expression'
 
-        if not issubclass(self.state_attributes_class, MarkovStateAttributes):
-            raise Exception("state_attirbutes_class must be a dataclass")
+        if states:
+            for state in states:
+                self.add_state(state)
+
+        if rates:
+            for r in rates:
+                self.add_both_transitions(*r)
+            if shared_variables_dict:
+                self.parameterise_rates(rate_dictionary, shared_variables_dict)
+
+        if states and open_state and rates and rate_dictionary and auxiliary_expression and\
+           auxiliary_symbol and shared_variables_dict and auxiliary_params_dict:
+            open_state = self.get_state_symbol(open_state)
+            self.define_auxiliary_expression(sp.sympify(auxiliary_expression.format(open_state)),
+                                             auxiliary_symbol,
+                                             auxiliary_params_dict)
 
     def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
         """ Duplicate all states and rates in the model such that there are two identical components.
@@ -250,9 +265,13 @@ class MarkovChain():
                 else:
                     edge = self.graph.get_edge_data(current_state, incident_state)
                     if edge is not None:
-                        row.append(edge["rate"])
+                        rate = edge['rate']
+                        if isinstance(rate, str):
+                            row.append(edge['rate'])
+                        else:
+                            row.append(edge['rate'][0])
                     else:
-                        row.append(0)
+                        row.append(sp.sympify('0'))
             matrix.append(row)
 
         matrix = sp.Matrix(matrix)
@@ -268,7 +287,7 @@ class MarkovChain():
         if label_order is None:
             return list(self.graph.nodes), matrix
         else:
-            if len(label_order) != self.graph.nodes():
+            if len(label_order) != len(self.graph.nodes()):
                 raise Exception("Not all states accounted for in label order")
 
             permutation = [label_order.index(n) for n in self.graph.nodes]
@@ -403,16 +422,19 @@ class MarkovChain():
             # default missing values to those in self.default_values
             param_dict = {param: param_dict[param]
                           if param in param_dict
-                          else self.default_values[param]
+                          else {**self.default_values, **self.shared_variables}[param]
                           for param in param_list}
         else:
             param_dict = self.default_values
 
         if starting_distribution is None:
+            # If there is no user specified starting_distribution, create one
             starting_distribution = np.around(np.array([no_trajectories] * no_nodes) / no_nodes)
             starting_distribution[0] += no_trajectories - starting_distribution.sum()
+        else:
+            starting_distribution = np.array(starting_distribution)
 
-        distribution = starting_distribution
+        distribution = np.around(starting_distribution * no_trajectories / starting_distribution.sum())
 
         labels, mean_waiting_times, e_chain = self.get_embedded_chain(param_dict)
 
@@ -468,8 +490,8 @@ class MarkovChain():
             ss = -np.array(A.LUsolve(B).evalf(subs=param_dict)).astype(np.float64)
 
         except TypeError as exc:
-            logging.warning("Couldn't evaluate equilibrium distribution as float."
-                            "Is every parameter defined?"
+            logging.warning("Error evaluating equilibrium distribution "
+                            f"A={A}\nB={B}\nparams={param_dict}\n"
                             "%s" % str(exc))
             raise exc
 
@@ -477,9 +499,21 @@ class MarkovChain():
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
 
+    def is_connected(self) -> bool:
+        """Checks if the graph is strongly connected that is, if each state can be
+        reached from every other state. This function returns true even if all
+        transition rates are 0.
+
+        :return: A bool which is true if the graph is strongly connected and
+        false otherwise
+
+        """
+
+        return nx.algorithms.components.is_strongly_connected(self.graph)
+
     def is_reversible(self) -> bool:
-        """Checks symbolically whether or not the Markov chain is reversible for any
-        set of non-zero transition rate values.
+        """Checks symbolically if the Markov chain is reversible for any set of non-zero
+        transition rate values.
 
         We assume that all transition rates are always non-zero and follow
         Colquhoun et al. (2004) https://doi.org/10.1529/biophysj.103.
@@ -491,7 +525,7 @@ class MarkovChain():
         # Digraph must be strongly connected in order for the chain to be
         # reversible. In other words it must be possible to transition from any
         # state to any other state in some finite number of transitions
-        if not nx.algorithms.components.is_strongly_connected(self.graph):
+        if not self.is_connected():
             return False
 
         undirected_graph = self.graph.to_undirected(reciprocal=False, as_view=True)
@@ -501,9 +535,16 @@ class MarkovChain():
             cycle.append(cycle[0])
             logging.debug("Checking cycle {}".format(cycle))
 
-            iter = list(zip(cycle, itertools.islice(cycle, 1, None)))
-            forward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for frm, to in iter]
-            backward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for to, frm in iter]
+            iterator = list(zip(cycle, itertools.islice(cycle, 1, None)))
+            forward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for frm, to in iterator]
+            backward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for to, frm in iterator]
+
+            logging.debug(self.rate_expressions)
+
+            # Substitute in expressions
+            forward_rate_list = [rate.subs(self.rate_expressions) for rate in forward_rate_list]
+            backward_rate_list = [rate.subs(self.rate_expressions) for rate in
+                                  backward_rate_list]
 
             logging.debug("Rates moving forwards around the cycle are: %s", forward_rate_list)
             logging.debug("Rates moving backwards around the cycle are: %s", backward_rate_list)
@@ -512,19 +553,22 @@ class MarkovChain():
                 logging.debug("Not all rates were specified.")
                 return False
 
-            forward_rate_product = sp.prod(forward_rate_list)
-            backward_rate_product = sp.prod(backward_rate_list)
+            forward_rate_product = sp.prod(forward_rate_list).subs(self.rate_expressions)
+            backward_rate_product = sp.prod(backward_rate_list).subs(self.rate_expressions)
+
             if (forward_rate_product - backward_rate_product).evalf() != 0:
                 return False
         return True
 
     def draw_graph(self, filepath: str = None, show_options: bool =
-                   False, show_rates: bool = False, show_parameters: bool = False):
+                   False, show_rates: bool = False, show_parameters: bool = False,
+                   show_html=False):
         """Visualise the graph as a webpage using pyvis.
 
         :param filepath: An optional filepath to save the file to. If this is None, will be opened as a webpage instead.
         :param show_options: Whether or not the options menu should be displayed on the webpage
         :param show_parameters: Whether or not we should display the transition rates instead of their labels
+        :param show_html: Whether or not to open the outputted html file in the browser
         """
 
         for _, _, data in self.graph.edges(data=True):
@@ -534,7 +578,7 @@ class MarkovChain():
                 if len(self.rate_expressions) == 0:
                     raise Exception()
                 else:
-                    data['label'] = str(self.rate_expressions[data['rate']])
+                    data['label'] = str(sp.sympify(data['rate']).subs(self.rate_expressions))
 
         nt = pyvis.network.Network(directed=True)
         nt.from_nx(self.graph)
@@ -543,7 +587,7 @@ class MarkovChain():
             nt.show_buttons()
         if filepath is not None:
             nt.save_graph(filepath)
-        else:
+        if show_html:
             nt.show('Markov_builder_graph.html')
 
     def substitute_rates(self, rates_dict: dict):
@@ -564,7 +608,7 @@ class MarkovChain():
                     d['label'] = d['rate']
                 d['rate'] = str(sp.sympify(d['rate']).subs(rates_dict))
 
-    def parameterise_rates(self, rate_dict: dict, shared_variables: list = []) -> None:
+    def parameterise_rates(self, rate_dict: dict, shared_variables: dict = {}) -> None:
         """Define a set of parameters for the transition rates.
 
         Parameters declared as
@@ -575,17 +619,9 @@ class MarkovChain():
         V is the membrane voltage (a variable shared between transition rates).
 
         :param rate_dict: A dictionary with a 2-tuple containing an expression and dummy variables for each rate.
-        :param shared_variables: A list of variables that may be shared between transition rates
+        :param shared_variables: A dictionary of variables that may be shared between transition rates
 
         """
-
-        # Check that shared_variables is a list (and not a string!)
-        if isinstance(shared_variables, str):
-            raise TypeError("shared_variables is a string but must be a list")
-
-        for v in shared_variables:
-            if v in self.reserved_names:
-                raise Exception('name %s is reserved', v)
 
         # Validate rate dictionary
         for r in rate_dict:
@@ -594,13 +630,21 @@ class MarkovChain():
 
         rate_expressions = {}
         default_values_dict = {}
+
         for r in self.rates:
             if r in rate_dict:
-                if len(rate_dict[r]) == 2:
+                default_values = []
+                dummy_variables = []
+                if len(rate_dict[r]) == 1:
+                    expression = rate_dict[r][0]
+                elif len(rate_dict[r]) == 2:
                     expression, dummy_variables = rate_dict[r]
-                    default_values = []
-                else:
+                elif len(rate_dict[r]) == 3:
                     expression, dummy_variables, default_values = rate_dict[r]
+                else:
+                    raise ValueError(f"Rate dictionary was malformed. \
+                    Entry with key {r} ({rate_dict[r]}) should be a tuple/list of length 1-3")
+
                 if len(dummy_variables) < len(default_values):
                     raise ValueError("dummy variables list and default values list have mismatching lengths.\
                     Lengths {} and {}".format(len(dummy_variables), len(default_values)))
@@ -608,10 +652,11 @@ class MarkovChain():
                 expression = sp.sympify(expression)
 
                 for symbol in expression.free_symbols:
-                    variables = list(dummy_variables) + list(shared_variables)
-                    if str(symbol) not in variables:
-                        raise Exception(
-                            f"Symbol, {symbol} was not found in dummy variables or shared_variables, {variables}.")
+                    symbol = str(symbol)
+                    variables = list(dummy_variables) + list(shared_variables.keys())
+                    if symbol not in variables:
+                        # Add symbol to shared variables dictionary
+                        shared_variables[symbol] = None
                 subs_dict = {u: f"{r}_{u}" for i, u in enumerate(dummy_variables)}
                 rate_expressions[r] = sp.sympify(expression).subs(subs_dict)
 
@@ -619,13 +664,17 @@ class MarkovChain():
                 for u, v in zip(dummy_variables, default_values):
                     new_var_name = f"{r}_{u}"
                     if new_var_name in default_values_dict:
-                        raise Exception(f"A parameter with label {new_var_name} is already present in the model.")
+                        raise ValueError(f"A parameter with label {new_var_name} is already present in the model.")
                     default_values_dict[new_var_name] = v
 
-        self.rate_expressions = {**self.rate_expressions, **rate_expressions}
-        self.default_values = {**self.default_values, **default_values_dict}
+        rate_expressions = {rate: expr.subs(rate_expressions) for rate, expr in
+                            rate_expressions.items()}
 
-        self.shared_rate_variables = self.shared_rate_variables.union(shared_variables)
+        self.rate_expressions = rate_expressions
+        self.default_values = default_values_dict
+
+        for key in shared_variables.keys():
+            self.default_values[key] = shared_variables[key]
 
     def get_parameter_list(self) -> List[str]:
         """
@@ -640,7 +689,7 @@ class MarkovChain():
             for symbol in self.rate_expressions[r].free_symbols:
                 rates.add(str(symbol))
 
-        rates = rates.union([str(sym) for sym in self.shared_rate_variables])
+        rates = rates.union([str(sym) for sym in self.shared_variables])
 
         return sorted(rates)
 
@@ -713,9 +762,21 @@ class MarkovChain():
                 comp.add_variable(parameter)
                 if parameter in self.default_values:
                     comp[parameter].set_rhs(self.default_values[parameter])
+                elif parameter in self.auxiliary_variables:
+                    comp[parameter].set_rhs(self.auxiliary_variables[parameter])
+                elif parameter in self.shared_variables:
+                    comp[parameter].set_rhs(self.shared_variables[parameter])
 
         for rate in self.rates:
-            comp.add_variable(rate)
+            free_symbols = sp.parse_expr(rate).free_symbols
+            for symb in free_symbols:
+                if symb not in comp.variables():
+                    try:
+                        comp.add_variable(str(symb))
+                    except myokit.DuplicateName:
+                        # Variable has already been added
+                        pass
+
             if rate in self.rate_expressions:
                 expr = self.rate_expressions[rate]
                 comp[rate].set_rhs(str(expr))
@@ -725,17 +786,21 @@ class MarkovChain():
             state = self.get_state_symbol(state)
             comp.add_variable(state)
 
+        connected_components = list(nx.connected_components(self.graph.to_undirected()))
+
         # Write down differential equations for the states (unless we chose to
         # eliminate it from the ODE system)
-        for state in states:
-            var = comp[state]
-            var.promote()
-            var.set_rhs(str(d_equations[state]))
-            var.set_state_value(0)
+        for state in self.graph.nodes():
+            state_symbol = self.get_state_symbol(state)
+            var = comp[state_symbol]
 
-        # All but one states start with 0 occupancy. If they were all 0 nothing
-        # would happen!
-        comp[states[-1]].set_state_value(1)
+            # Give all of the states equal occupancy
+            component = [c for c in connected_components if state in c][0]
+            initial_value = 1.0 / float(len(component))
+
+            if state != eliminate_state:
+                var.promote(initial_value)
+                var.set_rhs(str(d_equations[state_symbol]))
 
         # Write equation for eliminated state using the fact that the state
         # occupancies/probabilities must sum to 1.
@@ -749,12 +814,14 @@ class MarkovChain():
             comp[self.get_state_symbol(eliminate_state)].set_rhs(rhs_str)
 
         # Add auxiliary equation if required
-        if self.auxiliary_expression is not None:
+        if self.auxiliary_expression is not None and self.auxiliary_variable:
             comp.add_variable(self.auxiliary_variable)
-            comp[self.auxiliary_variable].set_rhs(str(self.auxiliary_expression))
+            comp[self.auxiliary_variable].set_rhs(str(self.auxiliary_expression).replace('**', '^'))
+
         return model
 
-    def define_auxiliary_expression(self, expression: sp.Expr, label: str = None, default_values: dict = {}) -> None:
+    def define_auxiliary_expression(self, expression: sp.Expr, label: str =
+                                    None, default_values: dict = {}) -> None:
         """Define an auxiliary output variable for the model.
 
         :param expression: A sympy expression defining the auxiliary variable
@@ -773,12 +840,6 @@ class MarkovChain():
             raise Exception()
 
         state_symbols = [self.get_state_symbol(state) for state in self.graph.nodes()]
-        for symbol in expression.free_symbols:
-            if str(symbol) not in state_symbols:
-                if self.shared_rate_variables is None:
-                    self.shared_rate_variables = set(str(symbol))
-                else:
-                    self.shared_rate_variables.add(str(symbol))
 
         for symbol in default_values:
             symbol = sp.sympify(symbol)
@@ -787,8 +848,20 @@ class MarkovChain():
             if symbol in self.default_values:
                 raise Exception()
 
-        self.default_values = {**self.default_values, **default_values}
+        for symbol in expression.free_symbols:
+            if str(symbol) not in state_symbols:
+                symbol = str(symbol)
+                if symbol in default_values.keys():
+                    self.shared_variables[symbol] = default_values[symbol]
+                elif symbol in self.shared_variables:
+                    continue
+                else:
+                    self.shared_variables[symbol] = np.NaN
+
         self.auxiliary_expression = expression
+
+        # TODO check these variables are not elsewhere in the model
+        self.auxiliary_variables = default_values
 
     def get_states(self):
         return list(self.graph)
@@ -826,7 +899,9 @@ class MarkovChain():
             if column_vector:
                 matrix_str = str(sp.latex(Q.T))
                 eqn = r'\begin{equation}\dfrac{dX}{dt} =  %s X \\end{equation}' % matrix_str
-                X_defn = r'\begin{equation} %s \end{equation}' % sp.latex(sp.Matrix(label_order))
+
+                x_vars = [[sp.sympify(self.get_state_symbol(label))] for label in label_order]
+                X_defn = r'\begin{equation} %s \end{equation}' % sp.latex(sp.Matrix(x_vars))
 
             else:
                 matrix_str = str(sp.latex(Q))

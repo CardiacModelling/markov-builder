@@ -1,0 +1,102 @@
+[[model]]
+name: model-28
+author: Sanmitra Ghosh
+desc: Check associated model definition document
+# Initial values
+ikr.C4 = 1
+ikr.C3 = 0
+ikr.C2 = 0
+ikr.C1 = 0
+ikr.O = 0
+ikr.I = 0
+ikr.IC1 = 0
+ikr.IC2 = 0
+ikr.IC3 = 0
+
+#
+# Simulation engine variables
+#
+[engine]
+time = 0 bind time
+pace = 0 bind pace
+
+#
+# Membrane potential
+#
+[membrane]
+V = engine.pace
+    desc: membrane potential
+    in [mV]
+
+[nernst]
+EK = -85 [mV]
+
+#
+#
+[ikr]
+use membrane.V
+IKr = p29 * O * (V - nernst.EK)
+
+IC4 = 1 - (C1 + C2 + C3 + C4 + O + I + IC1 + IC2 + IC3)
+
+bh = p1 * exp( p2 * V)
+ah = p3 * exp(-p4 * V)
+a1 = p5 * exp( p6 * V)
+b1 = p7 * exp(-p8 * V)
+a2 = p9 * exp( p10 * V)
+b2 = p11 * exp(-p12* V)
+a3 = p13 * exp( p14 * V)
+b3 = p15 * exp(-p16 * V)
+a4 = p17 * exp(p18* V)
+b4 = (a4*b1)/a1
+a5 = p19 * exp(p20 * V)
+b5 = (a5*b2)/a2
+a6 = p21 * exp(p22 * V)
+b6 = (a6*b3)/a3
+a7 = p23 * exp(p24 * V)
+b7 = p25 * exp(-p26 * V)
+a8 = p27 * exp(p28 * V)
+b8 = (a8*b7)/a7
+
+dot(C4) = ah*IC4 +b7*C3 - C4*(a7+bh)
+dot(C3) = b1*C2 + ah*IC3 + a7*C4 - C3*(a1 + bh + b7)
+dot(C2) = b2*C1 + a1*C3 +ah*IC2 - C2*(a2 + b1 + bh)
+dot(C1) = b3*O + a2*C2 + ah*IC1 - C1*(a3 + b2 + bh)
+dot(O) = ah*I + a3*C1 - O*(b3 + bh)
+dot(I) = bh*O + a6*IC1 - I*(ah + b6)
+dot(IC1) = b6*I + a5*IC2 + ah*C1 - IC1*(a6 + ah + b5)
+dot(IC2) = b5*IC1 + a4*IC3 + ah*C2 - IC2*(a5 + ah + b4)
+dot(IC3) = a8*IC4 + bh*C3 + b4*IC2 - IC3*(ah + a4 + b8)
+
+p1 = 2.26e-4 [1/ms]
+p2 = 0.06990 [1/mV]
+p3 = 3.45e-5 [1/ms]
+p4 = 0.05462 [1/mV]
+p5 = 0.08730 [1/ms]
+p6 = 8.91e-3 [1/mV]
+p7 = 5.15e-3 [1/ms]
+p8 = 0.03158 [1/mV]
+p9 = 2.26e-4 [1/ms]
+p10 = 0.06990 [1/mV]
+p11 = 3.45e-5 [1/ms]
+p12 = 0.05462 [1/mV]
+p13 = 0.08730 [1/ms]
+p14 = 8.91e-3 [1/mV]
+p15 = 5.15e-3 [1/ms]
+p16 = 0.03158 [1/mV]
+p17 = 0.08730 [1/ms]
+p18 = 8.91e-3 [1/mV]
+p19 = 5.15e-3 [1/ms]
+p20 = 0.03158 [1/mV]
+p21 = 5.15e-3 [1/ms]
+p22 = 0.03158 [1/mV]
+p23 = 5.15e-3 [1/ms]
+p24 = 0.03158 [1/mV]
+p25 = 5.15e-3 [1/ms]
+p26 = 0.03158 [1/mV]
+p27 = 5.15e-3 [1/ms]
+p28 = 0.03158 [1/mV]
+p29 = 0.15240 [mS/uF]
+
+n_params = 29
+
