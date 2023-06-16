@@ -11,6 +11,8 @@ import pyvis
 import sympy as sp
 from numpy.random import default_rng
 
+import myokit.formats.sympy
+
 from .MarkovStateAttributes import MarkovStateAttributes
 
 
@@ -785,17 +787,19 @@ class MarkovChain():
             state = self.get_state_symbol(state)
             comp.add_variable(state)
 
+        connected_components = list(nx.connected_components(self.graph.to_undirected()))
+
         # Write down differential equations for the states (unless we chose to
         # eliminate it from the ODE system)
-        for state in states:
-            var = comp[state]
+        for state in self.graph.nodes():
+            state_symbol = self.get_state_symbol(state)
+            var = comp[state_symbol]
             var.promote()
-            var.set_rhs(str(d_equations[state]))
-            var.set_state_value(0)
+            var.set_rhs(str(d_equations[state_symbol]))
 
-        # All but one states start with 0 occupancy. If they were all 0 nothing
-        # would happen.
-        comp[states[-1]].set_state_value(1)
+            # Give all of the states equal occupancy
+            component = [c for c in connected_components if state in c][0]
+            var.set_state_value(1.0 / len(component))
 
         # Write equation for eliminated state using the fact that the state
         # occupancies/probabilities must sum to 1.
@@ -811,7 +815,7 @@ class MarkovChain():
         # Add auxiliary equation if required
         if self.auxiliary_expression is not None and self.auxiliary_variable:
             comp.add_variable(self.auxiliary_variable)
-            comp[self.auxiliary_variable].set_rhs(str(self.auxiliary_expression))
+            comp[self.auxiliary_variable].set_rhs(str(self.auxiliary_expression).replace('**', '^'))
 
         return model
 

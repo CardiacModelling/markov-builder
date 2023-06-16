@@ -22,6 +22,8 @@ from markov_builder.models.thirty_models import (
     model_06,
     model_07,
     model_08,
+    model_09,
+    model_10,
     model_11,
     model_12,
     model_13,
@@ -48,14 +50,15 @@ class TestThirtyModels(unittest.TestCase):
         logging.info("outputting to " + test_output_dir)
 
         self.models = [
-            model_00,
-            model_01, model_02, model_03, model_04,
-            model_05, model_06, model_07, model_08,
-            model_11, model_12, model_13,
-            model_14, model_30
+            model_00, model_01, model_02, model_03, model_04,
+            model_05, model_06, model_07, model_08, model_09, model_10,
+            model_11, model_12, model_13, model_14, model_30
         ]
 
-        self.model_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 30]
+        self.disconnected_models = [model_09, model_10]
+
+        self.model_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                              30]
 
     def test_generate_myokit(self):
         for model in self.models:
@@ -86,12 +89,15 @@ class TestThirtyModels(unittest.TestCase):
             logging.debug(f"initiating {name}")
 
             mc = model()
-            self.assertTrue(mc.is_connected())
+            self.assertTrue(mc.is_connected() ^ (model in self.disconnected_models))
 
     def test_reversible(self):
         for model in self.models:
             name = model.__name__
             logging.debug(f"initiating {name}")
+
+            if model in self.disconnected_models:
+                continue
 
             mc = model()
             if not mc.is_reversible():
@@ -111,15 +117,15 @@ class TestThirtyModels(unittest.TestCase):
                     backward_rate_list = [rate.subs(mc.rate_expressions) for rate in
                                           backward_rate_list]
 
-                forward_rate_product = sp.prod(forward_rate_list)
-                backward_rate_product = sp.prod(backward_rate_list)
-                if (forward_rate_product - backward_rate_product).evalf() != 0:
-                    logging.error("Rates moving forwards around the cycle are: %s", forward_rate_list)
-                    logging.error("Rates moving backwards around the cycle are: %s", backward_rate_list)
+                    forward_rate_product = sp.prod(forward_rate_list)
+                    backward_rate_product = sp.prod(backward_rate_list)
+                    if (forward_rate_product - backward_rate_product).evalf() != 0:
+                        logging.error("Rates moving forwards around the cycle are: %s", forward_rate_list)
+                        logging.error("Rates moving backwards around the cycle are: %s", backward_rate_list)
 
             self.assertTrue(mc.is_reversible())
 
-    def test_output(self):
+    def test_myokit_simulation_output(self):
         mmt_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                'models_myokit')
         Erev = -88
