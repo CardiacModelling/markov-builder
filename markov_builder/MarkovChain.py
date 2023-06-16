@@ -4,14 +4,13 @@ from dataclasses import asdict
 from typing import List, Tuple
 
 import myokit
+import myokit.formats.sympy
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pyvis
 import sympy as sp
 from numpy.random import default_rng
-
-import myokit.formats.sympy
 
 from .MarkovStateAttributes import MarkovStateAttributes
 
