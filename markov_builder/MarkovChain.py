@@ -793,12 +793,14 @@ class MarkovChain():
         for state in self.graph.nodes():
             state_symbol = self.get_state_symbol(state)
             var = comp[state_symbol]
-            var.promote()
-            var.set_rhs(str(d_equations[state_symbol]))
 
             # Give all of the states equal occupancy
             component = [c for c in connected_components if state in c][0]
-            var.set_state_value(1.0 / len(component))
+            initial_value = 1.0 / float(len(component))
+
+            if state != eliminate_state:
+                var.promote(initial_value)
+                var.set_rhs(str(d_equations[state_symbol]))
 
         # Write equation for eliminated state using the fact that the state
         # occupancies/probabilities must sum to 1.

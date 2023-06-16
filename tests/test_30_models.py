@@ -155,7 +155,7 @@ class TestThirtyModels(unittest.TestCase):
 
             tmax = mk_protocol.characteristic_time()
             times = np.linspace(0, tmax, int(tmax) + 1)
-            sim.pre(1000)
+            sim.pre(5000)
 
             log = sim.run(tmax, log_times=times, log=['ikr.IKr'])
 
@@ -166,7 +166,7 @@ class TestThirtyModels(unittest.TestCase):
             sim = mk.Simulation(generated_mk_model, mk_protocol)
             sim.set_tolerance(1e-9, 1e-9)
             sim.set_constant('markov_chain.E_Kr', Erev)
-            sim.pre(1000)
+            sim.pre(5000)
 
             log = sim.run(tmax, log_times=times, log=['markov_chain.I_Kr'])
             gen_mk_IKr = np.array(log['markov_chain.I_Kr'])
