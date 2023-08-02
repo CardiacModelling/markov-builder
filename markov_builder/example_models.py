@@ -217,8 +217,6 @@ def construct_kemp_model():
         'b_h': positive_rate_expr + ((2.70e-01, 1.58e-02),),
     }
 
-    mc.parameterise_rates(rate_dictionary)
-
     open_state = mc.get_state_symbol('O')
 
     auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
@@ -227,4 +225,5 @@ def construct_kemp_model():
                                        'g_Kr': 7.05e-02,  # Use conductance from Cell 2
                                        'E_Kr': -88,  # -88mV chosen arbitrarily
                                    })
+    mc.parameterise_rates(rate_dictionary)
     return mc

@@ -34,12 +34,10 @@ class model_04(MarkovChain):
                        'b3': ('(a3*a1)/b1',)
                        }
 
-    auxiliary_expression = "g_Kr * {} * (V - E_Kr)"
+    auxiliary_expression = "p11 * {} * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
 
-    auxiliary_params_dict = {'g_Kr': 0.1524,
-                             'E_Kr': -88
-                             }
+    auxiliary_params_dict = {'E_Kr': -88}
 
     def __init__(self):
         super().__init__(states=self.states,

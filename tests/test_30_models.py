@@ -55,7 +55,7 @@ class TestThirtyModels(unittest.TestCase):
             model_11, model_12, model_13, model_14, model_30
         ]
 
-        self.disconnected_models = [model_09, model_10]
+        self.disconnected_models = [model_03, model_09, model_10]
 
         self.model_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                               30]

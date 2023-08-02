@@ -43,6 +43,7 @@ class MarkovChain():
         self.shared_variables = {}
         self.rate_expressions = {}
         self.default_values = {}
+        self.auxiliary_variables = {}
 
         self.auxiliary_expression = None
 
@@ -667,7 +668,8 @@ class MarkovChain():
                         raise ValueError(f"A parameter with label {new_var_name} is already present in the model.")
                     default_values_dict[new_var_name] = v
 
-        rate_expressions = {rate: expr.subs(rate_expressions) for rate, expr in
+        # TODO repeatedly substitute until no more substitutions possible
+        rate_expressions = {rate: expr.subs(rate_expressions).subs(rate_expressions) for rate, expr in
                             rate_expressions.items()}
 
         self.rate_expressions = rate_expressions
@@ -675,6 +677,9 @@ class MarkovChain():
 
         for key in shared_variables.keys():
             self.default_values[key] = shared_variables[key]
+
+        for key in self.auxiliary_variables:
+            self.default_values[key] = self.auxiliary_variables[key]
 
     def get_parameter_list(self) -> List[str]:
         """
