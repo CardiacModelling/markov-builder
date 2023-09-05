@@ -9,17 +9,19 @@ class model_01(MarkovChain):
     states = ('O', 'C')
     rates = [('O', 'C', 'k_21', 'k_12')]
 
-    open_state = 'O'
-    shared_variables_dict = {'V': NaN}
+    shared_variables_dict = {
+        'V': NaN,
+        'g_Kr': 0.1524,
+    }
+
     rate_dictionary = {'k_12': positive_rate_expr + ((2.26E-4, 6.99E-2),),
                        'k_21': negative_rate_expr + ((3.45e-5, 0.05462),)}
 
-    auxiliary_expression = "g_Kr * {} * (V - E_Kr)"
+    auxiliary_expression = "g_Kr * state_O * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
+    auxiliary_params_dict = {'E_Kr': -88}
 
-    auxiliary_params_dict = {'g_Kr': 0.1524,
-                             'E_Kr': -88
-                             }
+    open_state = 'O'
 
     def __init__(self):
         super().__init__(states=self.states,
@@ -29,4 +31,5 @@ class model_01(MarkovChain):
                          auxiliary_expression=self.auxiliary_expression,
                          auxiliary_symbol=self.auxiliary_symbol,
                          shared_variables_dict=self.shared_variables_dict,
-                         auxiliary_params_dict=self.auxiliary_params_dict)
+                         auxiliary_params_dict=self.auxiliary_params_dict
+                         )

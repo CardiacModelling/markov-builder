@@ -58,18 +58,18 @@ class MarkovChain():
             for state in states:
                 self.add_state(state)
 
-        if rates:
-            for r in rates:
-                self.add_both_transitions(*r)
-            if shared_variables_dict:
-                self.parameterise_rates(rate_dictionary, shared_variables_dict)
-
         if states and open_state and rates and rate_dictionary and auxiliary_expression and\
            auxiliary_symbol and shared_variables_dict and auxiliary_params_dict:
             open_state = self.get_state_symbol(open_state)
             self.define_auxiliary_expression(sp.sympify(auxiliary_expression.format(open_state)),
                                              auxiliary_symbol,
                                              auxiliary_params_dict)
+
+        if rates:
+            for r in rates:
+                self.add_both_transitions(*r)
+            if shared_variables_dict:
+                self.parameterise_rates(rate_dictionary, shared_variables_dict)
 
     def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
         """ Duplicate all states and rates in the model such that there are two identical components.
