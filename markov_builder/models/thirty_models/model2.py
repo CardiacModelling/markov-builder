@@ -10,18 +10,25 @@ class model_02(MarkovChain):
     rates = [('O', 'C', 'bm', 'am'),
              ('O', 'I', 'ah', 'bh')]
 
-    shared_variables_dict = {
-        'V': NaN,
-        'g_Kr': 0.1524,
-    }
-
     open_state = 'O'
 
-    rate_dictionary = {'am': positive_rate_expr + ((2.26E-4, 6.99E-2),),
-                       'bm': negative_rate_expr + ((3.45E-5, 5.462E-2),),
-                       'ah': positive_rate_expr + ((0.08730, 8.91e-3),),
-                       'bh': negative_rate_expr + ((5.15e-3, 0.03158),),
+    rate_dictionary = {'am': ('p1 * exp(p2 * V)',),
+                       'bm': ('p3 * exp(-p4 * V)',),
+                       'ah': ('p5 * exp(p6 * V)',),
+                       'bh': ('p7 * exp(-p8 * V)',)
                        }
+
+    shared_variables_dict = {'V': NaN,
+                             'p1': 2.26e-4,
+                             'p2': 0.06990,
+                             'p3': 3.45e-5,
+                             'p4': 0.05462,
+                             'p5': 0.08730,
+                             'p6': 8.91e-3,
+                             'p7': 5.15e-3,
+                             'p8': 0.03158,
+                             'g_Kr': 0.1524,
+                             }
 
     auxiliary_expression = "g_Kr * state_O * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'

@@ -9,13 +9,18 @@ class model_01(MarkovChain):
     states = ('O', 'C')
     rates = [('O', 'C', 'k_21', 'k_12')]
 
-    shared_variables_dict = {
-        'V': NaN,
-        'g_Kr': 0.1524,
+    rate_dictionary = {
+        'k_12': ('p1 * exp(p2*V)',),
+        'k_21': ('p3 * exp(-p4*V)',)
     }
 
-    rate_dictionary = {'k_12': positive_rate_expr + ((2.26E-4, 6.99E-2),),
-                       'k_21': negative_rate_expr + ((3.45e-5, 0.05462),)}
+    shared_variables_dict = {'V': NaN,
+                             'p1': 2.26e-4,
+                             'p2': 0.06990,
+                             'p3': 3.45e-5,
+                             'p4': 0.05462,
+                             'g_Kr': 0.1524,
+                             }
 
     auxiliary_expression = "g_Kr * state_O * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
