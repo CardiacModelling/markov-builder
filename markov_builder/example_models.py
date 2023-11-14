@@ -95,8 +95,10 @@ def construct_wang_chain():
     for state in ('C1', 'C2', 'C3', 'I'):
         mc.add_state(state)
 
-    rates = [('C1', 'C2', 'a_a0', 'b_a0'), ('C2', 'C3', 'k_f', 'k_b'), ('C3', 'O', 'a_a1', 'b_a1'),
-             ('O', 'I', 'a_1', 'b_1')]
+        rates = [('C1', 'C2', 'a_a0', 'b_a0'),
+                 ('C2', 'C3', 'k_f', 'k_b'),
+                 ('C3', 'O', 'a_a1', 'b_a1'),
+                 ('O', 'I', 'a_1', 'b_1')]
 
     for r in rates:
         mc.add_both_transitions(*r)
@@ -115,14 +117,13 @@ def construct_wang_chain():
                        'b_1': negative_rate_expr + ((0.006497, 0.03268),)
                        }
 
-    mc.parameterise_rates(rate_dictionary)
-
     open_state = mc.get_state_symbol('O')
-
     auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
                                    {'g_Kr': 0.1524,
                                     'E_Kr': -88})
+    mc.parameterise_rates(rate_dictionary)
+
     return mc
 
 

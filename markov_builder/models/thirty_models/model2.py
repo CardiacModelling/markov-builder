@@ -1,7 +1,6 @@
 from numpy import NaN
 
 from markov_builder.MarkovChain import MarkovChain
-from markov_builder.rate_expressions import negative_rate_expr, positive_rate_expr
 
 
 class model_02(MarkovChain):

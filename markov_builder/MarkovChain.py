@@ -52,7 +52,7 @@ class MarkovChain():
 
         self.state_attributes_class = state_attributes_class
         self.reserved_names = []
-        self.auxiliary_variable = 'auxiliary_expression'
+        self.auxiliary_variable = auxiliary_expression
 
         if states:
             for state in states:
@@ -834,6 +834,7 @@ class MarkovChain():
         :param default_values: A dictionary of the default values of any parameter used in the auxiliary expression
 
         """
+        self.auxiliary_variables = default_values
         if label in self.graph.nodes() or label in self.reserved_names:
             raise Exception('Name %s not available', label)
         else:
@@ -866,7 +867,9 @@ class MarkovChain():
         self.auxiliary_expression = expression
 
         # TODO check these variables are not elsewhere in the model
-        self.auxiliary_variables = default_values
+        for key, val in self.auxiliary_variables.items():
+            if key not in self.default_values:
+                self.default_values[key] = val
 
     def get_states(self):
         return list(self.graph)
