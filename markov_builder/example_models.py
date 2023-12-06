@@ -187,16 +187,19 @@ def construct_kemp_model():
     mc = MarkovChain(name='Kemp_model')
 
     # Now the conducting state
-    mc.add_state('O', open_state=True)
+    mc.add_state('O1', open_state=True)
+
+    # Add a second conducting state
+    mc.add_state('O2', open_state=True)
 
     # First add the non-conducting states
-    for state in ('IO', 'C1', 'IC1', 'C2', 'IC2'):
+    for state in ('I', 'C1', 'C2'):
         mc.add_state(state)
 
     rates = [
-        ('O', 'IO', 'b_h', 'a_h'), ('C1', 'IC1', 'b_h', 'a_h'), ('C2', 'IC2', 'b_h', 'a_h'),
-        ('O', 'C1', 'b_2', 'a_2'), ('C1', 'C2', 'b_1', 'a_1'),
-        ('IO', 'IC1', 'b_2', 'a_2'), ('IC1', 'IC2', 'b_1', 'a_1')
+        ('O2', 'I', 'b_h', 'a_h'),
+        ('O1', 'C1', 'b_2', 'a_2'),
+        ('C1', 'C2', 'b_1', 'a_1')
     ]
 
     for r in rates:
@@ -218,9 +221,11 @@ def construct_kemp_model():
         'b_h': positive_rate_expr + ((2.70e-01, 1.58e-02),),
     }
 
-    open_state = mc.get_state_symbol('O')
+    open_state1 = mc.get_state_symbol('O1')
+    open_state2 = mc.get_state_symbol('O2')
 
-    auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
+    auxiliary_expression = sp.sympify(f"g_Kr * {open_state1} * {open_state2}\
+    * (V + E_Kr)")
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
                                    {
                                        'g_Kr': 7.05e-02,  # Use conductance from Cell 2

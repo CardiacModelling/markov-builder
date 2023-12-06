@@ -5,6 +5,7 @@ import logging
 import os
 import unittest
 
+import matplotlib
 import matplotlib.pyplot as plt
 import myokit
 import myokit as mk
@@ -30,6 +31,8 @@ from markov_builder.models.thirty_models import (
     model_14,
     model_30,
 )
+
+matplotlib.use('pdf')
 
 
 class TestThirtyModels(unittest.TestCase):

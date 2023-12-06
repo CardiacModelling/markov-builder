@@ -4,6 +4,7 @@ import logging
 import os
 import unittest
 
+import matplotlib
 import matplotlib.pyplot as plt
 import myokit
 import networkx as nx
@@ -11,6 +12,8 @@ import sympy as sp
 
 import markov_builder.example_models as example_models
 from markov_builder.rate_expressions import negative_rate_expr, positive_rate_expr
+
+matplotlib.use('pdf')
 
 
 class TestMarkovChain(unittest.TestCase):
@@ -127,17 +130,26 @@ class TestMarkovChain(unittest.TestCase):
 
             self.assertEqual(param_list.count('V'), 1)
 
+            if 'O' in mc.graph.nodes():
+                eliminate_state = 'O'
+            else:
+                eliminate_state = None
+
             # Generate myokit code
-            myokit_model = mc.generate_myokit_model(eliminate_state='O')
+            myokit_model = mc.generate_myokit_model(eliminate_state=eliminate_state)
             myokit_model = mc.generate_myokit_model()
-            myokit_model = mc.generate_myokit_model(drug_binding=True)
-            myokit_model = mc.generate_myokit_model(drug_binding=True, eliminate_state='O')
 
-            myokit.save(os.path.join(self.output_dir, 'beattie_model.mmt'), myokit_model)
+            if mc.is_connected():
+                myokit_model = mc.generate_myokit_model(drug_binding=True)
+                myokit_model = mc.generate_myokit_model(drug_binding=True,
+                                                        eliminate_state=eliminate_state)
+                # Eliminate last node
+                myokit_model = mc.generate_myokit_model(list(mc.graph)[-1])
+                myokit.save(os.path.join(self.output_dir,
+                                         f"{mc.name}_model_reduced.mmt"), myokit_model)
 
-            # Eliminate last node
-            myokit_model = mc.generate_myokit_model(list(mc.graph)[-1])
-            myokit.save(os.path.join(self.output_dir, 'beattie_model_reduced.mmt'), myokit_model)
+            myokit.save(os.path.join(self.output_dir, f"{mc.name}_model.mmt"),
+                        myokit_model)
 
     def test_construct_open_trapping_model(self):
         """
@@ -148,6 +160,10 @@ class TestMarkovChain(unittest.TestCase):
         """
 
         for mc in self.models:
+
+            if not mc.is_connected():
+                continue
+
             mc.add_open_trapping(prefix="d_", new_rates=True)
 
             # Save dotfile
@@ -174,6 +190,10 @@ class TestMarkovChain(unittest.TestCase):
                              example_models.construct_kemp_model()]
 
         for mc in reversible_models:
+            # Skip models with multiple components
+            if not mc.is_connected():
+                continue
+
             logging.info("Checking reversibility")
             self.assertTrue(mc.is_reversible())
             logging.info("Checking reversibility with open trapping")
@@ -261,20 +281,23 @@ class TestMarkovChain(unittest.TestCase):
         labels, eqm_dist = mc.get_equilibrium_distribution(param_dict=param_dict)
         starting_distribution = [int(val) for val in n_samples * eqm_dist]
 
+        fig = plt.figure()
+        ax = fig.subplots()
+
         df = mc.sample_trajectories(n_samples, (0, 10))
 
         df = mc.sample_trajectories(n_samples, (0, 250), param_dict=param_dict,
                                     starting_distribution=starting_distribution)
         df = df.set_index('time')
         logging.debug(f"sample trajectories results: {df}")
-        df.plot()
 
+        df.plot(ax=ax)
         for label, val in zip(labels, eqm_dist):
             plt.axhline(val * n_samples, ls='--', alpha=0.5, label=label)
-        plt.legend()
+        fig.legend()
 
-        plt.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'))
-        logging.debug
+        fig.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'))
+        fig.clf()
 
     def test_HH_models(self):
         for i, j in [(2, 3), (4, 5), (3, 4), (2, 8)]:
