@@ -1,4 +1,4 @@
-from numpy import NaN
+from numpy import nan
 
 from markov_builder.MarkovChain import MarkovChain
 
@@ -17,7 +17,7 @@ class model_11(MarkovChain):
     ]
 
     open_state = 'O'
-    shared_variables_dict = {'V': NaN,
+    shared_variables_dict = {'V': nan,
                              'p1': 2.26e-4,
                              'p2': 0.06990,
                              'p3': 3.45e-5,

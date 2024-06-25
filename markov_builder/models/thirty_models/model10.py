@@ -1,4 +1,4 @@
-from numpy import NaN
+from numpy import nan
 
 from markov_builder.MarkovChain import MarkovChain
 
@@ -12,7 +12,7 @@ class model_10(MarkovChain):
         ('I', 'O2', 'ah', 'bh')
     ]
 
-    shared_variables_dict = {'V': NaN,
+    shared_variables_dict = {'V': nan,
                              'p1': 2.26e-4,
                              'p2': 0.06990,
                              'p3': 3.45e-5,
