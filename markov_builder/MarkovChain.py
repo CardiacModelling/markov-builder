@@ -862,7 +862,7 @@ class MarkovChain():
                 elif symbol in self.shared_variables:
                     continue
                 else:
-                    self.shared_variables[symbol] = np.NaN
+                    self.shared_variables[symbol] = np.nan
 
         self.auxiliary_expression = expression
 
