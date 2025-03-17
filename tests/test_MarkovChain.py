@@ -26,9 +26,9 @@ class TestMarkovChain(unittest.TestCase):
         MARKOVBUILDER_TEST_OUTPUT environment variable
 
         """
-        test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join('test_output',
-                                         os.path.dirname(os.path.abspath(__file__)),
-                                         self.__class__.__name__))
+
+        test_output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', os.path.join(
+            'test_output', self.__class__.__name__))
 
         if not os.path.exists(test_output_dir):
             os.makedirs(test_output_dir)
@@ -111,7 +111,9 @@ class TestMarkovChain(unittest.TestCase):
         Test the MarkovChain.parameterise_rates function.
         """
 
-        for mc in (example_models.construct_four_state_chain(), example_models.construct_kemp_model()):
+        for mc in (example_models.construct_four_state_chain(),
+                   example_models.construct_kemp_model(),
+                   example_models.construct_wang_chain()):
             # Expressions to be used for the rates. The variable V (membrane
             # voltage) is shared across expressions and so it should only appear
             # once in the parameter list.
@@ -269,7 +271,7 @@ class TestMarkovChain(unittest.TestCase):
 
         TODO add more models
         """
-        n_samples = 5
+        n_samples = 500
 
         mc = example_models.construct_four_state_chain()
 
@@ -288,15 +290,21 @@ class TestMarkovChain(unittest.TestCase):
 
         df = mc.sample_trajectories(n_samples, (0, 250), param_dict=param_dict,
                                     starting_distribution=starting_distribution)
+
+        for state in [l for l in df.columns if l != 'time']:
+            df[state] = df[state] * 100.0 / n_samples
+
         df = df.set_index('time')
         logging.debug(f"sample trajectories results: {df}")
 
+        ax.set_ylabel("State occupancy (%)")
+        ax.set_xlabel('time (ms)')
         df.plot(ax=ax)
-        for label, val in zip(labels, eqm_dist):
-            plt.axhline(val * n_samples, ls='--', alpha=0.5, label=label)
-        fig.legend()
 
-        fig.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'))
+        ax.spines[['top', 'right']].set_visible(False)
+
+        fig.savefig(os.path.join(self.output_dir, 'beattie_model_sample_trajectories'),
+                    transparent=True)
         fig.clf()
 
     def test_HH_models(self):

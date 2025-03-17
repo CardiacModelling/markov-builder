@@ -13,6 +13,7 @@ from .model11 import model_11
 from .model12 import model_12
 from .model13 import model_13
 from .model14 import model_14
+from .model20 import model_20
 from .model30 import model_30
 
 

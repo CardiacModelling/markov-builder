@@ -29,6 +29,7 @@ from markov_builder.models.thirty_models import (
     model_12,
     model_13,
     model_14,
+    model_20,
     model_30,
 )
 
@@ -55,12 +56,13 @@ class TestThirtyModels(unittest.TestCase):
         self.models = [
             model_00, model_01, model_02, model_03, model_04,
             model_05, model_06, model_07, model_08, model_09, model_10,
-            model_11, model_12, model_13, model_14, model_30
+            model_11, model_12, model_13, model_14, model_20,
+            model_30
         ]
 
-        self.disconnected_models = [model_03, model_09, model_10]
+        self.disconnected_models = [model_03, model_09, model_10, model_20]
 
-        self.model_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+        self.model_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 20,
                               30]
 
     def test_generate_myokit(self):
