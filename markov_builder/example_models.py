@@ -81,12 +81,12 @@ def construct_mazhari_chain():
     constant_rate_expr = ('a', ('a',))
     rate_dictionary = {
         'a0': positive_rate_expr + ((0.0069, 0.0272),),
-        'b0': negative_rate_expr + ((0.0227, 0.0431),),
         'a1': positive_rate_expr + ((0.0218, 0.0262),),
-        'b1': negative_rate_expr + ((0.0009, 0.0269),),
         'ai': positive_rate_expr + ((0.662, 0.012),),
-        'bi': negative_rate_expr + ((0.0059, 0.0443),),
         'ai3': positive_rate_expr + ((1.29e-5, 2.71e-6),),
+        'b0': negative_rate_expr + ((0.0227, 0.0431),),
+        'b1': negative_rate_expr + ((0.0009, 0.0269),),
+        'bi': negative_rate_expr + ((0.0059, 0.0443),),
         'kf': constant_rate_expr + ((0.0266,),),
         'kb': constant_rate_expr + ((0.1348,),)
     }
@@ -97,8 +97,8 @@ def construct_mazhari_chain():
                                    {'g_Kr': 0.1524,
                                     'E_Kr': -88})
 
-    mc.parameterise_rates(rate_dictionary)
     mc.substitute_rates({'psi': '(ai3*bi*b1)/(a1*ai)'})
+    mc.parameterise_rates(rate_dictionary)
 
     return mc
 
@@ -125,15 +125,16 @@ def construct_wang_chain():
     constant_rate_expr = ('a', ('a',))
 
     rate_dictionary = {'a_a0': positive_rate_expr + ((0.022348, 0.01176),),
-                       'b_a0': negative_rate_expr + ((0.047002, 0.0631),),
-                       'k_f': constant_rate_expr + ((0.023761,),),
-                       'k_b': constant_rate_expr + ((0.036778,),),
                        'a_a1': positive_rate_expr + ((0.013733, 0.038198),),
+                       'b_a0': negative_rate_expr + ((0.047002, 0.0631),),
                        'b_a1': negative_rate_expr + ((0.0000689, 0.04178),),
 
                        # Using 2mmol KCl values
                        'a_1': positive_rate_expr + ((0.090821, 0.023391),),
-                       'b_1': negative_rate_expr + ((0.006497, 0.03268),)
+                       'b_1': negative_rate_expr + ((0.006497, 0.03268),),
+
+                       'k_f': constant_rate_expr + ((0.023761,),),
+                       'k_b': constant_rate_expr + ((0.036778,),),
                        }
 
     open_state = mc.get_state_symbol('O')

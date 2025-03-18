@@ -603,6 +603,8 @@ class MarkovChain():
         for rate in rates_dict:
             if rate not in self.rates:
                 raise Exception()
+            self.rate_expressions[rate]= rates_dict[rate]
+
         for _, _, d in self.graph.edges(data=True):
             if d['rate'] in rates_dict:
                 if 'label' not in d:
@@ -660,7 +662,8 @@ class MarkovChain():
                         # Add symbol to shared variables dictionary
                         shared_variables[symbol] = None
                 subs_dict = {u: f"{r}_{u}" for i, u in enumerate(dummy_variables)}
-                rate_expressions[r] = sp.sympify(expression).subs(subs_dict)
+                subs_dict = subs_dict | self.rate_expressions
+                rate_expressions[r] = sp.sympify(expression).subs(subs_dict).subs(subs_dict)
 
                 # Add default values to dictionary
                 for u, v in zip(dummy_variables, default_values):
