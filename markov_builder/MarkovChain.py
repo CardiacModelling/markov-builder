@@ -608,6 +608,7 @@ class MarkovChain():
                 if 'label' not in d:
                     d['label'] = d['rate']
                 d['rate'] = str(sp.sympify(d['rate']).subs(rates_dict))
+                self.rate_expressions[d['label']] = sp.sympify(d['rate'])
 
     def parameterise_rates(self, rate_dict: dict, shared_variables: dict = {}) -> None:
         """Define a set of parameters for the transition rates.

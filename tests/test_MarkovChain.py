@@ -113,7 +113,9 @@ class TestMarkovChain(unittest.TestCase):
 
         for mc in (example_models.construct_four_state_chain(),
                    example_models.construct_kemp_model(),
-                   example_models.construct_wang_chain()):
+                   example_models.construct_wang_chain(),
+                   example_models.construct_mazhari_chain()
+                   ):
             # Expressions to be used for the rates. The variable V (membrane
             # voltage) is shared across expressions and so it should only appear
             # once in the parameter list.
@@ -255,7 +257,11 @@ class TestMarkovChain(unittest.TestCase):
         TODO: Add more cases
         """
 
-        models = [example_models.construct_four_state_chain(), example_models.construct_wang_chain()]
+        models = [example_models.construct_four_state_chain(),
+                  example_models.construct_wang_chain(),
+                  example_models.construct_mazhari_chain()
+                  ]
+
         for mc in models:
             logging.debug(f"Printing latex for {mc.name}")
             logging.debug(mc.as_latex())

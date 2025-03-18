@@ -79,6 +79,26 @@ def construct_mazhari_chain():
     for r in rates:
         mc.add_both_transitions(*r)
 
+    constant_rate_expr = ('a', ('a',))
+    rate_dictionary = {
+        'a0': positive_rate_expr + ((0.0069, 0.0272),),
+        'b0': negative_rate_expr + ((0.0227, 0.0431),),
+        'a1': positive_rate_expr + ((0.0218, 0.0262),),
+        'b1': negative_rate_expr + ((0.0009, 0.0269),),
+        'ai': positive_rate_expr + ((0.662, 0.012),),
+        'bi': negative_rate_expr + ((0.0059, 0.0443),),
+        'ai3': positive_rate_expr + ((1.29e-5, 2.71e-6),),
+        'kf': constant_rate_expr + ((0.0266,),),
+        'kb': constant_rate_expr + ((0.1348,),)
+    }
+
+    open_state = mc.get_state_symbol('O')
+    auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
+    mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
+                                   {'g_Kr': 0.1524,
+                                    'E_Kr': -88})
+
+    mc.parameterise_rates(rate_dictionary)
     mc.substitute_rates({'psi': '(ai3*bi*b1)/(a1*ai)'})
 
     return mc
