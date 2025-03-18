@@ -68,10 +68,9 @@ def construct_mazhari_chain():
 
     mc = MarkovChain(name='Mazhari_model')
 
+    mc.add_state('O', open_state=True)
     for state in ('C1', 'C2', 'C3', 'I'):
         mc.add_state(state)
-
-    mc.add_state('O', open_state=True)
 
     rates = [('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 'O', 'a1', 'b1'),
              ('O', 'I', 'ai', 'bi'), ('I', 'C3', 'psi', 'ai3')]
