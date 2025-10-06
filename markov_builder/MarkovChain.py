@@ -288,12 +288,19 @@ class MarkovChain():
         if label_order is None:
             return list(self.graph.nodes), matrix
         else:
+            if extra_labels := [l for l in label_order if l not in self.graph.nodes()]:
+                raise Exception(f"labels: {extra_labels} provided but no found in model. \n"
+                                f"States in model are: {list(self.graph.nodes())}")
+
             if len(label_order) != len(self.graph.nodes()):
                 raise Exception("Not all states accounted for in label order")
 
-            permutation = [label_order.index(n) for n in self.graph.nodes]
-            matrix_reordered = matrix[permutation, permutation]
-            return label_order, matrix_reordered
+            eliminated_state = label_order[-1]
+            permutation = [list(self.graph.nodes()).index(s)
+                           for s in label_order]
+            matrix = matrix[permutation, permutation]
+
+            return label_order, matrix
 
     def eval_transition_matrix(self, rates_dict: dict) -> Tuple[List[str], sp.Matrix]:
         """
@@ -331,33 +338,22 @@ class MarkovChain():
             if label not in self.graph.nodes():
                 raise Exception(f"Provided label, {label} is not present in the graph")
 
-        _, matrix = self.get_transition_matrix()
-
         eliminated_states = [state for state in self.graph.nodes() if state not in labels]
         assert len(eliminated_states) == 1
         eliminated_state = eliminated_states[0]
+
+        l , matrix = self.get_transition_matrix(label_order=labels + [eliminated_state])
+
+        print(l, labels, eliminated_state)
 
         matrix = matrix.T
         shape = sp.shape(matrix)
         assert shape[0] == shape[1]
 
-        # List describing the mapping from self.graph.nodes to labels.
-        # permutation[i] = j corresponds to a mapping which takes
-        # graph.nodes[i] to graph.nodes[j]. Map the row to be eliminated to the
-        # end.
-
-        permutation = [list(self.graph.nodes()).index(n) for n in labels + [eliminated_state]]
-
-        assert len(np.unique(permutation)) == shape[0]
-        matrix = matrix[permutation, permutation]
-
         M = sp.eye(shape[0])
         replacement_row = np.full(shape[0], -1)
-
         M[-1, :] = replacement_row[None, :]
-
         A_matrix = matrix @ M
-
         B_vec = matrix @ sp.Matrix([[0] * (shape[0] - 1) + [1]]).T
 
         if use_parameters:

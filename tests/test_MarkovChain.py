@@ -8,6 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import myokit
 import networkx as nx
+import numpy as np
 import sympy as sp
 
 import markov_builder.example_models as example_models
@@ -77,6 +78,11 @@ class TestMarkovChain(unittest.TestCase):
 
         self.assertEqual(pen_and_paper_A, system[0])
         self.assertEqual(pen_and_paper_B, system[1])
+
+        system2 = mc.eliminate_state_from_transition_matrix(['C', 'I', 'O'])
+
+        self.assertEqual(pen_and_paper_A[[0, 2, 1], [0, 2, 1]], system2[0])
+        self.assertEqual(pen_and_paper_B[[0, 2, 1], 0], system2[1])
 
     def test_construct_examples(self):
         """ Output the example models as pyvis files and DOT files """
