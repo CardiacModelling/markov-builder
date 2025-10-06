@@ -344,8 +344,6 @@ class MarkovChain():
 
         l , matrix = self.get_transition_matrix(label_order=labels + [eliminated_state])
 
-        print(l, labels, eliminated_state)
-
         matrix = matrix.T
         shape = sp.shape(matrix)
         assert shape[0] == shape[1]
