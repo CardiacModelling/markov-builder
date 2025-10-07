@@ -253,6 +253,7 @@ class MarkovChain():
         """Compute the Q Matrix of the Markov chain. Q[i,j] is the transition rate between states i and j.
 
         :param use_parameters: If true substitute in parameters of the transition rates
+        :param label_order: If not None, return a transition-rate matrix with columns/rows in the provided order
         :return: a 2-tuple, labels, and the transition matrix such that the labels column correspond.
 
         """
