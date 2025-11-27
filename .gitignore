@@ -106,3 +106,8 @@ venv.bak/
 # MacOS extensions
 **.DS_Store
 
+# Test output
+test_output/*
+
+# output
+output/*

@@ -43,6 +43,7 @@ dependencies = [
         'sympy>=1.10',
         'networkx>=3.4.2',
         'numba>=0.61.2',
+	'pygraphviz>=1.14'
 ]
 
 [project.optional-dependencies]

@@ -10,21 +10,30 @@ import numpy as np
 import pandas as pd
 import pyvis
 import sympy as sp
+from typing import List
 from numpy.random import default_rng
 
 from .MarkovStateAttributes import MarkovStateAttributes
 
 
 class MarkovChain():
-    """A class used to construct continuous time Markov Chains/compartmental models using networkx.
+    """
+    Class describing a CTMC or Markov model of an ion channel.
 
-    Various helper functions are included to generate equations, code for the
-    Markov chains and to test whether the model has certain properties.
+    :param states: List of states in the model.
+    :param state_attributes_class: A dataclass detailing what data is stored for each state
+    :param seed: Optional random seed to use for random simulations.
+    :param open_state: Label relating to the models open-conformation, a particular state.
+    :param transition_rates: Details transitions and rates to include in the model, each is a tuple, (from_state, to_state, label).
+    :param rate_dictionary: Provides mathematical expressions for transition rates. Each dictionary value is a tuple including the expression and optionally dummy variables and corresponding values. See MarkovChain.parameterise_rates
+    :param auxiliary_expression: Symbol to use to assign to the models auxiliary expression (sometimes known as an observation function)
+    :param shared_variables_dict: Parameters treated as global variables within the model and their corresponding default values
+    :param auxiliary_params_dict: Parameters that appear in the auxiliary expression and their default values
     """
 
     def __init__(self, states: list = [], state_attributes_class:
                  MarkovStateAttributes = None, seed: int = None, name: str =
-                 None, open_state: str = None, rates: list = None,
+                 None, open_state: str = None, transition_rates: List = [],
                  rate_dictionary: dict = None, auxiliary_expression: str =
                  None, auxiliary_symbol: str = None, shared_variables_dict: dict
                  = None, auxiliary_params_dict: dict = None):
@@ -54,9 +63,8 @@ class MarkovChain():
         self.reserved_names = []
         self.auxiliary_variable = auxiliary_expression
 
-        if states:
-            for state in states:
-                self.add_state(state)
+        for state in states:
+            self.add_state(state)
 
         if states and open_state and rates and rate_dictionary and auxiliary_expression and\
            auxiliary_symbol and shared_variables_dict and auxiliary_params_dict:
@@ -65,8 +73,8 @@ class MarkovChain():
                                              auxiliary_symbol,
                                              auxiliary_params_dict)
 
-        if rates:
-            for r in rates:
+        if transition_rates:
+            for r in transition_rates:
                 self.add_both_transitions(*r)
             if shared_variables_dict:
                 self.parameterise_rates(rate_dictionary, shared_variables_dict)
@@ -162,7 +170,7 @@ class MarkovChain():
     def add_rate(self, rate: str) -> None:
         """
 
-        Add a new transition rate to the model. These are stored in self.rates.
+        Add a new transition rate to the model. These are stored in self._rates.
 
         :param rate: A string defining the rate to be added
 
@@ -201,7 +209,7 @@ class MarkovChain():
 
         :param from_node: The state that the transition rate is incident from
         :param to_node: The state that the transition rate is incident to
-        :param transition rate: A string identifying this transition with a rate from self.rates.
+        :param transition rate: A string identifying this transition with a rate from self._rates.
         :param update: If false and exception will be thrown if an edge between from_node and to_node already exists
         """
 
@@ -475,7 +483,6 @@ class MarkovChain():
         """Compute the equilibrium distribution of the CTMC for the specified transition rate values
 
         :param param_dict: A dictionary specifying the values of each transition rate
-
         :return: A 2-tuple describing equilibrium distribution and labels defines which entry relates to which state
 
         """
@@ -964,3 +971,10 @@ class MarkovChain():
             return "state_" + state
         else:
             raise Exception("State not present in model")
+
+    def get_default_parameter_values(self):
+        """
+        :return: A dictionary of the default parameter values for each parameter in the model
+        """
+
+        return self.default_values
