@@ -290,7 +290,7 @@ class TestMarkovChain(unittest.TestCase):
         param_dict = mc.get_default_parameter_values()
         param_dict['V'] = 0
 
-        self.assertRaises(TypeError, mc.get_equilibrium_distribution)
+        self.assertRaises(ValueError, mc.get_equilibrium_distribution)
 
         labels, eqm_dist = mc.get_equilibrium_distribution(param_dict=param_dict)
         starting_distribution = [int(val) for val in n_samples * eqm_dist]
