@@ -20,6 +20,8 @@ class MarkovChain():
     """
     Class describing a CTMC or Markov model of an ion channel.
 
+    If rate_dictionary and shared_variables are not empty, MarkovModel.parameterise_rates will be called so that numerical values
+
     :param states: List of states in the model.
     :param state_attributes_class: A dataclass detailing what data is stored for each state
     :param seed: Optional random seed to use for random simulations.
@@ -27,16 +29,17 @@ class MarkovChain():
     :param transition_rates: Details transitions and rates to include in the model, each is a tuple, (from_state, to_state, label).
     :param rate_dictionary: Provides mathematical expressions for transition rates. Each dictionary value is a tuple including the expression and optionally dummy variables and corresponding values. See MarkovChain.parameterise_rates
     :param auxiliary_expression: Symbol to use to assign to the models auxiliary expression (sometimes known as an observation function)
-    :param shared_variables_dict: Parameters treated as global variables within the model and their corresponding default values
-    :param auxiliary_params_dict: Parameters that appear in the auxiliary expression and their default values
+    :param shared_variables: Parameters treated as global variables within the model and their corresponding default values
+    :param auxiliary_params: Parameters that appear in the auxiliary expression and their default values
+    :param auxiliary_variables: External variables that appear in the auxiliary expression but are not model parameters e.g. transmembrane voltage and drug concentrations
     """
 
     def __init__(self, states: list = [], state_attributes_class:
                  MarkovStateAttributes = None, seed: int = None, name: str =
                  None, open_state: str = None, transition_rates: List = [],
-                 rate_dictionary: dict = None, auxiliary_expression: str =
-                 None, auxiliary_symbol: str = None, shared_variables_dict: dict
-                 = None, auxiliary_params_dict: dict = None):
+                 rate_expressions: dict = {}, auxiliary_expression: str = "",
+                 auxiliary_symbol: str = None, shared_variables: dict
+                 = {}, auxiliary_params: dict = {}, auxiliary_variables: dict = {}):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
@@ -45,39 +48,52 @@ class MarkovChain():
         self.graph = nx.DiGraph()
         self.rates = set()
 
+
+        self.reserved_names = []
+
         # Initialise a random number generator for simulation. Optionally, a
         # seed can be specified.
         self.rng = default_rng(seed)
+
         self.name = name
-        self.shared_variables = {}
+
+        self.shared_variables = shared_variables
         self.rate_expressions = {}
         self.default_values = {}
-        self.auxiliary_variables = {}
-
-        self.auxiliary_expression = None
+        self.auxiliary_params = {}
+        self.auxiliary_variables = auxiliary_variables
 
         if state_attributes_class is None:
             state_attributes_class = MarkovStateAttributes
 
         self.state_attributes_class = state_attributes_class
-        self.reserved_names = []
-        self.auxiliary_variable = auxiliary_expression
+        self.auxiliary_variable = auxiliary_symbol
 
         for state in states:
             self.add_state(state)
 
-        if states and open_state and rates and rate_dictionary and auxiliary_expression and\
-           auxiliary_symbol and shared_variables_dict and auxiliary_params_dict:
-            open_state = self.get_state_symbol(open_state)
-            self.define_auxiliary_expression(sp.sympify(auxiliary_expression.format(open_state)),
+        if open_state:
+            open_state = sp.sympify(self.get_state_symbol(open_state))
+            auxiliary_expression = auxiliary_expression.format(open_state)
+
+        # Format auxiliary_expression in case it's using a placeholder for the open state
+
+        auxiliary_function_defined = auxiliary_expression and auxiliary_symbol and auxiliary_params
+
+        if auxiliary_function_defined:
+            self.define_auxiliary_expression(sp.sympify(auxiliary_expression.format(sp.sympify(open_state))),
                                              auxiliary_symbol,
-                                             auxiliary_params_dict)
+                                             auxiliary_params)
+
+        if not auxiliary_expression:
+            auxiliary_expression = sp.sympify("0")
 
         if transition_rates:
             for r in transition_rates:
                 self.add_both_transitions(*r)
-            if shared_variables_dict:
-                self.parameterise_rates(rate_dictionary, shared_variables_dict)
+
+        self.parameterise_rates(rate_expressions, shared_variables)
+
 
     def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
         """ Duplicate all states and rates in the model such that there are two identical components.
@@ -493,12 +509,11 @@ class MarkovChain():
             ss = -np.array(A.LUsolve(B).evalf(subs=param_dict)).astype(np.float64)
 
         except TypeError as exc:
-            logging.warning("Error evaluating equilibrium distribution "
-                            f"A={A}\nB={B}\nparams={param_dict}\n"
-                            "%s" % str(exc))
+            logging.error("Error evaluating equilibrium distribution "
+                          f"A={A}\nB={B}\nparams={param_dict}\n"
+                          "%s" % str(exc))
             raise exc
 
-        logging.debug("ss is %s", ss)
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
 
@@ -578,9 +593,7 @@ class MarkovChain():
             if 'label' not in data or show_rates:
                 data['label'] = data['rate']
             elif show_parameters:
-                if len(self.rate_expressions) == 0:
-                    raise Exception()
-                else:
+                if len(self.rate_expressions) != 0:
                     data['label'] = str(sp.sympify(data['rate']).subs(self.rate_expressions))
 
         nt = pyvis.network.Network(directed=True)
@@ -624,7 +637,7 @@ class MarkovChain():
         exp(a + b*V) or k = exp(a - b*V) where a and b are dummy variables and
         V is the membrane voltage (a variable shared between transition rates).
 
-        :param rate_dict: A dictionary with a 2-tuple containing an expression and dummy variables for each rate.
+        :param rate_dict: A dictionary with a tuple containing an expression and optionally dummy variables and corresponding values for each transition rate in the model.
         :param shared_variables: A dictionary of variables that may be shared between transition rates
 
         """
@@ -637,6 +650,8 @@ class MarkovChain():
         rate_expressions = {}
         default_values_dict = {}
 
+        # Construct rate_expressions dict containing all transition rates and corresponding expressions, dummy variables and default values.
+        # Also construct default_values dict which contains all default values for every variable in the model
         for r in self.rates:
             if r in rate_dict:
                 default_values = []
@@ -764,11 +779,6 @@ class MarkovChain():
                 model['membrane']['V'].set_rhs(0)
                 model['membrane']['V'].set_binding('pace')
                 comp.add_alias(membrane_potential, model['membrane']['V'])
-            elif drug_binding and parameter == drug_concentration:
-                model.add_component('drug')
-                model['drug'].add_variable('D')
-                model['drug']['D'].set_rhs(0)
-                comp.add_alias(drug_concentration, model['drug']['D'])
             else:
                 comp.add_variable(parameter)
                 if parameter in self.default_values:
@@ -849,7 +859,7 @@ class MarkovChain():
         self.auxiliary_variable = label
 
         if not isinstance(expression, sp.Expr):
-            raise Exception()
+            raise TypeError("Auxiliary expression must be a sympy expression")
 
         state_symbols = [self.get_state_symbol(state) for state in self.graph.nodes()]
 
@@ -873,7 +883,7 @@ class MarkovChain():
         self.auxiliary_expression = expression
 
         # TODO check these variables are not elsewhere in the model
-        for key, val in self.auxiliary_variables.items():
+        for key, val in default_values.items():
             if key not in self.default_values:
                 self.default_values[key] = val
 
@@ -970,7 +980,7 @@ class MarkovChain():
         if state in self.graph.nodes():
             return "state_" + state
         else:
-            raise Exception("State not present in model")
+            raise ValueError("State not present in model")
 
     def get_default_parameter_values(self):
         """
