@@ -495,25 +495,26 @@ class MarkovChain():
         df = pd.DataFrame(data, columns=['time', *self.graph.nodes], dtype=np.float64)
         return df
 
-    def get_equilibrium_distribution(self, param_dict: dict = None) -> Tuple[List[str], np.array]:
+    def get_equilibrium_distribution(self, param_dict: dict = {}) -> Tuple[List[str], np.array]:
         """Compute the equilibrium distribution of the CTMC for the specified transition rate values
 
         :param param_dict: A dictionary specifying the values of each transition rate
         :return: A 2-tuple describing equilibrium distribution and labels defines which entry relates to which state
 
+        :raises ValueError: If not every necessary parameter is defined in param_dict
+
         """
+
         A, B = self.eliminate_state_from_transition_matrix(use_parameters=True)
-
         labels = self.graph.nodes()
-        try:
-            ss = -np.array(A.LUsolve(B).evalf(subs=param_dict)).astype(np.float64)
+        vars_used = [*A.free_symbols, *B.free_symbols]
 
-        except TypeError as exc:
-            logging.error("Error evaluating equilibrium distribution "
-                          f"A={A}\nB={B}\nparams={param_dict}\n"
-                          "%s" % str(exc))
-            raise exc
+        for _var in vars_used:
+            if str(_var) not in param_dict:
+                raise ValueError(f"Error evaluating equilibrium distribution {_var}\n"
+                                 f"A={A}\nB={B}\nparams={param_dict}\n")
 
+        ss = -np.array(A.LUsolve(B).evalf(subs=param_dict)).astype(np.float64)
         ss = np.append(ss, 1 - ss.sum())
         return labels, ss
 
