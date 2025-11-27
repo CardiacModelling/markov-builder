@@ -125,8 +125,8 @@ class TestThirtyModels(unittest.TestCase):
                     forward_rate_product = sp.prod(forward_rate_list)
                     backward_rate_product = sp.prod(backward_rate_list)
                     if (forward_rate_product - backward_rate_product).evalf() != 0:
-                        logging.error("Rates moving forwards around the cycle are: %s", forward_rate_list)
-                        logging.error("Rates moving backwards around the cycle are: %s", backward_rate_list)
+                        logging.error("%s: rates moving forwards around the cycle are: %s", name, forward_rate_list)
+                        logging.error("%s: rates moving backwards around the cycle are: %s", name, backward_rate_list)
 
             self.assertTrue(mc.is_reversible())
 

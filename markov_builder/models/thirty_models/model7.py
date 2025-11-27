@@ -40,9 +40,10 @@ class model_07(MarkovChain):
     def __init__(self):
         super().__init__(states=self.states,
                          open_state=self.open_state,
-                         rates=self.rates,
-                         rate_dictionary=self.rate_dictionary,
+                         transition_rates=self.rates,
+                         rate_expressions=self.rate_dictionary,
                          auxiliary_expression=self.auxiliary_expression,
                          auxiliary_symbol=self.auxiliary_symbol,
-                         shared_variables_dict=self.shared_variables_dict,
-                         auxiliary_params_dict=self.auxiliary_params_dict)
+                         shared_variables=self.shared_variables_dict,
+                         auxiliary_params=self.auxiliary_params_dict
+                         )
