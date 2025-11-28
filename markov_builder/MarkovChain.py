@@ -1001,9 +1001,3 @@ class MarkovChain:
         else:
             raise ValueError("State not present in model")
 
-    def get_default_parameter_values(self):
-        """
-        :return: A dictionary of the default parameter values for each parameter in the model
-        """
-
-        return self.default_values

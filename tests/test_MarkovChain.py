@@ -288,7 +288,7 @@ class TestMarkovChain(unittest.TestCase):
 
         mc = example_models.construct_four_state_chain()
 
-        param_dict = mc.get_default_parameter_values()
+        param_dict = mc.default_values
         param_dict['V'] = 0
 
         self.assertRaises(ValueError, mc.get_equilibrium_distribution)
