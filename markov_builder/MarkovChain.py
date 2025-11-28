@@ -422,7 +422,7 @@ class MarkovChain():
         labs, Q = self.get_transition_matrix()
         _, Q_evaled = self.eval_transition_matrix(param_dict)
 
-        logging.debug("Q is {}".format(Q_evaled))
+        logging.debug("Q is %s", str(Q_evaled))
 
         mean_waiting_times = -1 / np.diagonal(Q_evaled)
 

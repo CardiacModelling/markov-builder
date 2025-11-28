@@ -23,7 +23,7 @@ class model_01(MarkovChain):
 
     auxiliary_expression = "g_Kr * state_O * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
-    auxiliary_params_dict = {'E_Kr': -88}
+    auxiliary_parameters = {'E_Kr': -88}
 
     open_state = 'O'
 
@@ -35,5 +35,5 @@ class model_01(MarkovChain):
                          auxiliary_expression=self.auxiliary_expression,
                          auxiliary_symbol=self.auxiliary_symbol,
                          shared_variables=self.shared_variables_dict,
-                         auxiliary_params=self.auxiliary_params_dict
+                         auxiliary_parameters=self.auxiliary_parameters
                          )

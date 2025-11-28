@@ -26,7 +26,7 @@ class model_00(MarkovChain):
                        'k_4': negative_rate_expr + ((5.15E-3, 0.03158),)}
     auxiliary_expression = "g_Kr * state_O * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
-    auxiliary_params_dict = {'E_Kr': -88}
+    auxiliary_parameters_dict = {'E_Kr': -88}
 
     def __init__(self):
         super().__init__(states=self.states,
@@ -36,5 +36,5 @@ class model_00(MarkovChain):
                          auxiliary_expression=self.auxiliary_expression,
                          auxiliary_symbol=self.auxiliary_symbol,
                          shared_variables=self.shared_variables_dict,
-                         auxiliary_params=self.auxiliary_params_dict
+                         auxiliary_parameters=self.auxiliary_parameters_dict
                          )
