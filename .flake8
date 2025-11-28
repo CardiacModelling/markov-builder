@@ -9,6 +9,8 @@ ignore =
     W504,
     # missing whitespace around arithmetic operator
     E226,
+    # Line length
+    E501
 exclude=
     .git,
     venv,
