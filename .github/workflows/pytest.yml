@@ -31,7 +31,8 @@ jobs:
         python -m flake8
     - name: Import sorting with isort
       run: |
-        python -m isort --verbose --check-only --diff markov_builder tests setup.py
+        python -m isort . --show-config
+        python -m isort --verbose --check-only --diff . --skip .venv
     - name: Test with pytest
       run: |
         python -m pytest --cov --cov-config=.coveragerc
