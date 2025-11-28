@@ -15,7 +15,7 @@ from numpy.random import default_rng
 from .MarkovStateAttributes import MarkovStateAttributes
 
 
-class MarkovChain():
+class MarkovChain:
     """Class describing a CTMC or Markov model of an ion channel.
 
     Describes the topology, parameters and observation function (auxiliary
