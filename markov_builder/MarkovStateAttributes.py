@@ -11,3 +11,4 @@ class MarkovStateAttributes:
 
     """
     open_state: bool = False
+    drug_bound: bool = False

@@ -126,7 +126,9 @@ class MarkovChain():
        """
 
         trapped_graph = nx.relabel_nodes(self.graph, dict([(n, "{}{}".format(prefix, n)) for n in self.graph.nodes]))
+
         nx.set_node_attributes(trapped_graph, False, 'open_state')
+        nx.set_node_attributes(trapped_graph, True, 'drug_bound')
 
         if new_rates:
             for frm, to, attr in trapped_graph.edges(data=True):
