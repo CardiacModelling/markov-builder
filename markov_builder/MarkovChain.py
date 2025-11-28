@@ -1,7 +1,7 @@
 import itertools
 import logging
 from dataclasses import asdict
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import myokit
 import myokit.formats.sympy
@@ -10,17 +10,36 @@ import numpy as np
 import pandas as pd
 import pyvis
 import sympy as sp
-from typing import List
 from numpy.random import default_rng
 
 from .MarkovStateAttributes import MarkovStateAttributes
 
 
 class MarkovChain():
-    """
-    Class describing a CTMC or Markov model of an ion channel.
+    """Class describing a CTMC or Markov model of an ion channel.
 
-    If rate_dictionary and shared_variables are not empty, MarkovModel.parameterise_rates will be called so that numerical values
+    Describes the topology, parameters and observation function (auxiliary
+    expression) of a ion-channel Markov model.
+
+    - The topology of the model is given by MarkovChain.graph, which has states
+    labels (str) as nodes, and transition rates (str). Optionally, edges may
+    also include a label (str) for diagram purposes.
+
+    - By default states have a flags as defined by the MarkovStateAttributes
+    class, but other properties may be included by specifying a different
+    state_attributes_class Additional properties of states may be included
+
+    - Model parameters relating to a particular transition rate (labels and
+    default values) are stored in rate_expressions, "global variables" which
+    can be referenced by multiple rates.
+
+    - Model parameters relating to the auxiliary expression are stored in
+    MarkovModels.shared_variables, and auxiliary_parameters map variables used
+    in the auxiliary expression to default values.
+
+    - Additional external variables, such as the transmembrane potential or a
+    drug concentration are found in auxiliary_variables with corresponding
+    default values.
 
     :param states: List of states in the model.
     :param state_attributes_class: A dataclass detailing what data is stored for each state
@@ -30,16 +49,17 @@ class MarkovChain():
     :param rate_dictionary: Provides mathematical expressions for transition rates. Each dictionary value is a tuple including the expression and optionally dummy variables and corresponding values. See MarkovChain.parameterise_rates
     :param auxiliary_expression: Symbol to use to assign to the models auxiliary expression (sometimes known as an observation function)
     :param shared_variables: Parameters treated as global variables within the model and their corresponding default values
-    :param auxiliary_params: Parameters that appear in the auxiliary expression and their default values
+    :param auxiliary_parameters: Parameters that appear in the auxiliary expression and their default values
     :param auxiliary_variables: External variables that appear in the auxiliary expression but are not model parameters e.g. transmembrane voltage and drug concentrations
+
     """
 
-    def __init__(self, states: list = [], state_attributes_class:
-                 MarkovStateAttributes = None, seed: int = None, name: str =
+    def __init__(self, states: list = [], state_attributes_class: Any = MarkovStateAttributes,
+                 dataclass=None, seed: int = None, name: str =
                  None, open_state: str = None, transition_rates: List = [],
                  rate_expressions: dict = {}, auxiliary_expression: str = "",
                  auxiliary_symbol: str = None, shared_variables: dict
-                 = {}, auxiliary_params: dict = {}, auxiliary_variables: dict = {}):
+                 = {}, auxiliary_parameters: dict = {}, auxiliary_variables: dict = {}):
 
         # Initialise the graph representing the states. Each directed edge has
         # a `rate` attribute which is a string representing the transition rate
@@ -47,7 +67,6 @@ class MarkovChain():
 
         self.graph = nx.DiGraph()
         self.rates = set()
-
 
         self.reserved_names = []
 
@@ -60,7 +79,7 @@ class MarkovChain():
         self.shared_variables = shared_variables
         self.rate_expressions = {}
         self.default_values = {}
-        self.auxiliary_params = {}
+        self.auxiliary_parameters = {}
         self.auxiliary_variables = auxiliary_variables
 
         if state_attributes_class is None:
@@ -78,12 +97,12 @@ class MarkovChain():
 
         # Format auxiliary_expression in case it's using a placeholder for the open state
 
-        auxiliary_function_defined = auxiliary_expression and auxiliary_symbol and auxiliary_params
+        auxiliary_function_defined = auxiliary_expression and auxiliary_symbol and auxiliary_parameters
 
         if auxiliary_function_defined:
             self.define_auxiliary_expression(sp.sympify(auxiliary_expression.format(sp.sympify(open_state))),
                                              auxiliary_symbol,
-                                             auxiliary_params)
+                                             auxiliary_parameters)
 
         if not auxiliary_expression:
             auxiliary_expression = sp.sympify("0")
@@ -93,7 +112,6 @@ class MarkovChain():
                 self.add_both_transitions(*r)
 
         self.parameterise_rates(rate_expressions, shared_variables)
-
 
     def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
         """ Duplicate all states and rates in the model such that there are two identical components.
@@ -226,7 +244,9 @@ class MarkovChain():
         :param from_node: The state that the transition rate is incident from
         :param to_node: The state that the transition rate is incident to
         :param transition rate: A string identifying this transition with a rate from self._rates.
-        :param update: If false and exception will be thrown if an edge between from_node and to_node already exists
+        :param update: If True, an edge will be created even if an edge between from_node and to_node already exists
+
+        :raises RuntimeError: if update is True and a duplicate already edge exists
         """
 
         if from_node not in self.graph.nodes or to_node not in self.graph.nodes:
@@ -250,7 +270,7 @@ class MarkovChain():
             if update:
                 self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
             else:
-                raise Exception(f"An edge already exists between {from_node} and {to_node}. \
+                raise RuntimeError(f"An edge already exists between {from_node} and {to_node}. \
                 Edges are {self.graph.edges()}")
         else:
             self.graph.add_edge(from_node, to_node, rate=transition_rate, label=label)
@@ -292,10 +312,7 @@ class MarkovChain():
                     edge = self.graph.get_edge_data(current_state, incident_state)
                     if edge is not None:
                         rate = edge['rate']
-                        if isinstance(rate, str):
-                            row.append(edge['rate'])
-                        else:
-                            row.append(edge['rate'][0])
+                        row.append(rate)
                     else:
                         row.append(sp.sympify('0'))
             matrix.append(row)
@@ -367,7 +384,7 @@ class MarkovChain():
         assert len(eliminated_states) == 1
         eliminated_state = eliminated_states[0]
 
-        l , matrix = self.get_transition_matrix(label_order=labels + [eliminated_state])
+        l, matrix = self.get_transition_matrix(label_order=labels + [eliminated_state])
 
         matrix = matrix.T
         shape = sp.shape(matrix)
@@ -440,9 +457,11 @@ class MarkovChain():
         if param_dict is not None:
             param_list = self.get_parameter_list()
             # default missing values to those in self.default_values
+
+            _all_default_values = {**self.default_values, **self.shared_variables}
             param_dict = {param: param_dict[param]
                           if param in param_dict
-                          else {**self.default_values, **self.shared_variables}[param]
+                          else all_default_values[param]
                           for param in param_list}
         else:
             param_dict = self.default_values
@@ -619,7 +638,7 @@ class MarkovChain():
         for rate in rates_dict:
             if rate not in self.rates:
                 raise Exception()
-            self.rate_expressions[rate]= rates_dict[rate]
+            self.rate_expressions[rate] = rates_dict[rate]
 
         for _, _, d in self.graph.edges(data=True):
             if d['rate'] in rates_dict:
