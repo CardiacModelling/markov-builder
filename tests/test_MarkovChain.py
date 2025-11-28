@@ -11,7 +11,8 @@ import networkx as nx
 import sympy as sp
 
 import markov_builder.example_models as example_models
-from markov_builder.rate_expressions import negative_rate_expr, positive_rate_expr
+from markov_builder.rate_expressions import (negative_rate_expr,
+                                             positive_rate_expr)
 
 
 matplotlib.use('pdf')

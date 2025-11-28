@@ -43,7 +43,7 @@ dependencies = [
         'sympy>=1.10',
         'networkx>=3.4.2',
         'numba>=0.61.2',
-	'pygraphviz>=1.14'
+        'pygraphviz>=1.14'
 ]
 
 [project.optional-dependencies]
@@ -71,10 +71,6 @@ Source = "https://github.com/CardiacModelling/markov-builder"
 skip = ["docs"]
 skip_glob = ["**/_version.py", "**.conf.py"]
 
-# Don't allow more than 3 imports on a single line
-force_grid_wrap = 4
-
 lines_after_imports = 2
 
-force_single_line = False
 

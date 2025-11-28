@@ -1,7 +1,8 @@
 import numpy as np
 
 from markov_builder import MarkovChain
-from markov_builder.rate_expressions import negative_rate_expr, positive_rate_expr
+from markov_builder.rate_expressions import (negative_rate_expr,
+                                             positive_rate_expr)
 
 
 class model_00(MarkovChain):
