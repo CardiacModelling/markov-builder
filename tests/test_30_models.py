@@ -33,6 +33,7 @@ from markov_builder.models.thirty_models import (
     model_30,
 )
 
+
 matplotlib.use('pdf')
 
 
