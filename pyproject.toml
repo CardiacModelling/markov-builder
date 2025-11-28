@@ -68,6 +68,6 @@ Homepage = "https://github.com/CardiacModelling/markov-builder"
 Source = "https://github.com/CardiacModelling/markov-builder"
 
 [tool.isort]
-skip = ["_version.py"]
+skip = ["markov_builder/_version.py"]
 
 
