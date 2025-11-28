@@ -8,7 +8,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import myokit
 import networkx as nx
-import numpy as np
 import sympy as sp
 
 import markov_builder.example_models as example_models
@@ -304,7 +303,7 @@ class TestMarkovChain(unittest.TestCase):
         df = mc.sample_trajectories(n_samples, (0, 250), param_dict=param_dict,
                                     starting_distribution=starting_distribution)
 
-        for state in [l for l in df.columns if l != 'time']:
+        for state in [lab for lab in df.columns if lab != 'time']:
             df[state] = df[state] * 100.0 / n_samples
 
         df = df.set_index('time')

@@ -332,14 +332,13 @@ class MarkovChain():
         if label_order is None:
             return list(self.graph.nodes), matrix
         else:
-            if extra_labels := [l for l in label_order if l not in self.graph.nodes()]:
+            if extra_labels := [lab for lab in label_order if lab not in self.graph.nodes()]:
                 raise Exception(f"labels: {extra_labels} provided but no found in model. \n"
                                 f"States in model are: {list(self.graph.nodes())}")
 
             if len(label_order) != len(self.graph.nodes()):
                 raise Exception("Not all states accounted for in label order")
 
-            eliminated_state = label_order[-1]
             permutation = [list(self.graph.nodes()).index(s)
                            for s in label_order]
             matrix = matrix[permutation, permutation]
@@ -463,7 +462,7 @@ class MarkovChain():
             _all_default_values = {**self.default_values, **self.shared_variables}
             param_dict = {param: param_dict[param]
                           if param in param_dict
-                          else all_default_values[param]
+                          else _all_default_values[param]
                           for param in param_list}
         else:
             param_dict = self.default_values
@@ -790,8 +789,6 @@ class MarkovChain():
 
         model['engine']['time'].set_binding('time')
         model['engine']['time'].set_rhs(0)
-
-        drug_concentration = 'D' if drug_binding else None
 
         # Add parameters to the model
         for parameter in self.get_parameter_list():
