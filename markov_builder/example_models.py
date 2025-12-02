@@ -6,8 +6,9 @@ from .rate_expressions import negative_rate_expr, positive_rate_expr
 
 
 def construct_non_reversible_chain():
-    """Construct a model structure that is known to not satisfy microscopic
-    reversibiliy. This is used for testing.
+    """Construct a model structure that is known to not satisfy microscopic reversibiliy.
+
+    This is used for testing.
     """
     mc = MarkovChain(name='non_reversible_example')
 
@@ -25,10 +26,7 @@ def construct_non_reversible_chain():
 
 
 def construct_four_state_chain():
-    """Construct and parameterise the model introduced by Beattie et al. in
-    https://doi.org/10.1101/100677
-    """
-
+    """Construct and parameterise the model introduced by Beattie et al. in https://doi.org/10.1101/100677."""
     mc = MarkovChain(name='Beattie_model')
     states = ['C', 'I', 'IC']
 
@@ -62,10 +60,7 @@ def construct_four_state_chain():
 
 
 def construct_mazhari_chain():
-    """Construct the Mazhari model structure for hERG as described in
-    https://doi.org/10.1161/hh1301.093633
-    """
-
+    """Construct the Mazhari model structure for hERG as described in https://doi.org/10.1161/hh1301.093633."""
     mc = MarkovChain(name='Mazhari_model')
 
     mc.add_state('O', open_state=True)
@@ -104,9 +99,7 @@ def construct_mazhari_chain():
 
 
 def construct_wang_chain():
-    """Construct the Wang model structure for hERG as described in
-    https://doi.org/10.1111/j.1469-7793.1997.045bl.x
-    """
+    """Construct the Wang model structure for hERG as described in https://doi.org/10.1111/j.1469-7793.1997.045bl.x."""
     mc = MarkovChain(name='Wang_model')
 
     mc.add_state('O', open_state=True)
@@ -132,7 +125,6 @@ def construct_wang_chain():
                        # Using 2mmol KCl values
                        'a_1': positive_rate_expr + ((0.090821, 0.023391),),
                        'b_1': negative_rate_expr + ((0.006497, 0.03268),),
-
                        'k_f': constant_rate_expr + ((0.023761,),),
                        'k_b': constant_rate_expr + ((0.036778,),),
                        }
@@ -148,15 +140,12 @@ def construct_wang_chain():
 
 
 def construct_HH_model(n: int, m: int, name: str = None):
-    """ Construct a Markov model equivalent to a Hodgkin-Huxley conductance models
+    """Construct a Markov model equivalent to a Hodgkin-Huxley conductance models.
 
     :param n: The number of activation gates in the model
     :param m: The number of inactivation gates in the model
-
     :return: A MarkovChain with n x m states
-
     """
-
     if n < 2 or m < 2:
         raise Exception()
 
@@ -200,10 +189,11 @@ def construct_HH_model(n: int, m: int, name: str = None):
 
 
 def construct_kemp_model():
-    """Construct and parameterise the model introduced by Kemp et al. in
+    """Construct and parameterise the model introduced by Kemp et al.
+
+    in
     https://doi.org/10.1085/jgp.202112923
     """
-
     mc = MarkovChain(name='Kemp_model')
 
     # Now the conducting state

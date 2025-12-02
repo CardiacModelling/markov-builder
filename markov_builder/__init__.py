@@ -1,6 +1,4 @@
-"""
-Main module for markov_builder
-"""
+"""Main module for markov_builder."""
 import inspect
 import os
 
@@ -30,8 +28,9 @@ __version__ = '.'.join([str(x) for x in __version_int__])
 # Expose version number
 #
 def version(formatted=False):
-    """
-    Returns the version number, as a 3-part integer (major, minor, revision).
+    """Returns the version number, as a 3-part integer (major, minor,
+    revision).
+
     If ``formatted=True``, it returns a string formatted version (e.g.
     "markov-builder 1.0.0").
     """

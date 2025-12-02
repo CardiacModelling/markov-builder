@@ -40,7 +40,6 @@ class model_12(MarkovChain):
         'b1': ('p7 * exp(-p8 * V)',),
         'a2': ('p9 * exp( p10 * V)',),
         'a3': ('p11 * exp( p12 * V)',),
-
         'b2': ('a2 * b1 / a1',),
         'b3': ('a3 * b2 / a2',),
     }

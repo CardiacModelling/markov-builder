@@ -41,6 +41,7 @@ class MarkovChain:
     drug concentration are found in auxiliary_variables with corresponding
     default values.
 
+
     :param states: List of states in the model.
     :param state_attributes_class: A dataclass detailing what data is stored for each state
     :param seed: Optional random seed to use for random simulations.
@@ -51,7 +52,6 @@ class MarkovChain:
     :param shared_variables: Parameters treated as global variables within the model and their corresponding default values
     :param auxiliary_parameters: Parameters that appear in the auxiliary expression and their default values
     :param auxiliary_variables: External variables that appear in the auxiliary expression but are not model parameters e.g. transmembrane voltage and drug concentrations
-
     """
 
     def __init__(self, states: list = [], state_attributes_class: Any = MarkovStateAttributes,
@@ -114,17 +114,18 @@ class MarkovChain:
         self.parameterise_rates(rate_expressions, shared_variables)
 
     def mirror_model(self, prefix: str, new_rates: bool = False) -> None:
-        """ Duplicate all states and rates in the model such that there are two identical components.
+        """Duplicate all states and rates in the model such that there are two identical components.
 
-        The new nodes will be disconnected from the nodes in the original graph.
-        New nodes will be the same as the original nodes but with the prefix
-        prepended. This function may be used to construct drug trapping models.
+        The new nodes will be disconnected from the nodes in the
+        original graph. New nodes will be the same as the original nodes
+        but with the prefix prepended. This function may be used to
+        construct drug trapping models.
 
-        :param prefix: The prefix to prepend to the new (trapped) nodes and rates (if new_rates is True)
-        :param new_rates: Whether or not to add a prefix to the new transition rates
-
-       """
-
+        :param prefix: The prefix to prepend to the new (trapped) nodes
+            and rates (if new_rates is True)
+        :param new_rates: Whether or not to add a prefix to the new
+            transition rates
+        """
         trapped_graph = nx.relabel_nodes(self.graph, dict([(n, "{}{}".format(prefix, n)) for n in self.graph.nodes]))
 
         nx.set_node_attributes(trapped_graph, False, 'open_state')
@@ -149,9 +150,10 @@ class MarkovChain:
     def add_open_trapping(self, prefix: str = "d_", new_rates: bool = False) -> None:
         """Construct an open trapping model by mirroring the current model and connecting the open states.
 
-        :param prefix: The prefix to prepend onto the new (trapped) nodes and rates (if new_rates is true.)
-        :param new_rates: Whether or not to create new transition rates for the new mirrored edges
-
+        :param prefix: The prefix to prepend onto the new (trapped)
+            nodes and rates (if new_rates is true.)
+        :param new_rates: Whether or not to create new transition rates
+            for the new mirrored edges
         """
         self.mirror_model(prefix, new_rates)
         self.add_rates(("drug_on", "drug_off"))
@@ -174,9 +176,7 @@ class MarkovChain:
         attribute `open_state`.
 
         Example: ``add_state('O', open_state=True)``
-
         """
-
         # Check that the label isn't already in use
         labels_in_use = list(self.graph.nodes())
 
@@ -204,15 +204,10 @@ class MarkovChain:
         self.graph.add_node(str(label), **attributes)
 
     def add_rate(self, rate: str) -> None:
-        """
-
-        Add a new transition rate to the model. These are stored in self._rates.
+        """Add a new transition rate to the model. These are stored in self._rates.
 
         :param rate: A string defining the rate to be added
-
-
         """
-
         # Check that the new rate isn't some complicated sympy expression
         # TODO test this and add nice exception
 
@@ -230,27 +225,28 @@ class MarkovChain:
             self.rates.add(rate)
 
     def add_rates(self, rates: list) -> None:
-        """
-        Add a list of rates to the model
+        """Add a list of rates to the model.
 
         :param rates: A list of strings to be added to self.rates
-
         """
         for rate in rates:
             self.add_rate(rate)
 
     def add_transition(self, from_node: str, to_node: str, transition_rate: str,
                        label: str = None, update=False) -> None:
-        """Adds an edge describing the transition rate between `from_node` and `to_node`.
+        """Add an edge describing the transition rate between `from_node` and `to_node`.
 
-        :param from_node: The state that the transition rate is incident from
-        :param to_node: The state that the transition rate is incident to
-        :param transition rate: A string identifying this transition with a rate from self._rates.
-        :param update: If True, an edge will be created even if an edge between from_node and to_node already exists
-
-        :raises RuntimeError: if update is True and a duplicate already edge exists
+        :param from_node: The state that the transition rate is incident
+            from
+        :param to_node: The state that the transition rate is incident
+            to
+        :param transition rate: A string identifying this transition
+            with a rate from self._rates.
+        :param update: If True, an edge will be created even if an edge
+            between from_node and to_node already exists
+        :raises RuntimeError: if update is True and a duplicate already
+            edge exists
         """
-
         if from_node not in self.graph.nodes or to_node not in self.graph.nodes:
             raise Exception("A node wasn't present in the graph ({} or {})".format(from_node, to_node))
 
@@ -279,10 +275,9 @@ class MarkovChain:
 
     def add_both_transitions(self, frm: str, to: str, fwd_rate: str = None,
                              bwd_rate: str = None, update=True) -> None:
-        """A helper function to add forwards and backwards rates between two
-        states.
+        """Add forwards and backwards rates between two states.
 
-        This is a convenient way to connect new states to the model.
+        This provides a convenient way to connect new states to the model.
 
         :param frm: Either of the two states to be connected.
         :param to: Either of the two states to be connected.
@@ -290,7 +285,6 @@ class MarkovChain:
         :param bwd_rate: The transition rate from `to` to `frm`.
         :param update: If false and exception will be thrown if an edge between from_node and to_node already exists
         """
-
         self.add_transition(frm, to, fwd_rate, update=update)
         self.add_transition(to, frm, bwd_rate, update=update)
 
@@ -298,10 +292,12 @@ class MarkovChain:
                               label_order: list = None) -> Tuple[List[str], sp.Matrix]:
         """Compute the Q Matrix of the Markov chain. Q[i,j] is the transition rate between states i and j.
 
-        :param use_parameters: If true substitute in parameters of the transition rates
-        :param label_order: If not None, return a transition-rate matrix with columns/rows in the provided order
-        :return: a 2-tuple, labels, and the transition matrix such that the labels column correspond.
-
+        :param use_parameters: If true substitute in parameters of the
+            transition rates
+        :param label_order: If not None, return a transition-rate matrix
+            with columns/rows in the provided order
+        :return: a 2-tuple, labels, and the transition matrix such that
+            the labels column correspond.
         """
         matrix = []
         for current_state in self.graph.nodes:
@@ -346,34 +342,35 @@ class MarkovChain:
             return label_order, matrix
 
     def eval_transition_matrix(self, rates_dict: dict) -> Tuple[List[str], sp.Matrix]:
-        """
-        Evaluate the transition matrix given values for each of the transition rates.
+        """Evaluate the transition matrix given values for each of the transition rates.
 
-        :param rates: A dictionary defining the value of each transition rate e.g rates['K1'] = 1.
+        :param rates: A dictionary defining the value of each transition
+            rate e.g rates['K1'] = 1.
         """
-
         if rates_dict is None:
             Exception('rate dictionary not provided')
 
-        l, Q = self.get_transition_matrix(use_parameters=True)
+        labels, Q = self.get_transition_matrix(use_parameters=True)
         Q_evaled = np.array(Q.evalf(subs=rates_dict)).astype(np.float64)
-        return l, Q_evaled
+        return labels, Q_evaled
 
     def eliminate_state_from_transition_matrix(self, labels: list = None,
                                                use_parameters: bool = False) -> Tuple[sp.Matrix, sp.Matrix]:
-        """Returns a matrix, A, and vector, B, corresponding to a linear ODE system describing the state probabilities.
+        """Return a matrix, A, and vector, B, corresponding to a linear ODE system describing the state probabilities.
 
-        Because the state occupancy probabilities must add up to zero, the
-        transition matrix is always singular. We can use this fact to remove
-        one state variable from the system of equations. The labels parameter
-        allows you to choose which variable is eliminated and also the ordering
-        of the states.
+        Because the state occupancy probabilities must add up to zero,
+        the transition matrix is always singular. We can use this fact
+        to remove one state variable from the system of equations. The
+        labels parameter allows you to choose which variable is
+        eliminated and also the ordering of the states.
 
-        :param labels: A list of labels. The order of which determines the ordering of outputted system.
-        :param use_parameters: If true substitute in parameters of the transition rates
-        :return: A pair of symbolic matrices, A & B, defining a system of ODEs of the format dX/dt = AX + B.
+        :param labels: A list of labels. The order of which determines
+            the ordering of outputted system.
+        :param use_parameters: If true substitute in parameters of the
+            transition rates
+        :return: A pair of symbolic matrices, A & B, defining a system
+            of ODEs of the format dX/dt = AX + B.
         """
-
         if labels is None:
             labels = list(self.graph.nodes)[:-1]
 
@@ -385,7 +382,7 @@ class MarkovChain:
         assert len(eliminated_states) == 1
         eliminated_state = eliminated_states[0]
 
-        l, matrix = self.get_transition_matrix(label_order=labels + [eliminated_state])
+        _, matrix = self.get_transition_matrix(label_order=labels + [eliminated_state])
 
         matrix = matrix.T
         shape = sp.shape(matrix)
@@ -407,14 +404,13 @@ class MarkovChain:
         return A_matrix[0:-1, 0:-1], B_vec[0:-1, :]
 
     def get_embedded_chain(self, param_dict: dict = None) -> Tuple[List[str], np.ndarray, np.ndarray]:
-        """Compute the embedded DTMC and associated waiting times given values for each of the transition rates
+        """Compute the embedded DTMC and associated waiting times given values for each of the transition rates.
 
-        :param rates: A dictionary defining the value of each transition rate e.g rates['K1'] = 1.
-
-        :return: 3-tuple: the state labels, the waiting times for each state, and the embedded Markov chain.
-
+        :param rates: A dictionary defining the value of each transition
+            rate e.g rates['K1'] = 1.
+        :return: 3-tuple: the state labels, the waiting times for each
+            state, and the embedded Markov chain.
         """
-
         if param_dict is None:
             param_dict = self.default_values
 
@@ -442,16 +438,19 @@ class MarkovChain:
     def sample_trajectories(self, no_trajectories: int, time_range: list = [0, 1],
                             param_dict: dict = None,
                             starting_distribution: list = None) -> pd.DataFrame:
-        """Samples trajectories of the Markov chain using a Gillespie algorithm.
+        """Sample trajectories of the Markov chain using a Gillespie algorithm.
 
-        :param no_trajectories: The number of simulations to run (number of channels)
-        :param time_range: A range of times durig which to simulate the model
-        :param param_dict: A dictionary defining the (constant) value of each transition rate
-        :param starting_distribution: The number of samples starting in each state. Defaults to an even distribution.
-        :return: A pandas dataframe describing the number of channels in each state for the times in time_range
-
+        :param no_trajectories: The number of simulations to run (number
+            of channels)
+        :param time_range: A range of times durig which to simulate the
+            model
+        :param param_dict: A dictionary defining the (constant) value of
+            each transition rate
+        :param starting_distribution: The number of samples starting in
+            each state. Defaults to an even distribution.
+        :return: A pandas dataframe describing the number of channels in
+            each state for the times in time_range
         """
-
         no_nodes = len(self.graph.nodes)
         logging.debug(f"There are {no_nodes} nodes")
 
@@ -516,15 +515,15 @@ class MarkovChain:
         return df
 
     def get_equilibrium_distribution(self, param_dict: dict = {}) -> Tuple[List[str], np.array]:
-        """Compute the equilibrium distribution of the CTMC for the specified transition rate values
+        """Compute the equilibrium distribution of the CTMC for the specified transition rate values.
 
-        :param param_dict: A dictionary specifying the values of each transition rate
-        :return: A 2-tuple describing equilibrium distribution and labels defines which entry relates to which state
-
-        :raises ValueError: If not every necessary parameter is defined in param_dict
-
+        :param param_dict: A dictionary specifying the values of each
+            transition rate
+        :return: A 2-tuple describing equilibrium distribution and
+            labels defines which entry relates to which state
+        :raises ValueError: If not every necessary parameter is defined
+            in param_dict
         """
-
         A, B = self.eliminate_state_from_transition_matrix(use_parameters=True)
         labels = self.graph.nodes()
         vars_used = [*A.free_symbols, *B.free_symbols]
@@ -539,28 +538,25 @@ class MarkovChain:
         return labels, ss
 
     def is_connected(self) -> bool:
-        """Checks if the graph is strongly connected that is, if each state can be
-        reached from every other state. This function returns true even if all
-        transition rates are 0.
+        """Check if the graph is strongly connected.
 
-        :return: A bool which is true if the graph is strongly connected and
-        false otherwise
+        Returns True if each state can be reached from every other state assuming all transition rates are positive
 
+        :return: A bool which is true if the graph is strongly connected
+            and false otherwise
         """
-
         return nx.algorithms.components.is_strongly_connected(self.graph)
 
     def is_reversible(self) -> bool:
-        """Checks symbolically if the Markov chain is reversible for any set of non-zero
-        transition rate values.
+        """Check symbolically if the Markov chain is reversible for any set of non-zero transition rate values.
 
-        We assume that all transition rates are always non-zero and follow
-        Colquhoun et al. (2004) https://doi.org/10.1529/biophysj.103.
+        We assume that all transition rates are always non-zero and
+        follow Colquhoun et al. (2004)
+        https://doi.org/10.1529/biophysj.103.
 
-        :return: A bool which is true if Markov chain is reversible (assuming non-zero transition rates).
-
+        :return: A bool which is true if Markov chain is reversible
+            (assuming non-zero transition rates).
         """
-
         # Digraph must be strongly connected in order for the chain to be
         # reversible. In other words it must be possible to transition from any
         # state to any other state in some finite number of transitions
@@ -604,12 +600,15 @@ class MarkovChain:
                    show_html=False):
         """Visualise the graph as a webpage using pyvis.
 
-        :param filepath: An optional filepath to save the file to. If this is None, will be opened as a webpage instead.
-        :param show_options: Whether or not the options menu should be displayed on the webpage
-        :param show_parameters: Whether or not we should display the transition rates instead of their labels
-        :param show_html: Whether or not to open the outputted html file in the browser
+        :param filepath: An optional filepath to save the file to. If
+            this is None, will be opened as a webpage instead.
+        :param show_options: Whether or not the options menu should be
+            displayed on the webpage
+        :param show_parameters: Whether or not we should display the
+            transition rates instead of their labels
+        :param show_html: Whether or not to open the outputted html file
+            in the browser
         """
-
         for _, _, data in self.graph.edges(data=True):
             if 'label' not in data or show_rates:
                 data['label'] = data['rate']
@@ -633,9 +632,7 @@ class MarkovChain:
         This function modifies the `rate` attribute of edges in self.graph
 
         :param rates_dict: A dictionary of rates and their corresponding expressions.
-
         """
-
         for rate in rates_dict:
             if rate not in self.rates:
                 raise Exception()
@@ -660,9 +657,7 @@ class MarkovChain:
 
         :param rate_dict: A dictionary with a tuple containing an expression and optionally dummy variables and corresponding values for each transition rate in the model.
         :param shared_variables: A dictionary of variables that may be shared between transition rates
-
         """
-
         # Validate rate dictionary
         for r in rate_dict:
             if r not in self.rates:
@@ -724,12 +719,11 @@ class MarkovChain:
             self.default_values[key] = self.auxiliary_variables[key]
 
     def get_parameter_list(self) -> List[str]:
-        """
-        Get a list describing every parameter in the model
+        """Get a list describing every parameter in the model.
 
-        :return: a list of strings corresponding the symbols in self.rate_expressions and self.shared_rate_variables.
+        :return: a list of strings corresponding the symbols in
+            self.rate_expressions and self.shared_rate_variables.
         """
-
         rates = set()
 
         for r in self.rate_expressions:
@@ -745,23 +739,21 @@ class MarkovChain:
                               drug_binding=False, eliminate_state=None) -> myokit.Model:
         """Generate a myokit Model instance describing this Markov model.
 
-        Build a myokit model from this Markov chain using the parameterisation
-        defined by self.rate_expressions. If a rate does not have an entry in
-        self.rate_expressions, it is treated as a constant.
+        Build a myokit model from this Markov chain using the
+        parameterisation defined by self.rate_expressions. If a rate
+        does not have an entry in self.rate_expressions, it is treated
+        as a constant.
 
-        All initial conditions and parameter values should be set before the
-        model is run.
+        All initial conditions and parameter values should be set before
+        the model is run.
 
         :param name: A name to give to the model. Defaults to self.name.
-
-        :param membrane_voltage: A label defining which variable should be treated as the membrane potential.
-
-        :param eliminate_rate: Which rate (if any) to eliminate in order to reduce the number of ODEs in the system.
-
+        :param membrane_voltage: A label defining which variable should
+            be treated as the membrane potential.
+        :param eliminate_rate: Which rate (if any) to eliminate in order
+            to reduce the number of ODEs in the system.
         :return: A myokit.Model built using self
-
         """
-
         if name == "":
             name = self.name
 
@@ -864,10 +856,11 @@ class MarkovChain:
                                     None, default_values: dict = {}) -> None:
         """Define an auxiliary output variable for the model.
 
-        :param expression: A sympy expression defining the auxiliary variable
+        :param expression: A sympy expression defining the auxiliary
+            variable
         :param label: A str naming the variable e.g IKr
-        :param default_values: A dictionary of the default values of any parameter used in the auxiliary expression
-
+        :param default_values: A dictionary of the default values of any
+            parameter used in the auxiliary expression
         """
         self.auxiliary_variables = default_values
         if label in self.graph.nodes() or label in self.reserved_names:
@@ -907,22 +900,24 @@ class MarkovChain:
                 self.default_values[key] = val
 
     def get_states(self):
+        """Construct a list of the states that are in the model.
+
+        :returns: a list of states
+        """
         return list(self.graph)
 
     def as_latex(self, state_to_remove: str = None, include_auxiliary_expression: bool = False,
                  column_vector=True, label_order: list = None) -> str:
-        """Creates a LaTeX expression describing the Markov chain, its parameters and
-        optionally, the auxiliary equation
+        """Create a LaTeX expression describing the Markov chain, its parameters and optionally, the auxiliary equation.
 
-        :param state_to_remove: The name of the state (if any) to eliminate from the system.
-
-        :param include_auxiliary_expression: Whether or not to include the auxiliary expression in the output
-        :param column_vector: If False, write the system using row vectors instead of column vectors. Defaults to True
-
+        :param state_to_remove: The name of the state (if any) to
+            eliminate from the system.
+        :param include_auxiliary_expression: Whether or not to include
+            the auxiliary expression in the output
+        :param column_vector: If False, write the system using row
+            vectors instead of column vectors. Defaults to True
         :returns: A python string containing the relevant LaTeX code.
-
         """
-
         if label_order is not None:
             if state_to_remove is None:
                 if len(label_order) != len(self.graph.nodes()):
@@ -995,7 +990,11 @@ class MarkovChain:
                 r'\end{equation}' + "\n where" + return_str
         return return_str
 
-    def get_state_symbol(self, state):
+    def get_state_symbol(self, state: str):
+        """Convert a state found in the model to a suitable identifier for use with sympy.
+
+        :raises ValueError: When state is not present in the model
+        """
         if state in self.graph.nodes():
             return "state_" + state
         else:

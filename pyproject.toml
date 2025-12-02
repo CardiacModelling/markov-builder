@@ -58,6 +58,10 @@ test = [
           'seaborn>=0.13.0',
 	        'pyvis>=0.3.2'
       ]
+docs = [
+	"sphinx>=9.0.0",
+	"ruff>=0.14.7"
+	]
 
 
 [tool.setuptools.packages.find]
@@ -72,4 +76,10 @@ skip_glob = ["**/_version.py", "**.conf.py", "**/docs"]
 
 lines_after_imports = 2
 
+[tool.ruff]
+extend-select = ["D"]
+fix = true
+exclude = ["markov_builder/models/thirty_models/", "*/__init__.py"]
 
+# Ignore empty docstring on init
+ignore = ["D100", "D107"]
