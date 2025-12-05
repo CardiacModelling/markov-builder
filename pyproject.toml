@@ -58,6 +58,7 @@ test = [
           'seaborn>=0.13.0',
 	        'pyvis>=0.3.2'
       ]
+
 docs = [
 	"sphinx>=9.0.0",
 	"ruff>=0.14.7"
