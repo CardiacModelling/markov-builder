@@ -46,13 +46,13 @@ class TestThirtyModels(unittest.TestCase):
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
 
-        self.models = [ model_00, model_01, model_02, model_03, model_04,
-                        model_05, model_06, model_07, model_08, model_09,
-                        model_10, model_11, model_12, model_13, model_14,
-                        model_15, model_16, model_17, model_18, model_19,
-                        model_20, model_21, model_22, model_23, model_24,
-                        model_25, model_26, model_27, model_28, model_29,
-                        model_30 ]
+        self.models = [model_00, model_01, model_02, model_03, model_04,
+                       model_05, model_06, model_07, model_08, model_09,
+                       model_10, model_11, model_12, model_13, model_14,
+                       model_15, model_16, model_17, model_18, model_19,
+                       model_20, model_21, model_22, model_23, model_24,
+                       model_25, model_26, model_27, model_28, model_29,
+                       model_30]
 
         self.disconnected_models = [model_03, model_09, model_10, model_19,
                                     model_20, model_26, model_27]
@@ -125,8 +125,6 @@ class TestThirtyModels(unittest.TestCase):
                         logging.error("%s: rates moving forwards around the cycle are: %s", name, forward_rate_list)
                         logging.error("%s: rates moving backwards around the cycle are: %s", name, backward_rate_list)
                         logging.error(f"States are {cycle}")
-
-
 
             self.assertTrue(mc.is_reversible())
 
