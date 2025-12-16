@@ -1,4 +1,3 @@
-import itertools
 import logging
 from dataclasses import asdict
 from typing import Any, List, Tuple
@@ -248,7 +247,6 @@ class MarkovChain:
             edge exists
         """
         if from_node not in self.graph.nodes or to_node not in self.graph.nodes:
-            nodes = [from_node, to_node]
             not_present = [node for node in [from_node, to_node] if node not in self.graph.nodes]
             raise ValueError(f"A node wasn't present in the graph ({not_present})")
 
