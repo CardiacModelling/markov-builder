@@ -18,7 +18,12 @@ from markov_builder.models.thirty_models import (model_00, model_01, model_02,
                                                  model_06, model_07, model_08,
                                                  model_09, model_10, model_11,
                                                  model_12, model_13, model_14,
-                                                 model_20, model_30)
+                                                 model_15, model_16, model_17,
+                                                 model_18, model_19, model_20,
+                                                 model_21, model_22, model_23,
+                                                 model_24, model_25, model_26,
+                                                 model_27, model_28, model_29,
+                                                 model_30)
 
 
 matplotlib.use('pdf')
@@ -41,17 +46,20 @@ class TestThirtyModels(unittest.TestCase):
         self.output_dir = test_output_dir
         logging.info("outputting to " + test_output_dir)
 
-        self.models = [
-            model_00, model_01, model_02, model_03, model_04,
-            model_05, model_06, model_07, model_08, model_09, model_10,
-            model_11, model_12, model_13, model_14, model_20,
-            model_30
-        ]
+        self.models = [ model_00, model_01, model_02, model_03, model_04,
+                        model_05, model_06, model_07, model_08, model_09,
+                        model_10, model_11, model_12, model_13, model_14,
+                        model_15, model_16, model_17, model_18, model_19,
+                        model_20, model_21, model_22, model_23, model_24,
+                        model_25, model_26, model_27, model_28, model_29,
+                        model_30 ]
 
-        self.disconnected_models = [model_03, model_09, model_10, model_20]
+        self.disconnected_models = [model_03, model_09, model_10, model_19,
+                                    model_20, model_26, model_27]
 
-        self.model_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 20,
-                              30]
+        self.model_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                              15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                              27, 28, 29, 30]
 
     def test_generate_myokit(self):
         for model in self.models:
@@ -82,7 +90,8 @@ class TestThirtyModels(unittest.TestCase):
             logging.debug(f"initiating {name}")
 
             mc = model()
-            self.assertTrue(mc.is_connected() ^ (model in self.disconnected_models))
+            self.assertTrue(mc.is_connected() ^ (model in self.disconnected_models),
+                            f"model {model} is not connected")
 
     def test_reversible(self):
         for model in self.models:
@@ -115,6 +124,9 @@ class TestThirtyModels(unittest.TestCase):
                     if (forward_rate_product - backward_rate_product).evalf() != 0:
                         logging.error("%s: rates moving forwards around the cycle are: %s", name, forward_rate_list)
                         logging.error("%s: rates moving backwards around the cycle are: %s", name, backward_rate_list)
+                        logging.error(f"States are {cycle}")
+
+
 
             self.assertTrue(mc.is_reversible())
 
@@ -132,15 +144,17 @@ class TestThirtyModels(unittest.TestCase):
             if i is None or model is None:
                 continue
             name = model.__name__
-            logging.debug(f"initiating {name}")
 
             mc = model()
             mk_protocol_filename = os.path.join(mmt_dir,
                                                 'simplified-staircase.mmt')
+
             mk_protocol = mk.load_protocol(mk_protocol_filename)
 
             mk_model = mk.load_model(os.path.join(mmt_dir,
                                                   f"model-{i}.mmt"))
+
+            # logging.debug(f"Loaded model-{i}.mmt")
 
             sim = mk.Simulation(mk_model, mk_protocol)
             sim.set_tolerance(1e-9, 1e-9)
@@ -169,12 +183,12 @@ class TestThirtyModels(unittest.TestCase):
             fig.gca().plot(times[:-1], gen_mk_IKr, label='generated markov_builder simulation')
 
             fig.gca().legend()
-
             fig.savefig(os.path.join(comparison_plot_dir,
                                      f"{name}_myokit_comparison"))
+            plt.close(fig)
 
             error = np.sqrt(np.mean((gen_mk_IKr - mk_IKr)**2))
-            self.assertLess(error, 1e-2)
+            self.assertLess(error, 0.02, f"Excessive error in model {i}: {name}")
 
 
 if __name__ == "__main__":

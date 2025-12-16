@@ -54,7 +54,7 @@ a5 = p15 * exp( p16 * V)
 b5 = (a5*b4)/a4
 
 dot(C4) = bm*C3 + b5*IC4 - C4*(4*am+a5) 
-dot(C3) = 2*bm*C2 + 4*am*C4 + b4*IC3 - C3*(a4 + 3*am - bm)
+dot(C3) = 2*bm*C2 + 4*am*C4 + b4*IC3 - C3*(a4 + 3*am + bm)
 dot(C2) = 3*bm*C1 + 3*am*C3 + b3*IC2 - C2*(a3 + 2*am + 2*bm)
 dot(C1) = 4*bm*O + 2*am*C2 + b2*IC1 - C1*(am + 3*bm + a2)
 dot(O) = b1*I + am*C1 - O*(4*bm + a1)

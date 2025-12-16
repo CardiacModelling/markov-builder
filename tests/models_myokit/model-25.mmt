@@ -46,7 +46,7 @@ a5 = p17 * exp( p18 * V)
 b5 = p19 * exp(-p20 * V)
 
 dot(C4) = b1 * C3 - a1 * C4
-dot(C3) = b2 * C2 - a1 * C4 - C3*(a2 + b1)
+dot(C3) = b2 * C2 + a1 * C4 - C3*(a2 + b1)
 dot(C2) = b3 * C1 + a2 * C3 - C2*(a3 + b2)
 dot(C1) = b4 * O  + a3 * C2 - C1*(a4 + b3)
 dot(O) =  b5 * I  + a4 * C1 -  O*(a5 + b4)
