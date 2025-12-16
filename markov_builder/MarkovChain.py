@@ -248,7 +248,9 @@ class MarkovChain:
             edge exists
         """
         if from_node not in self.graph.nodes or to_node not in self.graph.nodes:
-            raise Exception("A node wasn't present in the graph ({} or {})".format(from_node, to_node))
+            nodes = [from_node, to_node]
+            not_present = [node for node in [from_node, to_node] if node not in self.graph.nodes]
+            raise ValueError(f"A node wasn't present in the graph ({not_present})")
 
         if not isinstance(transition_rate, str):
             transition_rate = str(transition_rate)
@@ -567,10 +569,9 @@ class MarkovChain:
         cycle_basis = nx.cycle_basis(undirected_graph)
 
         for cycle in cycle_basis:
-            cycle.append(cycle[0])
             logging.debug("Checking cycle {}".format(cycle))
-
-            iterator = list(zip(cycle, itertools.islice(cycle, 1, None)))
+            cycle.append(cycle[0])
+            iterator = list(zip(cycle[:-1], cycle[1:]))
             forward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for frm, to in iterator]
             backward_rate_list = [sp.sympify(self.graph.get_edge_data(frm, to)['rate']) for to, frm in iterator]
 
@@ -998,5 +999,5 @@ class MarkovChain:
         if state in self.graph.nodes():
             return "state_" + state
         else:
-            raise ValueError("State not present in model")
+            raise ValueError(f"State not present in model {self.name}: {state}")
 
