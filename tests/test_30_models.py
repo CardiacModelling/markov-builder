@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import itertools
-import pytest
 import logging
 import os
 import unittest
@@ -12,31 +11,17 @@ import myokit
 import myokit as mk
 import networkx as nx
 import numpy as np
+import pytest
 import sympy as sp
 
 import markov_builder
 import markov_builder.models.thirty_models
 
-from markov_builder.models.thirty_models import (model_00, model_01, model_02,
-                                                 model_03, model_04, model_05,
-                                                 model_06, model_07, model_08,
-                                                 model_09, model_10, model_11,
-                                                 model_12, model_13, model_14,
-                                                 model_15, model_16, model_17,
-                                                 model_18, model_19, model_20,
-                                                 model_21, model_22, model_23,
-                                                 model_24, model_25, model_26,
-                                                 model_27, model_28, model_29,
-                                                 model_30)
-
 
 matplotlib.use('pdf')
 
 models = [getattr(markov_builder.models.thirty_models, f"model_{i:02}") for i in range(31)]
-
-
-disconnected_models = [model_03, model_09, model_10, model_19,
-                       model_20, model_26, model_27]
+disconnected_models = [models[i] for i in [3, 9, 10, 19, 20, 26, 27]]
 
 output_dir = os.environ.get('MARKOVBUILDER_TEST_OUTPUT', 'test_output')
 os.makedirs(output_dir, exist_ok=True)
@@ -53,6 +38,7 @@ def test_generate_myokit(model):
     myokit_model = mc.generate_myokit_model()
     myokit.save(os.path.join(output_dir, f"{model.__name__}.mmt"), myokit_model)
 
+
 @pytest.mark.parametrize("model", models)
 def test_visualise_graphs(model):
     name = model.__name__
@@ -60,12 +46,13 @@ def test_visualise_graphs(model):
     mc = model()
 
     mc.draw_graph(os.path.join(output_dir, f"{name}_graph.html"),
-                    show_parameters=False)
+                  show_parameters=False)
     mc.draw_graph(os.path.join(output_dir, f"{name}_graph_with_parameters.html"),
-                    show_parameters=True)
+                  show_parameters=True)
 
     nx.drawing.nx_agraph.write_dot(mc.graph, os.path.join(output_dir,
-                                                            "%s_dotfile.dot" % name))
+                                                          "%s_dotfile.dot" % name))
+
 
 @pytest.mark.parametrize("model", models)
 def test_connected(model):
@@ -74,6 +61,7 @@ def test_connected(model):
 
     mc = model()
     assert mc.is_connected() ^ (model in disconnected_models), f"model {model} is not connected"
+
 
 @pytest.mark.parametrize("model", models)
 def test_reversible(model):
@@ -97,9 +85,9 @@ def test_reversible(model):
 
             # Substitute in expressions
             forward_rate_list = [rate.subs(mc.rate_expressions) for
-                                    rate in forward_rate_list]
+                                 rate in forward_rate_list]
             backward_rate_list = [rate.subs(mc.rate_expressions) for rate in
-                                    backward_rate_list]
+                                  backward_rate_list]
 
             forward_rate_product = sp.prod(forward_rate_list)
             backward_rate_product = sp.prod(backward_rate_list)
@@ -114,7 +102,7 @@ def test_reversible(model):
 @pytest.mark.parametrize("model", models)
 def test_myokit_simulation_output(model):
     mmt_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            'models_myokit')
+                           'models_myokit')
     Erev = -88
 
     # Extract number from model name i.e. model_02 -> 02
@@ -134,7 +122,7 @@ def test_myokit_simulation_output(model):
     mk_protocol = mk.load_protocol(mk_protocol_filename)
 
     mk_model = mk.load_model(os.path.join(mmt_dir,
-                                            f"model-{index}.mmt"))
+                                          f"model-{index}.mmt"))
 
     # logging.debug(f"Loaded model-{i}.mmt")
 
@@ -166,7 +154,7 @@ def test_myokit_simulation_output(model):
 
     fig.gca().legend()
     fig.savefig(os.path.join(comparison_plot_dir,
-                                f"{name}_myokit_comparison"))
+                             f"{name}_myokit_comparison"))
     plt.close(fig)
 
     error = np.sqrt(np.mean((gen_mk_IKr - mk_IKr)**2))

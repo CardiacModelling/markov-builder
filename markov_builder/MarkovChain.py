@@ -144,7 +144,7 @@ class MarkovChain:
         if state not in self.graph.nodes():
             raise ValueError(f"State {state} not found in model")
 
-        nx.set_node_attributes(self.graph, {state:kwargs})
+        nx.set_node_attributes(self.graph, {state: kwargs})
 
     def add_open_trapping(self, prefix: str = "d_", new_rates: bool = False) -> None:
         """Construct an open trapping model by mirroring the current model and connecting the open states.
@@ -395,7 +395,7 @@ class MarkovChain:
 
         if use_parameters:
             if len(self.rate_expressions) == 0:
-                raise Exception(f"Tried substituting parameters but none found")
+                raise Exception("Tried substituting parameters but none found")
             else:
                 A_matrix = A_matrix.subs(self.rate_expressions)
                 B_vec = B_vec.subs(self.rate_expressions)

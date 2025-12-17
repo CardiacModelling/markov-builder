@@ -2,12 +2,13 @@
 
 import logging
 import os
-import pytest
+import unittest
 
 import matplotlib
 import matplotlib.pyplot as plt
 import myokit
 import networkx as nx
+import pytest
 import sympy as sp
 
 import markov_builder.example_models as example_models
@@ -68,8 +69,8 @@ def test_transition_matrix():
     system = mc.eliminate_state_from_transition_matrix(['C', 'O', 'I'])
 
     pen_and_paper_A = sp.Matrix([['-k_1 - k_3 - k_4', 'k_2 - k_4', '-k_4'],
-                                    ['k_1', '-k_2 - k_3', 'k_4'],
-                                    ['-k_1', 'k_3 - k_1', '-k_2 - k_4 - k_1']])
+                                 ['k_1', '-k_2 - k_3', 'k_4'],
+                                 ['-k_1', 'k_3 - k_1', '-k_2 - k_4 - k_1']])
     pen_and_paper_B = sp.Matrix(['k_4', 0, 'k_1'])
 
     assert pen_and_paper_A == system[0]
@@ -77,7 +78,7 @@ def test_transition_matrix():
 
     system2 = mc.eliminate_state_from_transition_matrix(['C', 'I', 'O'])
 
-    assert pen_and_paper_A[[0, 2, 1], [0, 2, 1]] ==  system2[0]
+    assert pen_and_paper_A[[0, 2, 1], [0, 2, 1]] == system2[0]
     assert pen_and_paper_B[[0, 2, 1], 0] == system2[1]
 
 
@@ -89,7 +90,7 @@ def test_construct_examples(mc):
 
     if len(mc.rate_expressions) > 0:
         mc.draw_graph(os.path.join(output_dir, "%s_graph_parameters.html" %
-                                    name), show_parameters=True)
+                                   name), show_parameters=True)
 
     nx.drawing.nx_agraph.write_dot(mc.graph, "%s_dotfile.dot" % name)
 
@@ -103,10 +104,10 @@ def test_parameterise_rates_no_default():
     mc = example_models.construct_four_state_chain()
 
     rate_dictionary = {'k_1': positive_rate_expr,
-                        'k_2': negative_rate_expr,
-                        'k_3': positive_rate_expr,
-                        'k_4': negative_rate_expr,
-                        }
+                       'k_2': negative_rate_expr,
+                       'k_3': positive_rate_expr,
+                       'k_4': negative_rate_expr,
+                       }
 
     mc.parameterise_rates(rate_dictionary, shared_variables={'V': 'V'})
 
@@ -126,7 +127,7 @@ def test_myokit_output(mc):
 
     # Output reduced system of equations
     logging.debug("Reduced ODE system is :%s",
-                    str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-1],
+                  str(mc.eliminate_state_from_transition_matrix(list(mc.graph.nodes)[:-1],
                                                                 use_parameters=True)))
 
     # Output list of parameters
@@ -151,7 +152,7 @@ def test_myokit_output(mc):
         # Eliminate last node
         myokit_model = mc.generate_myokit_model(list(mc.graph)[-1])
         myokit.save(os.path.join(output_dir,
-                                    f"{mc.name}_model_reduced.mmt"), myokit_model)
+                                 f"{mc.name}_model_reduced.mmt"), myokit_model)
 
     myokit.save(os.path.join(output_dir, f"{mc.name}_model.mmt"),
                 myokit_model)
@@ -193,8 +194,8 @@ def test_assert_reversibility_using_cycles():
 
     # Test function on models that we know are reversible
     reversible_models = [example_models.construct_four_state_chain(),
-                            example_models.construct_mazhari_chain(),
-                            example_models.construct_kemp_model()]
+                         example_models.construct_mazhari_chain(),
+                         example_models.construct_kemp_model()]
 
     for mc in reversible_models:
         # Skip models with multiple components
@@ -220,6 +221,7 @@ def test_assert_reversibility_using_cycles():
     logging.debug("graph is %s", mc.graph)
     assert not mc.is_reversible()
 
+
 def test_equate_rates():
     """
     Test that the MarkovChain.substitute_rates function performs the expected substitution
@@ -242,8 +244,8 @@ def test_equate_rates():
     mc.substitute_rates(rates_dict)
     mc.add_open_trapping(new_rates=True)
     mc.draw_graph(os.path.join(output_dir,
-                                '%s_open_trapping_rates_substitution.html' %
-                                mc.name), show_rates=True)
+                               '%s_open_trapping_rates_substitution.html' %
+                               mc.name), show_rates=True)
     transition_rates = [d['rate'] for _, _, d in mc.graph.edges(data=True)]
 
     # Check that new mirrored rates have been handled correctly
@@ -319,6 +321,8 @@ def test_sample_trajectories(mc):
 
 
 model_sizes = [(2, 3), (4, 5), (3, 4), (2, 8)]
+
+
 @pytest.mark.parametrize("model_size", model_sizes)
 def test_HH_models(model_size):
     i, j = model_size
