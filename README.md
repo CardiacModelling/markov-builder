@@ -2,7 +2,11 @@
 
 
 ## Description
-`markov_builder` is a Python package for constructing Markov models of ion-channel kinetics. These models may be thought of as chemical reaction networks where the transition rate matrix depends on the cell's transmembrane potential (and sometimes the concentration of a drug). This package uses 'networkx' to allow the user to specify the graph associated with the model (model topology). Many models of ion channel kinetics can be expressed in this way. For example, Markov models equivalent to Hodgkin-Huxley style conductance models are straightforward to generate. The transition rates may then be parameterised with any choice of equation, and depend on any number of 'shared variables' such as transmembrane potential, drug concentration, temperature, etc...
+`markov_builder` is a Python package for constructing Markov models of ion-channel kinetics.
+These models may be thought of as chemical reaction networks where the transition rate matrix depends on the cell's transmembrane potential (and sometimes the concentration of a drug). This package uses 'networkx' to allow the user to specify the graph associated with the model (model topology).
+Many models of ion channel kinetics can be expressed in this way.
+For example, Markov models equivalent to Hodgkin-Huxley style conductance models are straightforward to generate.
+The transition rates may then be parameterised with any choice of equation, and depend on any number of 'shared variables' such as transmembrane potential, drug concentration, temperature, etc...
 
 Given the graph for a model and a parameterisation, you may then:
 1. Output latex describing the model
@@ -20,7 +24,8 @@ This package requires Python with version >= 3.6 with `numpy`. `pip` is required
 
 ### Installation
 
-It is recommended to install `markov_builder` in a virtual environment to avoid dependency conflicts. To do this, navigate to this repository and run:
+It is recommended to install `markov_builder` in a virtual environment to avoid dependency conflicts.
+To do this, navigate to this repository and run:
 
 ```
 python3 -m pip install --upgrade pip
