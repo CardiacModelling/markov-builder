@@ -15,8 +15,8 @@ class model_23(MarkovChain):
     rates = [
         ('C3', 'C2', 'a1', 'b1'),
         ('C2', 'C1', 'a2', 'b2'),
-        ('C1', 'O',  'a3', 'b3'),
-        ('O',  'I',  'a4', 'b4'),
+        ('C1', 'O', 'a3', 'b3'),
+        ('O', 'I', 'a4', 'b4'),
 
         ('C3', 'IC3', 'a7', 'b7'),
         ('C2', 'IC2', 'a6', 'b6'),
@@ -24,7 +24,7 @@ class model_23(MarkovChain):
 
         ('IC3', 'IC2', 'a8', 'b8'),
         ('IC2', 'IC1', 'a9', 'b9'),
-        ('IC1', 'I',   'a10', 'b10'),
+        ('IC1', 'I', 'a10', 'b10'),
     ]
 
     rate_dictionary = {

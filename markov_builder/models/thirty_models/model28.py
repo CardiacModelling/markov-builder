@@ -1,6 +1,7 @@
 from numpy import nan
 from markov_builder.MarkovChain import MarkovChain
 
+
 class model_28(MarkovChain):
     description = "Model 28: IKr Markov model from Sanmitra Ghosh"
 

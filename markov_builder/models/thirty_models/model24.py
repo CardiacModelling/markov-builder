@@ -13,8 +13,8 @@ class model_24(MarkovChain):
         ('C4', 'C3', '4*am', 'bm'),
         ('C3', 'C2', '3*am', '2*bm'),
         ('C2', 'C1', '2*am', '3*bm'),
-        ('C1', 'O',  'am',   '4*bm'),
-        ('O',  'I',  'a1',   'b1'),
+        ('C1', 'O', 'am', '4*bm'),
+        ('O', 'I', 'a1', 'b1'),
     ]
 
     rate_dictionary = {
