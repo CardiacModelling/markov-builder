@@ -1,4 +1,5 @@
 from numpy import nan
+
 from markov_builder.MarkovChain import MarkovChain
 
 
