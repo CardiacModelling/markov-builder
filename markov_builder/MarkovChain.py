@@ -44,7 +44,6 @@ class MarkovChain:
     :param states: List of states in the model.
     :param state_attributes_class: A dataclass detailing what data is stored for each state
     :param seed: Optional random seed to use for random simulations.
-    :param open_state: Label relating to the models open-conformation, a particular state.
     :param transition_rates: Details transitions and rates to include in the model, each is a tuple, (from_state, to_state, label).
     :param rate_dictionary: Provides mathematical expressions for transition rates. Each dictionary value is a tuple including the expression and optionally dummy variables and corresponding values. See MarkovChain.parameterise_rates
     :param auxiliary_expression: Symbol to use to assign to the models auxiliary expression (sometimes known as an observation function)
@@ -54,8 +53,7 @@ class MarkovChain:
     """
 
     def __init__(self, states: list = [], state_attributes_class: Any = MarkovStateAttributes,
-                 dataclass=None, seed: int = None, name: str =
-                 None, open_state: str = None, transition_rates: List = [],
+                 dataclass=None, seed: int = None, name: str = None, transition_rates: List = [],
                  rate_expressions: dict = {}, auxiliary_expression: str = "",
                  auxiliary_symbol: str = None, shared_variables: dict
                  = {}, auxiliary_parameters: dict = {}, auxiliary_variables: dict = {}):
@@ -90,16 +88,11 @@ class MarkovChain:
         for state in states:
             self.add_state(state)
 
-        if open_state:
-            open_state = sp.sympify(self.get_state_symbol(open_state))
-            auxiliary_expression = auxiliary_expression.format(open_state)
-
         # Format auxiliary_expression in case it's using a placeholder for the open state
-
         auxiliary_function_defined = auxiliary_expression and auxiliary_symbol and auxiliary_parameters
 
         if auxiliary_function_defined:
-            self.define_auxiliary_expression(sp.sympify(auxiliary_expression.format(sp.sympify(open_state))),
+            self.define_auxiliary_expression(sp.sympify(auxiliary_expression),
                                              auxiliary_symbol,
                                              auxiliary_parameters)
 
@@ -145,6 +138,13 @@ class MarkovChain:
         new_graph = nx.compose(trapped_graph, self.graph)
 
         self.graph = new_graph
+
+    def set_state_attribute(self, state, **kwargs):
+
+        if state not in self.graph.nodes():
+            raise ValueError(f"State {state} not found in model")
+
+        nx.set_node_attributes(self.graph, {state:kwargs})
 
     def add_open_trapping(self, prefix: str = "d_", new_rates: bool = False) -> None:
         """Construct an open trapping model by mirroring the current model and connecting the open states.
@@ -215,11 +215,10 @@ class MarkovChain:
 
         symrate = sp.sympify(rate)
         if len(symrate.atoms()) != 1:
-            raise Exception()
+            raise Exception(f"rate {symrate} consists of multiple symbols")
 
         if rate in self.rates:
-            # TODO
-            raise Exception()
+            raise Exception(f"rate {rate} already exists in model")
         else:
             self.rates.add(rate)
 
@@ -323,7 +322,7 @@ class MarkovChain:
 
         if use_parameters:
             if len(self.rate_expressions) == 0:
-                raise Exception()
+                raise RuntimeError("No rate expressions provided")
             matrix = matrix.subs(self.rate_expressions)
         if label_order is None:
             return list(self.graph.nodes), matrix
@@ -396,7 +395,7 @@ class MarkovChain:
 
         if use_parameters:
             if len(self.rate_expressions) == 0:
-                raise Exception()
+                raise Exception(f"Tried substituting parameters but none found")
             else:
                 A_matrix = A_matrix.subs(self.rate_expressions)
                 B_vec = B_vec.subs(self.rate_expressions)
@@ -634,7 +633,7 @@ class MarkovChain:
         """
         for rate in rates_dict:
             if rate not in self.rates:
-                raise Exception()
+                raise Exception(f"Tried substituting for rate {rate} but it wasn't found in the model")
             self.rate_expressions[rate] = rates_dict[rate]
 
         for _, _, d in self.graph.edges(data=True):
@@ -877,9 +876,7 @@ class MarkovChain:
         for symbol in default_values:
             symbol = sp.sympify(symbol)
             if symbol not in expression.free_symbols:
-                raise Exception()
-            if symbol in self.default_values:
-                raise Exception()
+                raise Exception(f"Value provided for {symbol} but not found in auxiliarry expression")
 
         for symbol in expression.free_symbols:
             if str(symbol) not in state_symbols:
@@ -947,7 +944,7 @@ class MarkovChain:
 
         else:
             if state_to_remove not in map(str, self.graph.nodes()):
-                raise Exception("%s not in model", state_to_remove)
+                raise Exception(f"{state_to_remove} not in model")
             labels = [label for label in label_order]
 
             if len(labels) != len(self.graph.nodes()) - 1:

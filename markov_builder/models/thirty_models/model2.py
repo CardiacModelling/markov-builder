@@ -9,8 +9,6 @@ class model_02(MarkovChain):
     rates = [('O', 'C', 'bm', 'am'),
              ('O', 'I', 'ah', 'bh')]
 
-    open_state = 'O'
-
     rate_dictionary = {'am': ('p1 * exp(p2 * V)',),
                        'bm': ('p3 * exp(-p4 * V)',),
                        'ah': ('p5 * exp(p6 * V)',),
@@ -35,7 +33,6 @@ class model_02(MarkovChain):
 
     def __init__(self):
         super().__init__(states=self.states,
-                         open_state=self.open_state,
                          transition_rates=self.rates,
                          rate_expressions=self.rate_dictionary,
                          auxiliary_expression=self.auxiliary_expression,
@@ -43,3 +40,5 @@ class model_02(MarkovChain):
                          shared_variables=self.shared_variables_dict,
                          auxiliary_parameters=self.auxiliary_parameters
                          )
+
+        self.set_state_attribute('O', open_state=True)

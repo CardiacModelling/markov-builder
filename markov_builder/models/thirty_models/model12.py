@@ -44,14 +44,13 @@ class model_12(MarkovChain):
         'b3': ('a3 * b2 / a2',),
     }
 
-    auxiliary_expression = "p13 * {} * (V - E_Kr)"
+    auxiliary_expression = "p13 * state_O * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
 
     auxiliary_parameters = {'E_Kr': -85}
 
     def __init__(self):
         super().__init__(states=self.states,
-                         open_state=self.open_state,
                          transition_rates=self.rates,
                          rate_expressions=self.rate_dictionary,
                          auxiliary_expression=self.auxiliary_expression,
@@ -59,3 +58,5 @@ class model_12(MarkovChain):
                          shared_variables=self.shared_variables_dict,
                          auxiliary_parameters=self.auxiliary_parameters
                          )
+
+        self.set_state_attribute('O', open_state=True)
