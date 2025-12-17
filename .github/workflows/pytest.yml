@@ -28,7 +28,7 @@ jobs:
         python -m pip install .[test]
     - name: Lint with flake8
       run: |
-        python -m flake8
+        python -m flake8 --exclude=".venv"
     - name: Import sorting with isort
       run: |
         python -m isort . --show-config
