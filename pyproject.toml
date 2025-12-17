@@ -86,25 +86,13 @@ exclude = ["markov_builder/models/thirty_models/", "*/__init__.py"]
 ignore = ["D100", "D107"]
 
 [tool.flake8]
-max_line_length = 120
-ignore = [
-    # allow empty line at end of file
-    "W391",
-    # break before binary operator - allow either style
-    "W503",
-    # break after binary operator - allow either style
-    "W504",
-    # missing whitespace around arithmetic operator
-    "E226",
-    # Line length
-    "E501"
-    ]
+max-line-length = 120
+ignore = ["W391", "W503", "W504", "E226", "E501"]
 
 exclude = [
     ".git",
     ".*",
-    "**/.venv",
-    ".venv/**",
+    ".venv",
     "docs",
     "build",
     "doctrees",
