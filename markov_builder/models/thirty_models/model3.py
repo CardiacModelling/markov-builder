@@ -30,7 +30,6 @@ class model_03(MarkovChain):
     auxiliary_expression = "p9 * state_O1 * state_O2 * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
     auxiliary_parameters = {'E_Kr': -88}
-    open_state = 'O1'
 
     def __init__(self):
         super().__init__(states=self.states,

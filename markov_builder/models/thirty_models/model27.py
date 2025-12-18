@@ -53,7 +53,6 @@ class model_27(MarkovChain):
         'p21': 0.15240,
     }
 
-    open_state = 'Om'  # the Markov open state representing the m gate
     auxiliary_expression = 'p21 * state_Om * state_Oh * (V - E_Kr)'
     auxiliary_symbol = 'I_Kr'
 

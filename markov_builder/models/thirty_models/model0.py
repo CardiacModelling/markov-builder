@@ -13,7 +13,6 @@ class model_00(MarkovChain):
              ('O', 'I', 'k_3', 'k_4'),
              ('C', 'IC', 'k_3', 'k_4')]
 
-    open_state = 'O'
     shared_variables_dict = {'V': np.nan}
 
     shared_variables_dict = {

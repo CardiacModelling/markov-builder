@@ -8,8 +8,6 @@ class model_25(MarkovChain):
 
     states = ('C4', 'C3', 'C2', 'C1', 'O', 'I')
 
-    open_state = 'O'
-
     rates = [
         ('C4', 'C3', 'a1', 'b1'),
         ('C3', 'C2', 'a2', 'b2'),

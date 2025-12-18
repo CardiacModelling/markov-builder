@@ -37,7 +37,6 @@ class model_10(MarkovChain):
         'b2': ('p11 * exp(-p12*V)',),
     }
 
-    open_state = 'O'
     auxiliary_expression = "p13 * state_O * state_O2 * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
 

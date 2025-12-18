@@ -12,9 +12,6 @@ class model_22(MarkovChain):
         'I', 'IC1', 'IC2', 'IC3'
     )
 
-    # Open state
-    open_state = 'O'
-
     rates = [
         ('C3', 'C2', '3*am', 'bm'),
         ('C2', 'C1', '2*am', '2*bm'),

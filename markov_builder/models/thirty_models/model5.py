@@ -11,7 +11,6 @@ class model_05(MarkovChain):
              ('O', 'I', 'b1', 'a1'),
              ('C', 'IC', 'b2', 'a2')]
 
-    open_state = 'O'
     shared_variables_dict = {'V': nan,
                              'p1': 2.26e-4,
                              'p2': 0.06990,

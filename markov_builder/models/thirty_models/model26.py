@@ -32,7 +32,6 @@ class model_26(MarkovChain):
         'bh': ('p5 * exp(p6*V)',),
     }
 
-    open_state = 'O_m'  # primary open state (used by MarkovChain internally)
     auxiliary_expression = 'p9 * state_O_m**4 * state_O_h * (V - E_Kr)'
     auxiliary_symbol = 'I_Kr'
 

@@ -8,7 +8,6 @@ class model_29(MarkovChain):
 
     # States
     states = ('C1', 'C2', 'C3', 'C4', 'O', 'I', 'IC1', 'IC2', 'IC3', 'IC4')
-    open_state = 'O'
 
     # Transitions with HH-derived multiplicities (forward/backward in one tuple)
     rates = [

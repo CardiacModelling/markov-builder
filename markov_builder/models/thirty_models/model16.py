@@ -17,9 +17,6 @@ class model_16(MarkovChain):
         ('O', 'I', 'a4', 'b4'),
     ]
 
-    # Open state
-    open_state = 'O'
-
     # Rate expressions (verbatim from .mmt)
     rate_dictionary = {
         'a1': ('p1 * exp(p2 * V)',),

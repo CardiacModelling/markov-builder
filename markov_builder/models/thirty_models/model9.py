@@ -28,7 +28,6 @@ class model_09(MarkovChain):
         'ah': ('p7 * exp(-p8*V)',),
     }
 
-    open_state = 'O'
     auxiliary_expression = "p9 * state_O ** 2 * state_O2 * (V - E_Kr)"
     auxiliary_symbol = 'I_Kr'
 

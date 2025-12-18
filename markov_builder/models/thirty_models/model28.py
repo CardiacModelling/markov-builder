@@ -26,8 +26,6 @@ class model_28(MarkovChain):
         ('O', 'I', 'ah', 'bh'),
     ]
 
-    open_state = 'O'
-
     # Shared variables and parameters
     shared_variables_dict = {
         'V': nan,
