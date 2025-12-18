@@ -116,6 +116,7 @@ def test_myokit_simulation_output(model):
     name = model.__name__
 
     mc = model()
+
     mk_protocol_filename = os.path.join(mmt_dir,
                                         'simplified-staircase.mmt')
 
@@ -132,18 +133,30 @@ def test_myokit_simulation_output(model):
 
     tmax = mk_protocol.characteristic_time()
     times = np.linspace(0, tmax, int(tmax) + 1)
-    sim.pre(5000)
+    sim.pre(10000)
 
     log = sim.run(tmax, log_times=times, log=['ikr.IKr'])
 
     mk_IKr = np.array(log['ikr.IKr'])
 
-    generated_mk_model = mc.generate_myokit_model()
+    remove = None
+    if model not in disconnected_models + [models[0], models[1], models[8]]:
+        # Find removed state
+        for state_var in mk_model["ikr"]:
+            str_state_var = str(state_var).split(".")[1]
+            print(state_var)
+            if (not state_var.is_state()) and (str_state_var in mc.graph):
+                remove = str_state_var
+                break
+        if remove is None:
+            assert remove, "Couldn't find redundant state to remove"
+
+    generated_mk_model = mc.generate_myokit_model(eliminate_state=remove)
 
     sim = mk.Simulation(generated_mk_model, mk_protocol)
     sim.set_tolerance(1e-9, 1e-9)
     sim.set_constant('markov_chain.E_Kr', Erev)
-    sim.pre(5000)
+    sim.pre(10000)
 
     log = sim.run(tmax, log_times=times, log=['markov_chain.I_Kr'])
     gen_mk_IKr = np.array(log['markov_chain.I_Kr'])
@@ -158,7 +171,10 @@ def test_myokit_simulation_output(model):
     plt.close(fig)
 
     error = np.sqrt(np.mean((gen_mk_IKr - mk_IKr)**2))
-    assert error < 0.02, f"Excessive error in model {index}: {name}"
+
+    test_threshold = 0.02 if model in disconnected_models else 1e-5
+
+    assert error < test_threshold, f"Excessive error in model {index}: {name} {error} >= {test_threshold}"
 
 
 if __name__ == "__main__":
