@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Graph Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        #sidebar {
+            width: 250px;
+            background: #f0f0f0;
+            border-right: 1px solid #ccc;
+            overflow-y: auto;
+        }
+
+        #sidebar button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        #sidebar button:hover {
+            background: #ddd;
+        }
+
+        #viewer {
+            flex: 1;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+</div>
+
+<div id="toolbar">
+    <button onclick="prevModel()">◀ Previous</button>
+    <button onclick="nextModel()">Next ▶</button>
+    <button onclick="toggleParameters()" id="paramBtn">
+        Parameters: ON
+    </button>
+    <span id="currentModel"></span>
+</div>
+
+
+<iframe id="viewer" src="model2.html"></iframe>
+
+<script>
+ // Load first model initially
+ viewer.src = "model_00_graph_with_parameters.html";
+</script>
+
+<script>
+ const MIN_MODEL = 1;
+ const MAX_MODEL = 30;
+
+ let currentModel = 1;
+ let showParameters = true;
+
+ const sidebar = document.getElementById("sidebar");
+ const viewer = document.getElementById("viewer");
+
+ const currentModelLabel = document.getElementById("currentModel");
+ const paramBtn = document.getElementById("paramBtn");
+
+ function getFilename() {
+     const num = String(currentModel).padStart(2, "0");
+
+     return showParameters
+          ? `model_${num}_graph_with_parameters.html`
+          : `model_${num}_graph.html`;
+ }
+
+ function loadCurrentModel() {
+     viewer.src = getFilename();
+
+     currentModelLabel.textContent =
+         `Model ${String(currentModel).padStart(2, "0")}`;
+
+     paramBtn.textContent =
+         `Parameters: ${showParameters ? "ON" : "OFF"}`;
+
+     updateSidebarHighlight();
+ }
+
+ function nextModel() {
+     currentModel =
+         currentModel >= MAX_MODEL ? MIN_MODEL : currentModel + 1;
+     loadCurrentModel();
+ }
+
+ function prevModel() {
+     currentModel =
+         currentModel <= MIN_MODEL ? MAX_MODEL : currentModel - 1;
+     loadCurrentModel();
+ }
+
+ function toggleParameters() {
+     showParameters = !showParameters;
+     loadCurrentModel();
+ }
+
+ function loadPage(page) {
+     document.getElementById('viewer').src = page;
+ }
+
+const buttons = []
+ function updateSidebarHighlight() {
+     buttons.forEach((btn, index) => {
+         const model = Number(btn.dataset.model);
+         if (model == currentModel) {
+             btn.classList.add("active");
+         } else {
+             btn.classList.remove("active");
+         }
+     });
+}
+
+ for (let i = 0; i <= 30; i++) {
+     const num = String(i).padStart(2, '0');
+
+     const filename = `model_${num}_graph_with_parameters.html`;
+
+     const btn = document.createElement("button");
+     btn.textContent = `Model ${num}`;
+     btn.dataset.model = i;
+     btn.onclick = () => {
+         currentModel = i;
+         loadCurrentModel();
+     };
+     buttons.push(btn);
+     sidebar.appendChild(btn);
+ }
+
+loadCurrentModel();
+
+</script>
+
+</body>
+
+<style>
+ #sidebar button {
+     display: block;
+     width: 100%;
+     padding: 12px;
+     border: none;
+     background: none;
+     text-align: left;
+     cursor: pointer;
+ }
+
+ #sidebar button:hover {
+     background: #ddd;
+ }
+
+ #sidebar button.active {
+     background: #ccc;
+     font-weight: bold;
+ }
+</style>
+
+</html>
