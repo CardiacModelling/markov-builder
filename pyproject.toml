@@ -56,7 +56,7 @@ test = [
           'matplotlib>=3.7.0',
           'myokit>=1.38.0',
           'seaborn>=0.13.0',
-	        'pyvis>=0.3.2'
+	  'pyvis>=0.3.2'
       ]
 
 docs = [
