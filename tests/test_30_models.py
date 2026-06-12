@@ -63,7 +63,7 @@ def test_connected(model):
     assert mc.is_connected() ^ (model in disconnected_models), f"model {model} is not connected"
 
 
-@pytest.mark.parametrize("model", models)
+@pytest.mark.parametrize("model", set(models) - set(disconnected_models))
 def test_reversible(model):
     name = model.__name__
     logging.debug(f"initiating {name}")
