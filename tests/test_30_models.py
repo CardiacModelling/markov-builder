@@ -68,9 +68,6 @@ def test_reversible(model):
     name = model.__name__
     logging.debug(f"initiating {name}")
 
-    if model in disconnected_models:
-        return
-
     mc = model()
     if not mc.is_reversible():
         undirected_graph = mc.graph.to_undirected(reciprocal=False, as_view=True)
