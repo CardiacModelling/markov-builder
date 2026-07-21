@@ -1,0 +1,44 @@
+[[model]]
+name: model-1
+author: Sanmitra Ghosh
+desc: Check associated model deifintion document
+# Initial values
+ikr.O = 0
+
+
+#
+# Simulation engine variables
+#
+[engine]
+time = 0 bind time
+pace = 0 bind pace
+
+#
+# Membrane potential
+#
+[membrane]
+V = engine.pace
+    desc: membane potential
+    in [mV]
+
+[nernst]
+EK = -85 [mV]
+
+#
+# Model from Kylie's mex file (HH)
+#
+[ikr]
+use membrane.V
+IKr = p5 * O * (V - nernst.EK)
+k12 = p1 * exp( p2 * V)
+k21 = p3 * exp(-p4 * V)
+dot(O) = k12 * (1-O) - k21*O
+
+p1 = 2.26e-4 [1/ms]
+p2 = 0.06990 [1/mV]
+p3 = 3.45e-5 [1/ms]
+p4 = 0.05462 [1/mV]
+
+p5 = 0.15240 [mS/uF]
+
+n_params = 5

@@ -6,8 +6,9 @@ from .rate_expressions import negative_rate_expr, positive_rate_expr
 
 
 def construct_non_reversible_chain():
-    """Construct a model structure that is known to not satisfy microscopic
-    reversibiliy. This is used for testing.
+    """Construct a model structure that is known to not satisfy microscopic reversibiliy.
+
+    This is used for testing.
     """
     mc = MarkovChain(name='non_reversible_example')
 
@@ -25,10 +26,7 @@ def construct_non_reversible_chain():
 
 
 def construct_four_state_chain():
-    """Construct and parameterise the model introduced by Beattie et al. in
-    https://doi.org/10.1101/100677
-    """
-
+    """Construct and parameterise the model introduced by Beattie et al. in https://doi.org/10.1101/100677."""
     mc = MarkovChain(name='Beattie_model')
     states = ['C', 'I', 'IC']
 
@@ -49,7 +47,7 @@ def construct_four_state_chain():
                        'k_3': positive_rate_expr + ((0.0873, 8.91E-3),),
                        'k_4': negative_rate_expr + ((5.15E-3, 0.003158),)}
 
-    mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+    mc.parameterise_rates(rate_dictionary)
 
     open_state = mc.get_state_symbol('O')
     auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V - E_Kr)")
@@ -62,16 +60,12 @@ def construct_four_state_chain():
 
 
 def construct_mazhari_chain():
-    """Construct the Mazhari model structure for hERG as described in
-    https://doi.org/10.1161/hh1301.093633
-    """
-
+    """Construct the Mazhari model structure for hERG as described in https://doi.org/10.1161/hh1301.093633."""
     mc = MarkovChain(name='Mazhari_model')
 
+    mc.add_state('O', open_state=True)
     for state in ('C1', 'C2', 'C3', 'I'):
         mc.add_state(state)
-
-    mc.add_state('O', open_state=True)
 
     rates = [('C1', 'C2', 'a0', 'b0'), ('C2', 'C3', 'kf', 'kb'), ('C3', 'O', 'a1', 'b1'),
              ('O', 'I', 'ai', 'bi'), ('I', 'C3', 'psi', 'ai3')]
@@ -79,15 +73,33 @@ def construct_mazhari_chain():
     for r in rates:
         mc.add_both_transitions(*r)
 
+    constant_rate_expr = ('a', ('a',))
+    rate_dictionary = {
+        'a0': positive_rate_expr + ((0.0069, 0.0272),),
+        'a1': positive_rate_expr + ((0.0218, 0.0262),),
+        'ai': positive_rate_expr + ((0.662, 0.012),),
+        'ai3': positive_rate_expr + ((1.29e-5, 2.71e-6),),
+        'b0': negative_rate_expr + ((0.0227, 0.0431),),
+        'b1': negative_rate_expr + ((0.0009, 0.0269),),
+        'bi': negative_rate_expr + ((0.0059, 0.0443),),
+        'kf': constant_rate_expr + ((0.0266,),),
+        'kb': constant_rate_expr + ((0.1348,),)
+    }
+
+    open_state = mc.get_state_symbol('O')
+    auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
+    mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
+                                   {'g_Kr': 0.1524,
+                                    'E_Kr': -88})
+
     mc.substitute_rates({'psi': '(ai3*bi*b1)/(a1*ai)'})
+    mc.parameterise_rates(rate_dictionary)
 
     return mc
 
 
 def construct_wang_chain():
-    """Construct the Wang model structure for hERG as described in
-    https://doi.org/10.1111/j.1469-7793.1997.045bl.x
-    """
+    """Construct the Wang model structure for hERG as described in https://doi.org/10.1111/j.1469-7793.1997.045bl.x."""
     mc = MarkovChain(name='Wang_model')
 
     mc.add_state('O', open_state=True)
@@ -95,8 +107,10 @@ def construct_wang_chain():
     for state in ('C1', 'C2', 'C3', 'I'):
         mc.add_state(state)
 
-    rates = [('C1', 'C2', 'a_a0', 'b_a0'), ('C2', 'C3', 'k_f', 'k_b'), ('C3', 'O', 'a_a1', 'b_a1'),
-             ('O', 'I', 'a_1', 'b_1')]
+        rates = [('C1', 'C2', 'a_a0', 'b_a0'),
+                 ('C2', 'C3', 'k_f', 'k_b'),
+                 ('C3', 'O', 'a_a1', 'b_a1'),
+                 ('O', 'I', 'a_1', 'b_1')]
 
     for r in rates:
         mc.add_both_transitions(*r)
@@ -104,38 +118,34 @@ def construct_wang_chain():
     constant_rate_expr = ('a', ('a',))
 
     rate_dictionary = {'a_a0': positive_rate_expr + ((0.022348, 0.01176),),
-                       'b_a0': negative_rate_expr + ((0.047002, 0.0631),),
-                       'k_f': constant_rate_expr + ((0.023761,),),
-                       'k_b': constant_rate_expr + ((0.036778,),),
                        'a_a1': positive_rate_expr + ((0.013733, 0.038198),),
+                       'b_a0': negative_rate_expr + ((0.047002, 0.0631),),
                        'b_a1': negative_rate_expr + ((0.0000689, 0.04178),),
 
                        # Using 2mmol KCl values
                        'a_1': positive_rate_expr + ((0.090821, 0.023391),),
-                       'b_1': negative_rate_expr + ((0.006497, 0.03268),)
+                       'b_1': negative_rate_expr + ((0.006497, 0.03268),),
+                       'k_f': constant_rate_expr + ((0.023761,),),
+                       'k_b': constant_rate_expr + ((0.036778,),),
                        }
 
-    mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
-
     open_state = mc.get_state_symbol('O')
-
     auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
                                    {'g_Kr': 0.1524,
                                     'E_Kr': -88})
+    mc.parameterise_rates(rate_dictionary)
+
     return mc
 
 
 def construct_HH_model(n: int, m: int, name: str = None):
-    """ Construct a Markov model equivalent to a Hodgkin-Huxley conductance models
+    """Construct a Markov model equivalent to a Hodgkin-Huxley conductance models.
 
     :param n: The number of activation gates in the model
     :param m: The number of inactivation gates in the model
-
     :return: A MarkovChain with n x m states
-
     """
-
     if n < 2 or m < 2:
         raise Exception()
 
@@ -179,23 +189,27 @@ def construct_HH_model(n: int, m: int, name: str = None):
 
 
 def construct_kemp_model():
-    """Construct and parameterise the model introduced by Kemp et al. in
+    """Construct and parameterise the model introduced by Kemp et al.
+
+    in
     https://doi.org/10.1085/jgp.202112923
     """
-
     mc = MarkovChain(name='Kemp_model')
 
     # Now the conducting state
-    mc.add_state('O', open_state=True)
+    mc.add_state('O1', open_state=True)
+
+    # Add a second conducting state
+    mc.add_state('O2', open_state=True)
 
     # First add the non-conducting states
-    for state in ('IO', 'C1', 'IC1', 'C2', 'IC2'):
+    for state in ('I', 'C1', 'C2'):
         mc.add_state(state)
 
     rates = [
-        ('O', 'IO', 'b_h', 'a_h'), ('C1', 'IC1', 'b_h', 'a_h'), ('C2', 'IC2', 'b_h', 'a_h'),
-        ('O', 'C1', 'b_2', 'a_2'), ('C1', 'C2', 'b_1', 'a_1'),
-        ('IO', 'IC1', 'b_2', 'a_2'), ('IC1', 'IC2', 'b_1', 'a_1')
+        ('O2', 'I', 'b_h', 'a_h'),
+        ('O1', 'C1', 'b_2', 'a_2'),
+        ('C1', 'C2', 'b_1', 'a_1')
     ]
 
     for r in rates:
@@ -217,14 +231,15 @@ def construct_kemp_model():
         'b_h': positive_rate_expr + ((2.70e-01, 1.58e-02),),
     }
 
-    mc.parameterise_rates(rate_dictionary, shared_variables=('V',))
+    open_state1 = mc.get_state_symbol('O1')
+    open_state2 = mc.get_state_symbol('O2')
 
-    open_state = mc.get_state_symbol('O')
-
-    auxiliary_expression = sp.sympify(f"g_Kr * {open_state} * (V + E_Kr)")
+    auxiliary_expression = sp.sympify(f"g_Kr * {open_state1} * {open_state2}\
+    * (V + E_Kr)")
     mc.define_auxiliary_expression(auxiliary_expression, 'I_kr',
                                    {
                                        'g_Kr': 7.05e-02,  # Use conductance from Cell 2
                                        'E_Kr': -88,  # -88mV chosen arbitrarily
                                    })
+    mc.parameterise_rates(rate_dictionary)
     return mc

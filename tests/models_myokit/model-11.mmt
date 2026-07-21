@@ -1,0 +1,82 @@
+[[model]]
+name: model-11
+author: Sanmitra Ghosh
+desc: Check associated model deifintion document
+# Initial values
+ikr.C2 = 1
+ikr.C1 = 0
+ikr.O = 0
+ikr.I = 0
+ikr.IC1 = 0
+
+#
+# Simulation engine variables
+#
+[engine]
+time = 0 bind time
+pace = 0 bind pace
+
+#
+# Membrane potential
+#
+[membrane]
+V = engine.pace
+    desc: membane potential
+    in [mV]
+
+[nernst]
+EK = -85 [mV]
+
+# MODEL
+#          a4       a3
+#     IC2 <==> IC1  <==>  I
+#     ||   b4*  ||   b3* || 
+#   bh||ah    bh||ah   bh||ah
+#     ||   a2   ||   a1  || 
+#     C2  <==>  C1  <==>  O
+#          b2        b1
+#
+[ikr]
+use membrane.V
+IKr = p17 * O * (V - nernst.EK)
+
+IC2 = 1 - (C1 + C2 + O + I + IC1)
+
+a1 = p1 * exp( p2 * V)
+b1 = p3 * exp(-p4 * V)
+bh = p5 * exp( p6 * V)
+ah = p7 * exp(-p8 * V)
+a2 = p9 * exp( p10 * V)
+b2 = p11 * exp(-p12 * V)
+a3 = p13 * exp( p14 * V)
+b3 = (a3*b1)/a1
+a4 = p15 * exp(p16* V)
+b4 = (a4*b2)/a2
+
+dot(C2) = ah*IC2 + b2*C1 - C2*(a2 + bh)
+dot(C1) = ah*IC1 + b1*O + a2*C2 -C1*(a1+bh+b2)
+dot(O) = ah*I + a1*C1 - O*(bh+b1)
+dot(I) = bh*O + a3* IC1 - I*(ah+b3)
+dot(IC1) = b3*I + a4*IC2 + bh*C1 - IC1*(a3 + ah + b4)
+
+
+p1 = 2.26e-4 [1/ms]
+p2 = 0.06990 [1/mV]
+p3 = 3.45e-5 [1/ms]
+p4 = 0.05462 [1/mV]
+p5 = 0.08730 [1/ms]
+p6 = 8.91e-3 [1/mV]
+p7 = 5.15e-3 [1/ms]
+p8 = 0.03158 [1/mV]
+p9 = 2.26e-4 [1/ms]
+p10 = 0.06990 [1/mV]
+p11 = 3.45e-5 [1/ms]
+p12 = 0.05462 [1/mV]
+p13 = 0.08730 [1/ms]
+p14 = 8.91e-3 [1/mV]
+p15 = 5.15e-3 [1/ms]
+p16 = 0.03158 [1/mV]
+p17 = 0.15240 [mS/uF]
+
+n_params = 17
+

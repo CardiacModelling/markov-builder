@@ -1,0 +1,37 @@
+from numpy import nan
+
+from markov_builder.MarkovChain import MarkovChain
+
+
+class model_01(MarkovChain):
+    description = ""
+    states = ('O', 'C')
+    rates = [('O', 'C', 'k_21', 'k_12')]
+
+    rate_dictionary = {
+        'k_12': ('p1 * exp(p2*V)',),
+        'k_21': ('p3 * exp(-p4*V)',)
+    }
+
+    shared_variables_dict = {'V': nan,
+                             'p1': 2.26e-4,
+                             'p2': 0.06990,
+                             'p3': 3.45e-5,
+                             'p4': 0.05462,
+                             'g_Kr': 0.1524,
+                             }
+
+    auxiliary_expression = "g_Kr * state_O * (V - E_Kr)"
+    auxiliary_symbol = 'I_Kr'
+    auxiliary_parameters = {'E_Kr': -88}
+
+    def __init__(self):
+        super().__init__(states=self.states,
+                         transition_rates=self.rates,
+                         rate_expressions=self.rate_dictionary,
+                         auxiliary_expression=self.auxiliary_expression,
+                         auxiliary_symbol=self.auxiliary_symbol,
+                         shared_variables=self.shared_variables_dict,
+                         auxiliary_parameters=self.auxiliary_parameters
+                         )
+        self.set_state_attribute('O', open_state=True)

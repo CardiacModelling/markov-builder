@@ -1,0 +1,77 @@
+[[model]]
+name: model-22
+author: Sanmitra Ghosh
+desc: Check associated model definition document
+# Initial values
+ikr.C3 = 1
+ikr.C2 = 0
+ikr.C1 = 0
+ikr.O = 0
+ikr.I = 0
+ikr.IC1 = 0
+ikr.IC2 = 0
+
+#
+# Simulation engine variables
+#
+[engine]
+time = 0 bind time
+pace = 0 bind pace
+
+#
+# Membrane potential
+#
+[membrane]
+V = engine.pace
+    desc: membrane potential
+    in [mV]
+
+[nernst]
+EK = -85 [mV]
+
+#
+# Model from Kylie's mex file (HH)
+#
+[ikr]
+use membrane.V
+IKr = p15 * O * (V - nernst.EK)
+
+IC3 = 1 - (C1 + C2 + C3 + O + I + IC1 + IC2)
+
+am = p1 * exp( p2 * V)
+bm = p3 * exp(-p4 * V)
+a1 = p5 * exp( p6 * V)
+b1 = p7 * exp(-p8 * V)
+a2 = p9 * exp( p10 * V)
+b2 = (a2*b1)/a1
+a3 = p11 * exp( p12* V)
+b3 = (a3*b2)/a2
+a4 = p13 * exp( p14 * V)
+b4 = (a4*b3)/a3
+
+dot(C3) = bm*C2 + b4*IC3 - C3*(a4 + 3*am)
+dot(C2) = 2*bm*C1 + 3*am*C3 + b3*IC2 - C2*(a3 + 2*am + bm)
+dot(C1) = 3*bm*O + 2*am*C2 + b2*IC1 - C1*(am + 2*bm + a2)
+dot(O) = b1*I + am*C1 - O*(3*bm + a1)
+dot(I) = a1*O + am*IC1 - I*(b1 + 3*bm)
+dot(IC1) = 3*bm*I + 2*am*IC2 + a2*C1 - IC1*(2*bm + am + b2)
+dot(IC2) = 2*bm*IC1 + 3*am*IC3 + a3*C2 - IC2*(2*am + b3 + bm)
+
+p1 = 2.26e-4 [1/ms]
+p2 = 0.06990 [1/mV]
+p3 = 3.45e-5 [1/ms]
+p4 = 0.05462 [1/mV]
+p5 = 0.08730 [1/ms]
+p6 = 8.91e-3 [1/mV]
+p7 = 5.15e-3 [1/ms]
+p8 = 0.03158 [1/mV]
+p9 = 2.26e-4 [1/ms]
+p10 = 0.06990 [1/mV]
+p11 = 3.45e-5 [1/ms]
+p12 = 0.05462 [1/mV]
+p13 = 0.08730 [1/ms]
+p14 = 8.91e-3 [1/mV]
+p15 = 0.15240 [mS/uF]
+
+n_params = 15
+

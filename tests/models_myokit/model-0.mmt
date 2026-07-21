@@ -1,0 +1,54 @@
+[[model]]
+name: Beattie-2017-IKr
+author: Michael Clerx
+desc: Kylie's model as imported from the Mex file
+# Initial values
+ikr.y1 = 0
+ikr.y2 = 0
+ikr.y3 = 0
+
+#
+# Simulation engine variables
+#
+[engine]
+time = 0 bind time
+pace = 0 bind pace
+
+#
+# Membrane potential
+#
+[membrane]
+V = engine.pace
+    desc: membrane potential
+    in [mV]
+
+[nernst]
+EK = -85 [mV]
+
+#
+# Model from Kylie's mex file (HH)
+#
+[ikr]
+use membrane.V
+IKr = p9 * y3 * (V - nernst.EK)
+y4 = 1 - y1 - y2 - y3
+k12 = p1 * exp( p2 * V)
+k21 = p3 * exp(-p4 * V)
+k41 = p5 * exp( p6 * V)
+k14 = p7 * exp(-p8 * V)
+dot(y1) = -(k12 + k14) * y1 + k21 * y2 + k41 * y4 
+dot(y2) = -(k14 + k21) * y2 + k41 * y3 + k12 * y1 
+dot(y3) = -(k21 + k41) * y3 + k12 * y4 + k14 * y2 
+
+p1 = 2.26e-4 [1/ms]
+p2 = 0.06990 [1/mV]
+p3 = 3.44e-5 [1/ms]
+p4 = 0.0546 [1/mV]
+p5 = 0.08730 [1/ms]
+p6 = 8.91e-3 [1/mV]
+p7 = 5.15e-3 [1/ms]
+p8 = 0.03158 [1/mV]
+p9 = 0.15240 [mS/uF]
+
+n_params = 9
+
